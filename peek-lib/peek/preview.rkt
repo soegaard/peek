@@ -11,7 +11,7 @@
 ;; preview-options-type                -- Explicit file-type override.
 ;; preview-options-align?              -- Whether alignment is enabled.
 ;; preview-options-swatches?           -- Whether swatches are enabled.
-;; preview-options-color?              -- Whether colored output is enabled.
+;; preview-options-color-mode          -- Color mode selection.
 ;; make-preview-options                -- Construct preview options.
 ;; preview-string : string? ... -> string?
 ;;   Preview a source string using the selected options.
@@ -29,8 +29,8 @@
  preview-options-align?
  ;; preview-options-swatches?  Whether swatches are enabled.
  preview-options-swatches?
- ;; preview-options-color?     Whether colored output is enabled.
- preview-options-color?
+ ;; preview-options-color-mode Color mode selection.
+ preview-options-color-mode
  ;; make-preview-options       Construct preview options.
  make-preview-options
  ;; preview-string : string? (or/c symbol? #f) preview-options? -> string?
@@ -42,17 +42,27 @@
 
 (require racket/file
          racket/path
+         racket/port
          "css.rkt")
 
-(struct preview-options (type align? swatches? color?) #:transparent)
+(struct preview-options (type align? swatches? color-mode) #:transparent)
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
 (define (make-preview-options #:type      [type #f]
                               #:align?    [align? #f]
                               #:swatches? [swatches? #t]
-                              #:color?    [color? #t])
-  (preview-options type align? swatches? color?))
+                              #:color-mode [color-mode 'always])
+  (preview-options type align? swatches? color-mode))
+
+;; color-enabled? : output-port? preview-options? -> boolean?
+;;   Determine whether preview output should include ANSI color.
+(define (color-enabled? out options)
+  (case (preview-options-color-mode options)
+    [(always) #t]
+    [(never)  #f]
+    [(auto)   (terminal-port? out)]
+    [else     #t]))
 
 ;; detect-file-type : (or/c path-string? #f) -> (or/c symbol? #f)
 ;;   Infer a supported file type from a file path.
@@ -75,11 +85,14 @@
 
 ;; preview-string : string? (or/c path-string? #f) preview-options? -> string?
 ;;   Preview a source string.
-(define (preview-string source [maybe-path #f] [options (make-preview-options)])
+(define (preview-string source
+                        [maybe-path #f]
+                        [options (make-preview-options)]
+                        [out (current-output-port)])
   (define file-type
     (effective-file-type maybe-path options))
   (cond
-    [(not (preview-options-color? options)) source]
+    [(not (color-enabled? out options)) source]
     [(eq? file-type 'css)
      (render-css-preview source
                          #:align?    (preview-options-align? options)
@@ -89,7 +102,9 @@
 
 ;; preview-file : path-string? preview-options? -> string?
 ;;   Preview a file from disk.
-(define (preview-file path [options (make-preview-options)])
+(define (preview-file path
+                      [options (make-preview-options)]
+                      [out (current-output-port)])
   (define source
     (file->string path))
-  (preview-string source path options))
+  (preview-string source path options out))

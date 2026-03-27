@@ -29,6 +29,7 @@
 (define (main)
   (define align? #f)
   (define swatches? #t)
+  (define color-mode 'always)
   (define type #f)
   (define file-path #f)
   (command-line
@@ -43,6 +44,13 @@
    [("--no-swatches")
     "Disable CSS swatches."
     (set! swatches? #f)]
+   [("--color") value
+                "Choose color mode: always, auto, or never."
+                (set! color-mode
+                      (case (string->symbol value)
+                        [(always auto never) (string->symbol value)]
+                        [else
+                         (usage-error (format "unknown color mode: ~a" value))]))]
    #:args args
    (cond
      [(null? args)
@@ -55,16 +63,16 @@
     (make-preview-options #:type      type
                           #:align?    align?
                           #:swatches? swatches?
-                          #:color?    (terminal-port? (current-output-port))))
+                          #:color-mode color-mode))
   (cond
     [file-path
      (unless (file-exists? file-path)
        (usage-error (format "file not found: ~a" file-path)))
-     (display (preview-file file-path options))]
+     (display (preview-file file-path options (current-output-port)))]
     [else
      (define source
        (port->string (current-input-port)))
-     (display (preview-string source #f options))]))
+     (display (preview-string source #f options (current-output-port)))]))
 
 (module+ main
   (main))
@@ -74,7 +82,20 @@
 
   (define plain-options
     (make-preview-options #:type 'css
-                          #:color? #f))
+                          #:color-mode 'never))
 
   (check-equal? (preview-string "color: #fff;" #f plain-options)
-                "color: #fff;"))
+                "color: #fff;")
+  (check-true
+   (regexp-match? #px"\u001b\\["
+                  (preview-string "color: #fff;"
+                                  #f
+                                  (make-preview-options #:type 'css
+                                                        #:color-mode 'always))))
+  (check-equal?
+   (preview-string "color: #fff;"
+                   #f
+                   (make-preview-options #:type 'css
+                                         #:color-mode 'auto)
+                   (open-output-string))
+   "color: #fff;"))

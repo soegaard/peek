@@ -68,6 +68,27 @@ swatch contributes its rendered terminal width. When `--no-swatches` is used,
 the swatch render items are omitted and alignment is recomputed from the
 remaining rendered output.
 
+### Cross-rule Alignment
+
+For CSS, cross-rule alignment is acceptable for simple sibling rule groups when
+it improves scanability.
+
+The intended rules are:
+
+1. Align selectors across sibling single-line rules so their `{` tokens land in
+   the same column.
+2. Align matching property columns across those same sibling rules.
+3. Compute cross-rule alignment from rendered width, including any visible
+   swatches.
+4. Only apply cross-rule alignment when the participating rules have the same
+   ordered property set.
+5. When repeated aligned lines use the same function call shape, such as
+   repeated `rgba(...)` values, align the function arguments when doing so
+   improves scanability.
+
+This is a CSS-specific formatting rule. It should not be treated as a generic
+preview rule for other file types.
+
 ## CSS CLI Direction
 
 For CSS, the relevant options are:

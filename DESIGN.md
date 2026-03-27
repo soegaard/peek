@@ -20,7 +20,7 @@ The implementation is divided into two layers:
   - file-type detection
   - dispatch to a file-type previewer
   - plain-text fallback for unsupported types
-  - output-mode decisions such as tty vs non-tty behavior
+  - output-mode decisions such as color mode and tty detection
 
 - File-type preview layer
   - token interpretation for a specific file type

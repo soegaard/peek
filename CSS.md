@@ -75,10 +75,13 @@ For CSS, the relevant options are:
 - `--type css`
 - `--align`
 - `--no-swatches`
+- `--color always|auto|never`
 
 Defaults:
 
 - CSS preview uses syntax coloring by default
+- color mode defaults to `always`
+- non-interactive output stays colored unless color mode is changed explicitly
 - swatches are enabled by default
 - `--no-swatches` disables swatch rendering only
 - `--align` enables intra-rule alignment only

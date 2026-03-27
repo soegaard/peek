@@ -19,6 +19,8 @@ Guidelines
 7. Add tests for preview behavior with realistic sample inputs.
 8. Keep public behavior easy to inspect from the terminal.
 9. Document design decisions in `DESIGN.md` when they affect future file-type support or the division between generic and file-type-specific code.
+10. When preview rendering inserts visible elements such as swatches, alignment must use rendered width, including the visible width of inserted elements.
+11. Put shared design notes in `DESIGN.md`; put file-type-specific design notes in files such as `CSS.md`.
 
 
 Coding guidelines for Racket code.
@@ -70,4 +72,4 @@ There are 3 packages:
 ## Design Notes
 
 1. Shared design notes are in `DESIGN.md`.
-2. Each supported file type may get its own design note when needed.
+2. Each supported file type should keep its specific design notes in its own file, such as `CSS.md`.

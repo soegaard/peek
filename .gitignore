@@ -2,6 +2,7 @@
 compiled/
 /doc/
 tmp/
+html/
 *~
 *.bak
 \#*

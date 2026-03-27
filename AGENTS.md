@@ -68,6 +68,13 @@ There are 3 packages:
   - peek       Installs both peek-lib and peek-doc
 
 
+Scribble
+
+Build the manual with:
+
+  - `raco scribble +m --htmls --dest html/ peek-doc/peek.scrbl`
+
+
 
 
 ## Design Notes

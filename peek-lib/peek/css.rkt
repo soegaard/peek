@@ -515,152 +515,407 @@
     [_
      ""]))
 
-;; single-length-value : css-decl -> (or/c (cons string? string?) #f)
-;;   Recognize a simple single CSS length value.
-(define (single-length-value decl)
-  (define trimmed
-    (string-trim (css-decl-value decl)))
-  (define match
-    (regexp-match #px"^([+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+))(px|rem|em|%|vw|vh|vmin|vmax|pt|pc|cm|mm|in|q|ch|ex|s|ms)$"
-                  trimmed))
-  (and match
-       (cons (list-ref match 1)
-             (list-ref match 2))))
+;; css-length-rx : regexp?
+;;   Recognize a simple CSS numeric length or duration token.
+(define css-length-rx
+  #px"^([+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+))(px|rem|em|%|vw|vh|vmin|vmax|pt|pc|cm|mm|in|q|ch|ex|s|ms)$")
 
-;; align-numeric-values : (listof css-decl?) -> (listof css-decl?)
-;;   Right-align simple same-unit numeric values.
-(define (align-numeric-values decls)
-  (define groups
-    (for/fold ([table (hash)]) ([decl decls] [index (in-naturals)])
-      (define info
-        (single-length-value decl))
+;; property-token? : css-token? -> boolean?
+;;   Determine whether a token names a CSS property.
+(define (property-token? token)
+  (or (member 'property-name        (css-token-tags token))
+      (member 'custom-property-name (css-token-tags token))))
+
+;; whitespace-width-after-newline : string? exact-nonnegative-integer? -> exact-nonnegative-integer?
+;;   Measure whitespace width, resetting after the final newline.
+(define (whitespace-width-after-newline text prefix-width)
+  (define matches
+    (regexp-match-positions #px"(?s:.*)\n" text))
+  (cond
+    [matches (- (string-length text) (cdar matches))]
+    [else    (+ prefix-width (string-length text))]))
+
+;; semicolon-part? : (listof css-token?) -> boolean?
+;;   Determine whether a block part is a standalone semicolon separator.
+(define (semicolon-part? part)
+  (match part
+    [(list token) (delimiter-token? token ";")]
+    [_            #f]))
+
+;; declaration-part? : (listof css-token?) -> boolean?
+;;   Determine whether a block part contains a property declaration.
+(define (declaration-part? part)
+  (for/or ([token part])
+    (property-token? token)))
+
+;; comment-only-part? : (listof css-token?) -> boolean?
+;;   Determine whether a block part is a comment section separator.
+(define (comment-only-part? part)
+  (and (for/or ([token part])
+         (eq? (css-token-category token) 'comment))
+       (not (declaration-part? part))))
+
+;; split-block-parts : (listof css-token?) -> (listof (listof css-token?))
+;;   Split a block into declaration-ish parts and semicolon separators.
+(define (split-block-parts tokens)
+  (let split ([rest tokens] [current '()] [parts '()])
+    (cond
+      [(null? rest)
+       (reverse (if (null? current)
+                    parts
+                    (cons (reverse current) parts)))]
+      [(delimiter-token? (car rest) ";")
+       (split (cdr rest)
+              '()
+              (cons (list (car rest))
+                    (cons (reverse current) parts)))]
+      [else
+       (split (cdr rest)
+              (cons (car rest) current)
+              parts)])))
+
+;; scan-post-colon : (listof css-token?) exact-nonnegative-integer? -> list?
+;;   Measure whitespace immediately after a colon.
+(define (scan-post-colon tokens post-width)
+  (match tokens
+    [(cons token tail)
+     (cond
+       [(whitespace-token? token)
+        (scan-post-colon tail
+                         (whitespace-width-after-newline (css-token-text token)
+                                                         post-width))]
+       [else
+        (list post-width tokens)])]
+    [_ (list post-width tokens)]))
+
+;; scan-after-property : (listof css-token?) exact-nonnegative-integer? -> (or/c list? #f)
+;;   Scan from after the property name to the colon and following whitespace.
+(define (scan-after-property tokens name-width)
+  (match tokens
+    ['() #f]
+    [(cons token tail)
+     (cond
+       [(whitespace-token? token)
+        (scan-after-property tail
+                             (whitespace-width-after-newline (css-token-text token)
+                                                             name-width))]
+       [(delimiter-token? token ":")
+        (define post+rest
+          (scan-post-colon tail 0))
+        (list (+ name-width 1)
+              (first post+rest)
+              (second post+rest))]
+       [else
+        #f])]))
+
+;; measure-declaration-prefix : (listof css-token?) -> (or/c list? #f)
+;;   Return (list prefix-width post-width rest) for a declaration part.
+(define (measure-declaration-prefix decl)
+  (let scan ([rest decl] [prefix-width 0])
+    (match rest
+      ['() #f]
+      [(cons token tail)
+       (cond
+         [(whitespace-token? token)
+          (scan tail
+                (whitespace-width-after-newline (css-token-text token)
+                                                prefix-width))]
+         [(eq? (css-token-category token) 'comment)
+          (scan tail 0)]
+         [(property-token? token)
+          (scan-after-property tail (string-length (css-token-text token)))]
+         [else
+          #f])])))
+
+;; drop-post-colon-whitespace : (listof css-token?) -> (listof css-token?)
+;;   Drop whitespace immediately after a property colon.
+(define (drop-post-colon-whitespace tokens)
+  (match tokens
+    [(cons token tail)
+     (cond
+       [(whitespace-token? token)
+        (drop-post-colon-whitespace tail)]
+       [else
+        tokens])]
+    [_ tokens]))
+
+;; whitespace-like-token : css-token? string? -> css-token?
+;;   Copy a whitespace token or synthesize one from a nearby token.
+(define (whitespace-like-token token text)
+  (struct-copy css-token token
+               [category 'whitespace]
+               [text     text]
+               [tags     '()]))
+
+;; rebuild-declaration-spacing : (listof css-token?) exact-nonnegative-integer? exact-nonnegative-integer? -> (listof css-token?)
+;;   Replace post-colon whitespace so declaration values align.
+(define (rebuild-declaration-spacing decl prefix-width max-prefix)
+  (define new-post-width
+    (+ 1 (- max-prefix prefix-width)))
+  (let rebuild ([rest decl] [prefix '()])
+    (match rest
+      ['() (reverse prefix)]
+      [(cons token tail)
+       (cond
+         [(delimiter-token? token ":")
+          (define new-space
+            (whitespace-like-token token (make-string new-post-width #\space)))
+          (append (reverse (cons token prefix))
+                  (list new-space)
+                  (drop-post-colon-whitespace tail))]
+         [else
+          (rebuild tail (cons token prefix))])])))
+
+;; declaration-value-tokens : (listof css-token?) -> (or/c (listof css-token?) #f)
+;;   Collect simple value tokens after the colon, or #f for complex values.
+(define (declaration-value-tokens decl)
+  (let loop ([rest decl] [after-colon? #f] [values '()])
+    (cond
+      [(null? rest)
+       (and after-colon? (reverse values))]
+      [else
+       (define token
+         (car rest))
+       (cond
+         [(not after-colon?)
+          (loop (cdr rest)
+                (delimiter-token? token ":")
+                values)]
+         [(or (whitespace-token? token)
+              (eq? (css-token-category token) 'comment))
+          (loop (cdr rest) #t values)]
+         [(delimiter-token? token ";")
+          (and after-colon? (reverse values))]
+         [(eq? (css-token-category token) 'delimiter)
+          #f]
+         [else
+          (loop (cdr rest) #t (cons token values))])])))
+
+;; declaration-single-length : (listof css-token?) -> (or/c (cons string? string?) #f)
+;;   Recognize a declaration whose value is a single CSS length token.
+(define (declaration-single-length decl)
+  (define values
+    (declaration-value-tokens decl))
+  (and values
+       (= (length values) 1)
+       (let ([match (regexp-match css-length-rx
+                                  (css-token-text (car values)))])
+         (and match
+              (cons (list-ref match 1)
+                    (list-ref match 2))))))
+
+;; replace-first-value-token : (listof css-token?) string? string? -> (listof css-token?)
+;;   Replace the first matching declaration-value token text.
+(define (replace-first-value-token decl old-text new-text)
+  (define replaced? #f)
+  (for/list ([token decl])
+    (cond
+      [(and (not replaced?)
+            (member 'declaration-value-token (css-token-tags token))
+            (string=? (css-token-text token) old-text))
+       (set! replaced? #t)
+       (struct-copy css-token token [text new-text])]
+      [else
+       token])))
+
+;; collect-unit-run : (listof (listof css-token?)) string? -> pair?
+;;   Collect adjacent declaration parts sharing the same simple value unit.
+(define (collect-unit-run parts unit)
+  (let loop ([rest parts] [run '()])
+    (cond
+      [(null? rest)           (cons (reverse run) rest)]
+      [(semicolon-part? (car rest))
+       (loop (cdr rest) run)]
+      [else
+       (define info
+         (declaration-single-length (car rest)))
+       (cond
+         [(and info (string=? (cdr info) unit))
+          (loop (cdr rest) (cons (car rest) run))]
+         [else
+          (cons (reverse run) rest)])])))
+
+;; pad-unit-run : (listof (listof css-token?)) -> (listof (listof css-token?))
+;;   Right-align numeric parts within a same-unit run.
+(define (pad-unit-run run)
+  (define infos
+    (map declaration-single-length run))
+  (define max-width
+    (apply max
+           (map (lambda (info)
+                  (string-length (car info)))
+                infos)))
+  (for/list ([decl run] [info infos])
+    (define number-text
+      (car info))
+    (define unit-text
+      (cdr info))
+    (define padded
+      (string-append (make-string (- max-width (string-length number-text))
+                                  #\space)
+                     number-text
+                     unit-text))
+    (replace-first-value-token decl
+                               (string-append number-text unit-text)
+                               padded)))
+
+;; interleave-semicolons : (listof (listof css-token?)) -> (listof (listof css-token?))
+;;   Reinsert semicolon parts between declaration parts.
+(define (interleave-semicolons decls)
+  (define sep
+    (list (css-token 'delimiter ";" '() #f #f)))
+  (let loop ([rest decls] [parts '()])
+    (cond
+      [(null? rest)       (reverse parts)]
+      [(null? (cdr rest)) (reverse (cons (car rest) parts))]
+      [else
+       (loop (cdr rest)
+             (cons sep (cons (car rest) parts)))])))
+
+;; process-unit-run : (listof (listof css-token?)) (listof (listof css-token?)) -> (values (listof (listof css-token?)) (listof (listof css-token?)))
+;;   Right-align one adjacent same-unit run when beneficial.
+(define (process-unit-run rest acc)
+  (define info
+    (declaration-single-length (car rest)))
+  (cond
+    [(not info)
+     (values (cdr rest) (cons (car rest) acc))]
+    [else
+     (define run+tail
+       (collect-unit-run rest (cdr info)))
+     (define run
+       (car run+tail))
+     (define tail
+       (cdr run+tail))
+     (cond
+       [(< (length run) 2)
+        (values (cdr rest) (cons (car rest) acc))]
+       [else
+        (values tail
+                (append (reverse (interleave-semicolons (pad-unit-run run)))
+                        acc))])]))
+
+;; right-align-number-runs : (listof (listof css-token?)) -> (listof (listof css-token?))
+;;   Right-align adjacent same-unit numeric declaration values.
+(define (right-align-number-runs parts)
+  (let loop ([rest parts] [acc '()])
+    (cond
+      [(null? rest) (reverse acc)]
+      [(semicolon-part? (car rest))
+       (loop (cdr rest) (cons (car rest) acc))]
+      [else
+       (define-values (rest* acc*)
+         (process-unit-run rest acc))
+       (loop rest* acc*)])))
+
+;; align-declaration-group : (listof (listof css-token?)) -> (listof (listof css-token?))
+;;   Colon-align and then numeric-align one declaration group.
+(define (align-declaration-group parts)
+  (define infos
+    (map measure-declaration-prefix parts))
+  (define max-prefix
+    (for/fold ([current-max 0]) ([info infos])
+      (cond
+        [info (max current-max (first info))]
+        [else current-max])))
+  (define colon-aligned
+    (for/list ([part parts] [info infos])
       (cond
         [info
-         (hash-update table
-                      (cdr info)
-                      (lambda (items) (cons (cons index info) items))
-                      '())]
+         (rebuild-declaration-spacing part (first info) max-prefix)]
         [else
-         table])))
-  (for/fold ([updated decls]) ([(unit entries) (in-hash groups)])
-    (define ordered
-      (reverse entries))
-    (cond
-      [(< (length ordered) 2) updated]
-      [else
-       (define max-width
-         (apply max
-                (map (lambda (entry)
-                       (string-length (car (cdr entry))))
-                     ordered)))
-       (for/fold ([current updated]) ([entry ordered])
-         (define index
-           (car entry))
-         (define num
-           (car (cdr entry)))
-         (define padded
-           (string-append (make-string (- max-width (string-length num)) #\space)
-                          num
-                          unit))
-         (list-set current
-                   index
-                   (struct-copy css-decl (list-ref current index)
-                                [value padded])))])))
+         part])))
+  (right-align-number-runs colon-aligned))
 
-;; parse-block-decls : string? -> (values string? (listof css-decl?) string?)
-;;   Parse block contents into declarations while preserving surrounding text.
-(define (parse-block-decls block-text)
-  (define lines
-    (string-split block-text "\n" #:trim? #f))
-  (define trailing-newline?
-    (and (pair? lines)
-         (string=? (last lines) "")))
-  (define real-lines
-    (if trailing-newline? (drop-right lines 1) lines))
-  (define decls
-    (for/list ([line real-lines])
-      (define match
-        (regexp-match #px"^(\\s*)([^:;{}\\s][^:;{}]*?)(\\s*):(\\s*)([^;{}]*?)(\\s*;?\\s*)$"
-                      line))
+;; align-block-parts : (listof css-token?) -> (listof css-token?)
+;;   Align one simple declaration block while preserving separators.
+(define (align-block-parts block)
+  (define parts
+    (split-block-parts block))
+  (define aligned-parts
+    (let group-loop ([rest parts] [current '()] [acc '()])
       (cond
-        [match
-         (css-decl (list-ref match 1)
-                   (string-trim (list-ref match 2))
-                   (list-ref match 3)
-                   (list-ref match 4)
-                   (string-trim (list-ref match 5))
-                   (list-ref match 6)
-                   #f)]
+        [(null? rest)
+         (append acc (align-declaration-group (reverse current)))]
+        [(comment-only-part? (car rest))
+         (group-loop (cdr rest)
+                     (list (car rest))
+                     (append acc (align-declaration-group (reverse current))))]
         [else
-         (css-decl "" "" "" "" line "" #t)])))
-  (values "" decls (if trailing-newline? "\n" "")))
+         (group-loop (cdr rest)
+                     (cons (car rest) current)
+                     acc)])))
+  (append-map values aligned-parts))
 
-;; align-block-text : string? -> string?
-;;   Align one CSS declaration block.
-(define (align-block-text block-text)
-  (define-values (_prefix decls suffix)
-    (parse-block-decls block-text))
-  (define real-decls
-    (filter (lambda (decl) (not (css-decl-comment? decl))) decls))
-  (cond
-    [(null? real-decls) block-text]
-    [else
-     (define max-name-width
-       (apply max
-              (map (lambda (decl) (string-length (css-decl-name decl)))
-                   real-decls)))
-     (define aligned-decls
-       (align-numeric-values
-        (for/list ([decl decls])
+;; collect-brace-block : (listof css-token?) -> (values (listof css-token?) (or/c css-token? #f) (listof css-token?))
+;;   Collect tokens through the matching close brace after an open brace.
+(define (collect-brace-block tokens)
+  (let loop ([rest tokens] [depth 1] [block '()])
+    (cond
+      [(null? rest)
+       (values (reverse block) #f '())]
+      [else
+       (define token
+         (car rest))
+       (cond
+         [(delimiter-token? token "{")
+          (loop (cdr rest) (add1 depth) (cons token block))]
+         [(delimiter-token? token "}")
           (cond
-            [(css-decl-comment? decl) decl]
+            [(= depth 1)
+             (values (reverse block) token (cdr rest))]
             [else
-             (struct-copy css-decl decl
-                          [after-colon
-                           (make-string (+ 1 (- max-name-width
-                                                (string-length (css-decl-name decl))))
-                                        #\space)])]))))
-     (string-append
-      (string-join
-       (for/list ([decl aligned-decls])
-         (cond
-           [(css-decl-comment? decl)
-            (css-decl-value decl)]
-           [else
-            (string-append (css-decl-indent decl)
-                           (css-decl-name decl)
-                           ":"
-                           (css-decl-after-colon decl)
-                           (css-decl-value decl)
-                           (if (string=? (string-trim (css-decl-suffix decl)) "")
-                               ";"
-                               (css-decl-suffix decl)))]))
-       "\n")
-      suffix)]))
+             (loop (cdr rest) (sub1 depth) (cons token block))])]
+         [else
+          (loop (cdr rest) depth (cons token block))])])))
 
-;; align-css-source : string? -> string?
-;;   Align simple CSS blocks without attempting cross-rule alignment.
-(define (align-css-source source)
-  (regexp-replace* #px"\\{([^{}]*)\\}"
-                   source
-                   (lambda (whole block)
-                     (string-append "{"
-                                    (align-block-text block)
-                                    "}"))))
+;; align-css-tokens : (listof css-token?) -> (listof css-token?)
+;;   Align simple CSS declaration blocks without cross-rule alignment.
+(define (align-css-tokens tokens)
+  (let loop ([rest tokens] [acc '()])
+    (cond
+      [(null? rest)
+       (reverse acc)]
+      [(delimiter-token? (car rest) "{")
+       (define open-token
+         (car rest))
+       (define-values (block close-token tail)
+         (collect-brace-block (cdr rest)))
+       (define aligned-block
+         (let ([nested-aligned (align-css-tokens block)])
+           (cond
+             [(for/or ([token nested-aligned])
+                (or (delimiter-token? token "{")
+                    (delimiter-token? token "}")))
+              nested-aligned]
+             [else
+              (align-block-parts nested-aligned)])))
+       (define rebuilt
+         (append (list open-token)
+                 aligned-block
+                 (if close-token
+                     (list close-token)
+                     '())))
+       (loop tail
+             (append (reverse rebuilt) acc))]
+      [else
+       (loop (cdr rest) (cons (car rest) acc))])))
 
 ;; render-css-preview : string? keyword-arguments -> string?
 ;;   Render CSS with ANSI coloring and optional CSS-specific enhancements.
 (define (render-css-preview source
                             #:align?    [align? #f]
                             #:swatches? [swatches? #t])
-  (define effective-source
-    (if align? (align-css-source source) source))
   (define tokens
-    (annotate-css-tokens effective-source))
+    (annotate-css-tokens source))
+  (define effective-tokens
+    (if align?
+        (align-css-tokens tokens)
+        tokens))
   (define insertions
-    (build-swatch-plan tokens swatches?))
+    (build-swatch-plan effective-tokens swatches?))
   (apply string-append
-         (for/list ([token tokens] [index (in-naturals)])
+         (for/list ([token effective-tokens] [index (in-naturals)])
            (string-append
             (colorize-text (token-style token)
                            (css-token-text token))
@@ -701,4 +956,28 @@
      (regexp-match? #px"color:\\s+#ff0000(?:\\s+█)?;" plain)))
   (check-true
    (let ([plain (strip-ansi aligned-css)])
-     (regexp-match? #px"margin:\\s+8px;" plain))))
+     (regexp-match? #px"margin:\\s+8px;" plain)))
+  (check-true
+   (let* ([commented (render-css-preview (string-append ".a {\n"
+                                                        "  color: #111111;\n"
+                                                        "  /* section */\n"
+                                                        "  border-color: #222222;\n"
+                                                        "  color: #333333;\n"
+                                                        "}\n")
+                                         #:align? #t)]
+          [plain (strip-ansi commented)])
+     (and (regexp-match? #px"color:\\s+#111111(?:\\s+█)?;" plain)
+          (regexp-match? #px"border-color:\\s+#222222(?:\\s+█)?;" plain)
+          (regexp-match? #px"/\\* section \\*/" plain))))
+  (check-true
+   (let* ([nested (render-css-preview (string-append "@media screen {\n"
+                                                     "  .a {\n"
+                                                     "    color: red;\n"
+                                                     "    margin: 8px;\n"
+                                                     "  }\n"
+                                                     "}\n")
+                                      #:align? #t
+                                      #:swatches? #f)]
+          [plain (strip-ansi nested)])
+     (regexp-match? #px"@media screen \\{\n  \\.a \\{\n    color:\\s+red;\n    margin:\\s+8px;\n  \\}\n\\}\n"
+                    plain))))

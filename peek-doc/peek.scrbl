@@ -3,11 +3,11 @@
 @(require scribble-tools
           (for-label lexers/css
                      racket/base
-                     peek/main
-                     peek/preview))
+                     (lib "peek/main.rkt")
+                     (lib "peek/preview.rkt")))
 
 @title{peek}
-@defmodule[peek/main]
+@defmodule[(lib "peek/main.rkt")]
 
 @para{
 @exec{peek} is a terminal-first preview tool for files and standard input.
@@ -137,48 +137,21 @@ const view = <Button kind="primary">Hello {name}</Button>;
 @section{Library}
 
 The command-line tool is backed by a small library in
-@racketmodname[peek/preview].
+@racketmodname[(lib "peek/preview.rkt")].
 
-@defmodule[peek/preview]
+The initial library surface is intentionally small:
 
-@defstruct*[preview-options
-            ([type (or/c symbol? #f)]
-             [align? boolean?]
-             [swatches? boolean?]
-             [color-mode symbol?])]{
-Shared preview configuration for both @racket[preview-string] and
-@racket[preview-file].
-}
+@itemlist[
+ @item{@tt{make-preview-options} constructs a preview-options value with
+       optional type, alignment, swatch, and color-mode settings.}
+ @item{@tt{preview-string} previews a source string using the selected
+       options.}
+ @item{@tt{preview-file} reads a file and previews it using the selected
+       options.}
+]
 
-@defproc[(make-preview-options
-          [#:type type (or/c symbol? #f) #f]
-          [#:align? align? boolean? #f]
-          [#:swatches? swatches? boolean? #t]
-          [#:color-mode color-mode symbol? 'always])
-         preview-options?]{
-Construct preview options for @racket[preview-string] and
-@racket[preview-file].
-}
-
-@defproc[(preview-string [source string?]
-                         [maybe-path (or/c path-string? #f) #f]
-                         [options preview-options? (make-preview-options)]
-                         [out output-port? (current-output-port)])
-         string?]{
-Preview @racket[source] using the selected options.
-}
-
-@defproc[(preview-file [path path-string?]
-                       [options preview-options? (make-preview-options)]
-                       [out output-port? (current-output-port)])
-         string?]{
-Read and preview a file from disk.
-}
-
-@defmodule[peek/main]
-@defproc[(main) void?]{
-Run the @exec{peek} command-line interface.
-}
+The command-line entry point lives in
+@racketmodname[(lib "peek/main.rkt")] and is exported as @tt{main}.
 
 @section{Notes}
 

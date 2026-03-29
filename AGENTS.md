@@ -23,6 +23,7 @@ Guidelines
 10. When preview rendering inserts visible elements such as swatches, alignment must use rendered width, including the visible width of inserted elements.
 11. Put shared design notes in `DESIGN.md`; put file-type-specific design notes in files such as `CSS.md`.
 12. Default preview output should keep color enabled unless the user explicitly disables it.
+13. `peek` should support `--list-file-types` to print the currently supported explicit file type names.
 
 
 Coding guidelines for Racket code.

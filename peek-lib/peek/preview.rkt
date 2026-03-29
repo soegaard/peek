@@ -12,6 +12,7 @@
 ;; preview-options-align?              -- Whether alignment is enabled.
 ;; preview-options-swatches?           -- Whether swatches are enabled.
 ;; preview-options-color-mode          -- Color mode selection.
+;; supported-file-types                -- Supported explicit file type names.
 ;; make-preview-options                -- Construct preview options.
 ;; preview-string : string? ... -> string?
 ;;   Preview a source string using the selected options.
@@ -31,6 +32,8 @@
  preview-options-swatches?
  ;; preview-options-color-mode Color mode selection.
  preview-options-color-mode
+ ;; supported-file-types       Supported explicit file type names.
+ supported-file-types
  ;; make-preview-options       Construct preview options.
  make-preview-options
  ;; preview-string : string? (or/c symbol? #f) preview-options? -> string?
@@ -47,6 +50,10 @@
          "js.rkt")
 
 (struct preview-options (type align? swatches? color-mode) #:transparent)
+
+;; Supported explicit file-type names.
+(define supported-file-types
+  '(css js jsx))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -74,10 +81,12 @@
      (define path-string
        (path->string (simple-form-path maybe-path)))
      (cond
-       [(regexp-match? #px"(?i:\\.css)$" path-string)            'css]
-       [(regexp-match? #px"(?i:\\.jsx)$" path-string)            'jsx]
-       [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string) 'js]
-       [else                                                     #f])]))
+       [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
+       [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
+       [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
+        'js]
+       [else
+        #f])]))
 
 ;; effective-file-type : (or/c path-string? #f) preview-options? -> (or/c symbol? #f)
 ;;   Resolve the selected file type from options and path.

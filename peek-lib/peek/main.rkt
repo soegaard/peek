@@ -76,6 +76,12 @@
   (close-output-port pager-in)
   (subprocess-wait pager-pid))
 
+;; print-supported-file-types : -> void?
+;;   Print supported explicit file-type names, one per line.
+(define (print-supported-file-types)
+  (for ([file-type (in-list supported-file-types)])
+    (displayln file-type)))
+
 ;; main : -> void?
 ;;   Run the peek command-line interface.
 (define (main)
@@ -83,6 +89,7 @@
   (define swatches? #t)
   (define color-mode 'always)
   (define pager? #f)
+  (define list-file-types? #f)
   (define type #f)
   (define file-path #f)
   (command-line
@@ -91,6 +98,9 @@
    [("--type") value
                "Explicit file type for stdin input."
                (set! type (string->symbol value))]
+   [("--list-file-types")
+    "Print supported file type names and exit."
+    (set! list-file-types? #t)]
    [("-a" "--align")
     "Enable CSS intra-rule alignment."
     (set! align? #t)]
@@ -115,26 +125,30 @@
       (set! file-path (car args))]
      [else
       (usage-error "expected at most one input file")]))
-  (define options
-    (make-preview-options #:type      type
-                          #:align?    align?
-                          #:swatches? swatches?
-                          #:color-mode color-mode))
-  (define output
-    (cond
-      [file-path
-       (unless (file-exists? file-path)
-         (usage-error (format "file not found: ~a" file-path)))
-       (preview-file file-path options (current-output-port))]
-      [else
-       (define source
-         (port->string (current-input-port)))
-       (preview-string source #f options (current-output-port))]))
   (cond
-    [pager?
-     (write-through-pager output)]
+    [list-file-types?
+     (print-supported-file-types)]
     [else
-     (display output)]))
+     (define options
+       (make-preview-options #:type      type
+                             #:align?    align?
+                             #:swatches? swatches?
+                             #:color-mode color-mode))
+     (define output
+       (cond
+         [file-path
+          (unless (file-exists? file-path)
+            (usage-error (format "file not found: ~a" file-path)))
+          (preview-file file-path options (current-output-port))]
+         [else
+          (define source
+            (port->string (current-input-port)))
+          (preview-string source #f options (current-output-port))]))
+     (cond
+       [pager?
+        (write-through-pager output)]
+       [else
+        (display output)])]))
 
 (module+ main
   (main))
@@ -167,4 +181,6 @@
        (subprocess (current-output-port) #f (current-error-port) "/bin/cat"))
      (display "peek pager smoke\n" pager-in)
      (close-output-port pager-in)
-     (subprocess-wait pager-pid))))
+     (subprocess-wait pager-pid)))
+  (check-equal? supported-file-types
+                '(css js jsx)))

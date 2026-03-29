@@ -39,13 +39,20 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 cat path/to/file.css | peek --type css
 }
 
+To list the currently supported explicit file type names:
+
+@shellblock[#:shell 'bash]{
+peek --list-file-types
+}
+
 Useful CSS examples:
 
 @shellblock[#:shell 'bash]{
-peek --align path/to/file.css
+peek -a path/to/file.css
 peek --no-swatches path/to/file.css
 peek --color never path/to/file.css
 peek --color auto path/to/file.css | less -R
+peek -p path/to/file.css
 }
 
 JavaScript and JSX examples:
@@ -60,12 +67,19 @@ peek path/to/component.jsx
 @itemlist[
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
-       input. The initial useful value is @racket['css].}
- @item{@DFlag{--align}
+       input. Supported values are @tt{css}, @tt{js}, and @tt{jsx}.}
+ @item{@DFlag{--list-file-types}
+       prints the currently supported explicit file type names, one per line,
+       and exits.}
+ @item{@Flag{-a}, @DFlag{--align}
        enables CSS-specific alignment. This may rewrite spacing to improve the
        readability of declarations and aligned rule groups.}
  @item{@DFlag{--no-swatches}
        disables CSS color swatches while keeping syntax coloring enabled.}
+ @item{@Flag{-p}, @DFlag{--pager}
+       sends preview output through the configured pager. @exec{peek} uses the
+       @envvar{PAGER} environment variable when it is set, and otherwise falls
+       back to @tt{less -R}.}
  @item{@DFlag{--color} @litchar{always}@litchar{|}@litchar{auto}@litchar{|}@litchar{never}
        controls ANSI color output. The default is @litchar{always}.}
 ]
@@ -78,7 +92,51 @@ peek path/to/component.jsx
  @item{@litchar{never} disables color and prints plain text.}
 ]
 
+@subsection{Pagers}
+
+Use @Flag{-p} or @DFlag{--pager} when you want @exec{peek} to open its output
+in a pager instead of writing directly to the terminal.
+
+By default, @exec{peek} uses:
+
+@itemlist[
+ @item{the command named by @envvar{PAGER}, if that environment variable is set}
+ @item{@tt{less -R}, otherwise}
+]
+
+On Unix-like systems, a common usage is:
+
+@shellblock[#:shell 'bash]{
+peek -p path/to/file.css
+}
+
+or, with an explicit pager selection:
+
+@shellblock[#:shell 'bash]{
+PAGER="less -R" peek -p path/to/file.css
+}
+
+On Windows, pager availability depends on what is installed. One practical
+approach is to point @envvar{PAGER} at an installed pager explicitly. For
+example, if @tt{less.exe} is available from Git for Windows:
+
+@shellblock[#:shell 'powershell]{
+$env:PAGER = "C:\Program Files\Git\usr\bin\less.exe -R"
+peek -p path\to\file.css
+}
+
+If @envvar{PAGER} is not set and @tt{less} is not installed, pager mode will
+fail with an error instead of silently falling back to plain output.
+
 @section{Supported File Types}
+
+The current explicit file type names are:
+
+@itemlist[
+ @item{@tt{css}}
+ @item{@tt{js}}
+ @item{@tt{jsx}}
+]
 
 @subsection{CSS}
 

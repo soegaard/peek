@@ -31,6 +31,42 @@ This separation is important for future file-type support. File-type-specific
 concepts must stay in the corresponding previewer and not leak into the generic
 preview path.
 
+## Lessons From `scribble-tools`
+
+The JavaScript colorer in `scribble-tools` is a useful reference point for
+future file-type support, but it should be treated primarily as architectural
+prior art, not as an implementation template for `peek`.
+
+The main lesson worth borrowing is the layered pipeline:
+
+- tokenize
+- add semantic annotations
+- render
+
+That layering makes it possible to keep rendering concerns separate from
+language analysis, while still letting a file-type previewer enrich raw tokens
+with roles that improve the final output.
+
+For `peek`, this means future previewers may add a file-type-specific
+annotation pass when lexer output alone is not enough for a good terminal
+preview.
+
+The parts that should not be copied directly are the pieces that are specific
+to documentation rendering rather than terminal previewing. In particular:
+
+- do not introduce custom tokenizers when the corresponding `lexers` module is
+  sufficient
+- do not mix documentation-link inference into the terminal renderer
+- do not pull Scribble-specific rendering concerns into generic preview code
+
+So the intended direction for future file types is:
+
+- start from the corresponding `lexers` module
+- preserve useful token and position information
+- add a small file-type-specific semantic pass only when it materially improves
+  terminal output
+- keep rendering terminal-first
+
 ## Design Notes By File Type
 
 Shared notes belong in this file.

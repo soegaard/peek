@@ -17,9 +17,11 @@ previewing for supported file types.
 }
 
 @para{
-CSS is the first supported file type. The CSS previewer uses
+CSS and JavaScript are currently supported. The CSS previewer uses
 @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
+The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
+classification for @tt{.jsx} files.
 }
 
 @section{Command Line}
@@ -44,6 +46,13 @@ peek --align path/to/file.css
 peek --no-swatches path/to/file.css
 peek --color never path/to/file.css
 peek --color auto path/to/file.css | less -R
+}
+
+JavaScript and JSX examples:
+
+@shellblock[#:shell 'bash]{
+peek path/to/file.js
+peek path/to/component.jsx
 }
 
 @subsection{Options}
@@ -105,6 +114,26 @@ Example CSS preview input:
 }
 }
 
+@subsection{JavaScript And JSX}
+
+For JavaScript, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for JavaScript files such as @tt{.js}, @tt{.mjs}, and
+       @tt{.cjs}}
+ @item{syntax coloring for JSX in @tt{.jsx} files}
+ @item{derived-tag-driven rendering built on @tt{lexers/javascript}}
+]
+
+The first JavaScript pass focuses on syntax coloring only. It does not yet add
+preview widgets or framework-specific heuristics.
+
+Example JSX preview input:
+
+@jsblock[#:jsx? #t]{
+const view = <Button kind="primary">Hello {name}</Button>;
+}
+
 @section{Library}
 
 The command-line tool is backed by a small library in
@@ -155,6 +184,6 @@ Run the @exec{peek} command-line interface.
 
 Unsupported file types currently fall back to plain text.
 
-The initial implementation focuses on CSS and a small generic preview
-pipeline. Future file types may add their own previewers without forcing all
-file types into the same rendering model.
+The current implementation focuses on CSS, JavaScript, and a small generic
+preview pipeline. Future file types may add their own previewers without
+forcing all file types into the same rendering model.

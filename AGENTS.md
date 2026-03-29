@@ -81,4 +81,4 @@ Build the manual with:
 ## Design Notes
 
 1. Shared design notes are in `DESIGN.md`.
-2. Each supported file type should keep its specific design notes in its own file, such as `CSS.md`.
+2. Each supported file type should keep its specific design notes in its own file, such as `CSS.md` or `JS.md`.

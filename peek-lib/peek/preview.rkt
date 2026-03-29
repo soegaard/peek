@@ -43,7 +43,8 @@
 (require racket/file
          racket/path
          racket/port
-         "css.rkt")
+         "css.rkt"
+         "js.rkt")
 
 (struct preview-options (type align? swatches? color-mode) #:transparent)
 
@@ -73,8 +74,10 @@
      (define path-string
        (path->string (simple-form-path maybe-path)))
      (cond
-       [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
-       [else                                      #f])]))
+       [(regexp-match? #px"(?i:\\.css)$" path-string)            'css]
+       [(regexp-match? #px"(?i:\\.jsx)$" path-string)            'jsx]
+       [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string) 'js]
+       [else                                                     #f])]))
 
 ;; effective-file-type : (or/c path-string? #f) preview-options? -> (or/c symbol? #f)
 ;;   Resolve the selected file type from options and path.
@@ -97,6 +100,11 @@
      (render-css-preview source
                          #:align?    (preview-options-align? options)
                          #:swatches? (preview-options-swatches? options))]
+    [(eq? file-type 'js)
+     (render-javascript-preview source)]
+    [(eq? file-type 'jsx)
+     (render-javascript-preview source
+                                #:jsx? #t)]
     [else
      source]))
 
@@ -108,3 +116,23 @@
   (define source
     (file->string path))
   (preview-string source path options out))
+
+(module+ test
+  (require rackunit)
+
+  (check-equal? (detect-file-type "theme.css") 'css)
+  (check-equal? (detect-file-type "widget.js") 'js)
+  (check-equal? (detect-file-type "widget.mjs") 'js)
+  (check-equal? (detect-file-type "widget.cjs") 'js)
+  (check-equal? (detect-file-type "widget.jsx") 'jsx)
+  (check-false  (detect-file-type "README.txt"))
+  (check-true
+   (regexp-match? #px"\u001b\\["
+                  (preview-string "const answer = 42;\n"
+                                  "demo.js"
+                                  (make-preview-options #:color-mode 'always))))
+  (check-true
+   (regexp-match? #px"Button"
+                  (preview-string "const el = <Button>Hello</Button>;\n"
+                                  "demo.jsx"
+                                  (make-preview-options #:color-mode 'always)))))

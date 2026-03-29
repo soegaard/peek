@@ -118,6 +118,8 @@
          (memq 'object-key tags)
          (memq 'jsx-attribute-name tags))
      ansi-identifier]
+    [(memq 'jsx-text tags)
+     ""]
     [(or (memq 'string-literal tags)
          (memq 'numeric-literal tags)
          (memq 'regex-literal tags)
@@ -156,4 +158,7 @@
   (check-true (regexp-match? #px"run" js-rendered))
   (check-true (regexp-match? #px"Button" jsx-rendered))
   (check-true (regexp-match? #px"kind" jsx-rendered))
-  (check-true (regexp-match? #px"Hello" jsx-rendered)))
+  (check-true (regexp-match? #px"Hello" jsx-rendered))
+  (check-false
+   (regexp-match? #px"\u001b\\[38;2;206;145;120mHello"
+                  jsx-rendered)))

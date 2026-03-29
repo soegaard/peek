@@ -19,6 +19,7 @@ Guidelines
 7. Add tests for preview behavior with realistic sample inputs.
 8. Keep public behavior easy to inspect from the terminal.
 9. Document design decisions in `DESIGN.md` when they affect future file-type support or the division between generic and file-type-specific code.
+10. `peek` should support a pager mode via `-p` / `--pager`, which sends rendered output through `less -R`.
 10. When preview rendering inserts visible elements such as swatches, alignment must use rendered width, including the visible width of inserted elements.
 11. Put shared design notes in `DESIGN.md`; put file-type-specific design notes in files such as `CSS.md`.
 12. Default preview output should keep color enabled unless the user explicitly disables it.

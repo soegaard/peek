@@ -49,13 +49,14 @@
          "css.rkt"
          "html.rkt"
          "js.rkt"
-         "racket.rkt")
+         "racket.rkt"
+         "scribble.rkt")
 
 (struct preview-options (type align? swatches? color-mode) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(css html js jsx rkt))
+  '(css html js jsx rkt scrbl))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -86,6 +87,7 @@
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
+       [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
        [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
         'js]
        [(regexp-match? #px"(?i:\\.(?:rkt|ss|scm|rktd))$" path-string)
@@ -123,6 +125,8 @@
                                 #:jsx? #t)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
+    [(eq? file-type 'scrbl)
+     (render-scribble-preview source)]
     [else
      source]))
 
@@ -141,6 +145,8 @@
 
   (define-runtime-path demo-racket-path
     "../../test/fixtures/demo.rkt")
+  (define-runtime-path demo-scribble-path
+    "../../test/fixtures/demo.scrbl")
 
   (check-equal? (detect-file-type "theme.css") 'css)
   (check-equal? (detect-file-type "index.html") 'html)
@@ -149,12 +155,12 @@
   (check-equal? (detect-file-type "widget.mjs") 'js)
   (check-equal? (detect-file-type "widget.cjs") 'js)
   (check-equal? (detect-file-type "widget.jsx") 'jsx)
+  (check-equal? (detect-file-type "manual.scrbl") 'scrbl)
   (check-equal? (detect-file-type "program.rkt") 'rkt)
   (check-equal? (detect-file-type "program.ss") 'rkt)
   (check-equal? (detect-file-type "program.scm") 'rkt)
   (check-equal? (detect-file-type "data.rktd") 'rkt)
   (check-false  (detect-file-type "README.txt"))
-  (check-false  (detect-file-type "manual.scrbl"))
   (check-true
    (regexp-match? #px"\u001b\\["
                   (preview-string "const answer = 42;\n"
@@ -179,8 +185,12 @@
    (regexp-match? #px"greet"
                   (preview-file demo-racket-path
                                 (make-preview-options #:color-mode 'always))))
-  (check-equal?
-   (preview-string "@title{Hi}\n"
-                   "manual.scrbl"
-                   (make-preview-options #:color-mode 'always))
-   "@title{Hi}\n"))
+  (check-true
+   (regexp-match? #px"title"
+                  (preview-string "@title{Hi}\n"
+                                  "manual.scrbl"
+                                  (make-preview-options #:color-mode 'always))))
+  (check-true
+   (regexp-match? #px"itemlist"
+                  (preview-file demo-scribble-path
+                                (make-preview-options #:color-mode 'always)))))

@@ -183,4 +183,4 @@
      (close-output-port pager-in)
      (subprocess-wait pager-pid)))
   (check-equal? supported-file-types
-                '(css html js jsx rkt)))
+                '(css html js jsx rkt scrbl)))

@@ -5,6 +5,7 @@
                      lexers/html
                      lexers/javascript
                      lexers/racket
+                     lexers/scribble
                      racket/base
                      (lib "peek/main.rkt")
                      (lib "peek/preview.rkt")))
@@ -20,7 +21,7 @@ previewing for supported file types.
 }
 
 @para{
-CSS, HTML, JavaScript, and Racket are currently supported. The CSS previewer uses
+CSS, HTML, JavaScript, Racket, and Scribble are currently supported. The CSS previewer uses
 @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
@@ -28,7 +29,8 @@ color model for embedded @tt{<style>} and @tt{<script>} content.
 The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
 classification for @tt{.jsx} files. The Racket previewer uses
 @tt{lexers/racket} and provides first-pass syntax coloring for @tt{.rkt}
-files.
+files. The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
+command syntax plus embedded Racket escapes in @tt{.scrbl} files.
 }
 
 @section{Command Line}
@@ -41,6 +43,7 @@ peek path/to/file.css
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.rkt
+peek path/to/file.scrbl
 }
 
 When reading from standard input, use @DFlag{--type} to select the file type:
@@ -49,6 +52,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 cat path/to/file.css | peek --type css
 cat path/to/file.html | peek --type html
 cat path/to/file.rkt | peek --type rkt
+cat path/to/file.scrbl | peek --type scrbl
 }
 
 To list the currently supported explicit file type names:
@@ -67,13 +71,14 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSX, and Racket examples:
+HTML, JavaScript, JSX, Racket, and Scribble examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/component.jsx
 peek path/to/file.rkt
+peek path/to/file.scrbl
 }
 
 @subsection{Options}
@@ -82,7 +87,7 @@ peek path/to/file.rkt
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
        input. Supported values are @tt{css}, @tt{html}, @tt{js}, and
-       @tt{jsx}, and @tt{rkt}.}
+       @tt{jsx}, @tt{rkt}, and @tt{scrbl}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -153,6 +158,7 @@ The current explicit file type names are:
  @item{@tt{js}}
  @item{@tt{jsx}}
  @item{@tt{rkt}}
+ @item{@tt{scrbl}}
 ]
 
 @subsection{CSS}
@@ -248,7 +254,7 @@ For Racket, @exec{peek} currently supports:
 
 The first Racket pass is intentionally color-only. It does not yet add
 structure-aware formatting or separate support for nearby file types such as
-@tt{.rktd}, @tt{.rktl}, or @tt{.scrbl}.
+@tt{.rktl}.
 
 Example Racket preview input:
 
@@ -260,6 +266,31 @@ Example Racket preview input:
 (define (greet #:name [name "you"])
   (string-append "hi " name))
 }
+
+@subsection{Scribble}
+
+For Scribble, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.scrbl} files}
+ @item{derived-tag-driven rendering built on @tt{lexers/scribble}}
+ @item{plain text left unstyled while command syntax is colored}
+ @item{Racket-like coloring for tokens inside Scribble Racket escapes}
+]
+
+The first Scribble pass is intentionally color-only. It does not try to render
+Scribble as a document view; it stays a syntax-oriented terminal preview.
+
+Example Scribble preview input:
+
+@scribbleblock[
+  "#lang scribble/manual\n"
+  "\n"
+  "@title{peek Scribble Demo}\n"
+  "\n"
+  "This is plain text.\n"
+  "\n"
+  "Inline Racket: @racket[(define x 1)]\n"]
 
 @section{Library}
 
@@ -284,6 +315,7 @@ The command-line entry point lives in
 
 Unsupported file types currently fall back to plain text.
 
-The current implementation focuses on CSS, HTML, JavaScript, Racket, and a
-small generic preview pipeline. Future file types may add their own previewers
-without forcing all file types into the same rendering model.
+The current implementation focuses on CSS, HTML, JavaScript, Racket,
+Scribble, and a small generic preview pipeline. Future file types may add
+their own previewers without forcing all file types into the same rendering
+model.

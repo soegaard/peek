@@ -47,13 +47,15 @@
          racket/path
          racket/port
          "css.rkt"
-         "js.rkt")
+         "html.rkt"
+         "js.rkt"
+         "racket.rkt")
 
 (struct preview-options (type align? swatches? color-mode) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(css js jsx))
+  '(css html js jsx rkt))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -82,9 +84,12 @@
        (path->string (simple-form-path maybe-path)))
      (cond
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
+       [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
        [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
         'js]
+       [(regexp-match? #px"(?i:\\.rkt)$" path-string)
+        'rkt]
        [else
         #f])]))
 
@@ -109,11 +114,15 @@
      (render-css-preview source
                          #:align?    (preview-options-align? options)
                          #:swatches? (preview-options-swatches? options))]
+    [(eq? file-type 'html)
+     (render-html-preview source)]
     [(eq? file-type 'js)
      (render-javascript-preview source)]
     [(eq? file-type 'jsx)
      (render-javascript-preview source
                                 #:jsx? #t)]
+    [(eq? file-type 'rkt)
+     (render-racket-preview source)]
     [else
      source]))
 
@@ -127,14 +136,23 @@
   (preview-string source path options out))
 
 (module+ test
-  (require rackunit)
+  (require rackunit
+           racket/runtime-path)
+
+  (define-runtime-path demo-racket-path
+    "../../test/fixtures/demo.rkt")
 
   (check-equal? (detect-file-type "theme.css") 'css)
+  (check-equal? (detect-file-type "index.html") 'html)
+  (check-equal? (detect-file-type "index.htm") 'html)
   (check-equal? (detect-file-type "widget.js") 'js)
   (check-equal? (detect-file-type "widget.mjs") 'js)
   (check-equal? (detect-file-type "widget.cjs") 'js)
   (check-equal? (detect-file-type "widget.jsx") 'jsx)
+  (check-equal? (detect-file-type "program.rkt") 'rkt)
   (check-false  (detect-file-type "README.txt"))
+  (check-false  (detect-file-type "data.rktd"))
+  (check-false  (detect-file-type "manual.scrbl"))
   (check-true
    (regexp-match? #px"\u001b\\["
                   (preview-string "const answer = 42;\n"
@@ -144,4 +162,23 @@
    (regexp-match? #px"Button"
                   (preview-string "const el = <Button>Hello</Button>;\n"
                                   "demo.jsx"
-                                  (make-preview-options #:color-mode 'always)))))
+                                  (make-preview-options #:color-mode 'always))))
+  (check-true
+   (regexp-match? #px"doctype"
+                  (preview-string "<!doctype html><main id=\"app\">Hi</main>\n"
+                                  "index.html"
+                                  (make-preview-options #:color-mode 'always))))
+  (check-true
+   (regexp-match? #px"#lang"
+                  (preview-string "#lang racket/base\n(define x 1)\n"
+                                  "program.rkt"
+                                  (make-preview-options #:color-mode 'always))))
+  (check-true
+   (regexp-match? #px"greet"
+                  (preview-file demo-racket-path
+                                (make-preview-options #:color-mode 'always))))
+  (check-equal?
+   (preview-string "@title{Hi}\n"
+                   "manual.scrbl"
+                   (make-preview-options #:color-mode 'always))
+   "@title{Hi}\n"))

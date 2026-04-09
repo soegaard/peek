@@ -74,3 +74,6 @@ Shared notes belong in this file.
 File-type-specific notes belong in separate files, such as:
 
 - [`CSS.md`](/Users/soegaard/Dropbox/GitHub/peek/CSS.md)
+- [`HTML.md`](/Users/soegaard/Dropbox/GitHub/peek/HTML.md)
+- [`JS.md`](/Users/soegaard/Dropbox/GitHub/peek/JS.md)
+- [`Racket.md`](/Users/soegaard/Dropbox/GitHub/peek/Racket.md)

@@ -24,6 +24,7 @@ Guidelines
 11. Put shared design notes in `DESIGN.md`; put file-type-specific design notes in files such as `CSS.md`.
 12. Default preview output should keep color enabled unless the user explicitly disables it.
 13. `peek` should support `--list-file-types` to print the currently supported explicit file type names.
+14. Persistent smoke tests and fixtures belong in `test/`, not in `tmp/`, which is for temporary local files.
 
 
 Coding guidelines for Racket code.
@@ -82,4 +83,4 @@ Build the manual with:
 ## Design Notes
 
 1. Shared design notes are in `DESIGN.md`.
-2. Each supported file type should keep its specific design notes in its own file, such as `CSS.md` or `JS.md`.
+2. Each supported file type should keep its specific design notes in its own file, such as `CSS.md`, `HTML.md`, `JS.md`, or `Racket.md`.

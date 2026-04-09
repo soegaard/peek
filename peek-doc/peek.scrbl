@@ -2,6 +2,9 @@
 
 @(require scribble-tools
           (for-label lexers/css
+                     lexers/html
+                     lexers/javascript
+                     lexers/racket
                      racket/base
                      (lib "peek/main.rkt")
                      (lib "peek/preview.rkt")))
@@ -17,11 +20,15 @@ previewing for supported file types.
 }
 
 @para{
-CSS and JavaScript are currently supported. The CSS previewer uses
+CSS, HTML, JavaScript, and Racket are currently supported. The CSS previewer uses
 @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
+The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
+color model for embedded @tt{<style>} and @tt{<script>} content.
 The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
-classification for @tt{.jsx} files.
+classification for @tt{.jsx} files. The Racket previewer uses
+@tt{lexers/racket} and provides first-pass syntax coloring for @tt{.rkt}
+files.
 }
 
 @section{Command Line}
@@ -31,12 +38,17 @@ After installing the @exec{peek} package, the launcher is available as
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
+peek path/to/file.html
+peek path/to/file.js
+peek path/to/file.rkt
 }
 
 When reading from standard input, use @DFlag{--type} to select the file type:
 
 @shellblock[#:shell 'bash]{
 cat path/to/file.css | peek --type css
+cat path/to/file.html | peek --type html
+cat path/to/file.rkt | peek --type rkt
 }
 
 To list the currently supported explicit file type names:
@@ -55,11 +67,13 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-JavaScript and JSX examples:
+HTML, JavaScript, JSX, and Racket examples:
 
 @shellblock[#:shell 'bash]{
+peek path/to/file.html
 peek path/to/file.js
 peek path/to/component.jsx
+peek path/to/file.rkt
 }
 
 @subsection{Options}
@@ -67,7 +81,8 @@ peek path/to/component.jsx
 @itemlist[
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
-       input. Supported values are @tt{css}, @tt{js}, and @tt{jsx}.}
+       input. Supported values are @tt{css}, @tt{html}, @tt{js}, and
+       @tt{jsx}, and @tt{rkt}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -134,8 +149,10 @@ The current explicit file type names are:
 
 @itemlist[
  @item{@tt{css}}
+ @item{@tt{html}}
  @item{@tt{js}}
  @item{@tt{jsx}}
+ @item{@tt{rkt}}
 ]
 
 @subsection{CSS}
@@ -172,6 +189,33 @@ Example CSS preview input:
 }
 }
 
+@subsection{HTML}
+
+For HTML, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for HTML structure such as tag names, attribute names,
+       attribute values, comments, entities, and doctypes}
+ @item{best-effort previewing on malformed input}
+ @item{embedded CSS coloring inside @tt{<style>} elements}
+ @item{embedded JavaScript coloring inside @tt{<script>} elements}
+]
+
+The first HTML pass is intentionally color-only. It does not yet add
+HTML-specific layout transforms, and it does not enable CSS swatches or
+alignment inside embedded @tt{<style>} regions.
+
+Example HTML preview input:
+
+@htmlblock{
+<!doctype html>
+<main id="app">
+  <style>.hero { color: #2f7ea0; }</style>
+  <script>const root = document.querySelector("#app");</script>
+  <p>Hello &amp; goodbye.</p>
+</main>
+}
+
 @subsection{JavaScript And JSX}
 
 For JavaScript, @exec{peek} currently supports:
@@ -190,6 +234,31 @@ Example JSX preview input:
 
 @jsblock[#:jsx? #t]{
 const view = <Button kind="primary">Hello {name}</Button>;
+}
+
+@subsection{Racket}
+
+For Racket, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.rkt} files}
+ @item{derived-tag-driven rendering built on @tt{lexers/racket}}
+ @item{best-effort previewing in coloring mode}
+]
+
+The first Racket pass is intentionally color-only. It does not yet add
+structure-aware formatting or separate support for nearby file types such as
+@tt{.rktd}, @tt{.rktl}, or @tt{.scrbl}.
+
+Example Racket preview input:
+
+@racketblock{
+#lang racket/base
+
+; Greeting helper.
+#;(+ 1 2)
+(define (greet #:name [name "you"])
+  (string-append "hi " name))
 }
 
 @section{Library}
@@ -215,6 +284,6 @@ The command-line entry point lives in
 
 Unsupported file types currently fall back to plain text.
 
-The current implementation focuses on CSS, JavaScript, and a small generic
-preview pipeline. Future file types may add their own previewers without
-forcing all file types into the same rendering model.
+The current implementation focuses on CSS, HTML, JavaScript, Racket, and a
+small generic preview pipeline. Future file types may add their own previewers
+without forcing all file types into the same rendering model.

@@ -88,7 +88,7 @@
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
        [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
         'js]
-       [(regexp-match? #px"(?i:\\.rkt)$" path-string)
+       [(regexp-match? #px"(?i:\\.(?:rkt|ss|scm|rktd))$" path-string)
         'rkt]
        [else
         #f])]))
@@ -150,8 +150,10 @@
   (check-equal? (detect-file-type "widget.cjs") 'js)
   (check-equal? (detect-file-type "widget.jsx") 'jsx)
   (check-equal? (detect-file-type "program.rkt") 'rkt)
+  (check-equal? (detect-file-type "program.ss") 'rkt)
+  (check-equal? (detect-file-type "program.scm") 'rkt)
+  (check-equal? (detect-file-type "data.rktd") 'rkt)
   (check-false  (detect-file-type "README.txt"))
-  (check-false  (detect-file-type "data.rktd"))
   (check-false  (detect-file-type "manual.scrbl"))
   (check-true
    (regexp-match? #px"\u001b\\["

@@ -64,6 +64,7 @@ Included in the first pass:
 - syntax coloring from `lexers/racket`
 - support for reusable Racket derived tags
 - best-effort previewing in coloring mode
+- file detection for `.rkt`, `.ss`, `.scm`, and `.rktd`
 
 Out of scope for the first pass:
 
@@ -72,7 +73,7 @@ Out of scope for the first pass:
 - swatches
 - binding analysis
 - `.scrbl` support
-- `.rktd` and `.rktl` support
+- `.rktl` support
 
 ## Consumer Boundary
 
@@ -84,5 +85,5 @@ Out of scope for the first pass:
 `peek` should answer:
 
 - how those roles are styled in the terminal
-- that `.rkt` maps to the Racket previewer
+- that `.rkt`, `.ss`, `.scm`, and `.rktd` map to the Racket previewer
 - that `--type rkt` selects the Racket previewer for stdin

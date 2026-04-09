@@ -25,6 +25,7 @@ Guidelines
 12. Default preview output should keep color enabled unless the user explicitly disables it.
 13. `peek` should support `--list-file-types` to print the currently supported explicit file type names.
 14. Persistent smoke tests and fixtures belong in `test/`, not in `tmp/`, which is for temporary local files.
+15. Racket-family files with extensions `.rkt`, `.ss`, `.scm`, and `.rktd` should use the Racket previewer.
 
 
 Coding guidelines for Racket code.

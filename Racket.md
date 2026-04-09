@@ -38,6 +38,11 @@ The initial Racket renderer should use a small terminal-oriented role mapping.
 - `racket-close`
 - `racket-continue`
   - render with delimiter styling
+- `racket-usual-special-form`
+- `racket-definition-form`
+- `racket-binding-form`
+- `racket-conditional-form`
+  - render with the keyword color
 - `racket-symbol`
 - `racket-datum`
   - render with the identifier or name color
@@ -46,6 +51,9 @@ The initial Racket renderer should use a small terminal-oriented role mapping.
 
 Whitespace should remain unstyled, and the first pass should keep `#lang`
 lines, symbols, and identifiers within the existing generic color model.
+
+The form tags are heuristic. They are useful for previewing common built-in
+forms such as `define`, `if`, and `let`, but they are not binding-aware.
 
 ## Scope Boundaries
 

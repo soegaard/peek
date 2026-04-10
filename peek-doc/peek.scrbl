@@ -36,7 +36,9 @@ languages in @tt{.md} files. The Racket previewer uses
 files. The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
 command syntax plus embedded Racket escapes in @tt{.scrbl} files. The WAT
 previewer uses @tt{lexers/wat} and provides first-pass syntax coloring for
-WebAssembly text-format files in @tt{.wat}.
+WebAssembly text-format files in @tt{.wat}. Standalone WAT preview uses a
+streaming render path, so large @tt{.wat} files and @tt{--type wat} stdin
+input do not need to be buffered as one giant string first.
 }
 
 @section{Command Line}
@@ -297,7 +299,10 @@ For WAT, @exec{peek} currently supports:
 ]
 
 The first WAT pass is intentionally color-only. It does not add
-indentation normalization, formatting, or spec-link behavior.
+indentation normalization, formatting, or spec-link behavior. Standalone WAT
+preview is also the first file type to use the streaming render path in
+@exec{peek}; other current file types still use the existing buffered preview
+path.
 
 Example WAT preview input:
 
@@ -370,6 +375,9 @@ The initial library surface is intentionally small:
        optional type, alignment, swatch, and color-mode settings.}
  @item{@tt{preview-string} previews a source string using the selected
        options.}
+ @item{@tt{preview-port} previews from an input port to an output port. This
+       is the lower-level entry point used by streaming previewers such as
+       standalone WAT.}
  @item{@tt{preview-file} reads a file and previews it using the selected
        options.}
 ]
@@ -381,7 +389,9 @@ The command-line entry point lives in
 
 Unsupported file types currently fall back to plain text.
 
-The current implementation focuses on CSS, HTML, JavaScript, Racket,
-Scribble, and a small generic preview pipeline. Future file types may add
-their own previewers without forcing all file types into the same rendering
-model.
+The current implementation focuses on CSS, HTML, JavaScript, Markdown,
+Racket, Scribble, WAT, and a small generic preview pipeline. Standalone WAT
+preview uses the port-oriented streaming path, while the other current file
+types still use the existing buffered rendering path. Future file types may
+add their own previewers without forcing all file types into the same
+rendering model.

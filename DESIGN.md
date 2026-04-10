@@ -31,6 +31,18 @@ This separation is important for future file-type support. File-type-specific
 concepts must stay in the corresponding previewer and not leak into the generic
 preview path.
 
+The generic layer now has two rendering shapes:
+
+- buffered previewing, where the whole input is materialized as a string and a
+  previewer returns a rendered string
+- port-oriented previewing, where a previewer writes directly to an output port
+
+Most current file types still use the buffered path. WAT is the first file type
+to use the port-oriented path for standalone previews, because `.wat` inputs are
+expected to be very large in practice. This keeps the generic architecture
+forward-compatible without forcing every file type through a streaming refactor
+at once.
+
 ## Lessons From `scribble-tools`
 
 The JavaScript colorer in `scribble-tools` is a useful reference point for

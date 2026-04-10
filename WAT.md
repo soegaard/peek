@@ -19,6 +19,10 @@ as comments; and parentheses as delimiters.
 The previewer does not currently add indentation normalization, alignment, or
 other WAT-specific layout transforms.
 
+Standalone `.wat` preview now uses a streaming render path built on the
+streaming lexer in `lexers/wat`. This means large WAT files and stdin input can
+be previewed without first materializing the whole source as a string.
+
 ## Embedded Markdown Use
 
 `lexers/markdown` can delegate fenced `wat` blocks.
@@ -26,3 +30,7 @@ other WAT-specific layout transforms.
 When Markdown tokens carry `embedded-wat`, `peek` should reuse the same WAT
 style mapping used by standalone `.wat` files. Markdown should not parse fence
 info strings or classify WAT syntax locally.
+
+Markdown itself is still previewed through the existing buffered path in this
+first pass, so fenced WAT inside Markdown is not streamed yet even though
+standalone WAT is.

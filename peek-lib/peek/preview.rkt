@@ -16,6 +16,8 @@
 ;; make-preview-options                -- Construct preview options.
 ;; preview-string : string? ... -> string?
 ;;   Preview a source string using the selected options.
+;; preview-port : input-port? ... -> void?
+;;   Preview from an input port to an output port.
 ;; preview-file : path-string? ... -> string?
 ;;   Preview a file using the selected options.
 
@@ -39,6 +41,9 @@
  ;; preview-string : string? (or/c symbol? #f) preview-options? -> string?
  ;;   Preview a source string.
  preview-string
+ ;; preview-port : input-port? (or/c path-string? #f) preview-options? output-port? -> void?
+ ;;   Preview from an input port to an output port.
+ preview-port
  ;; preview-file : path-string? preview-options? -> string?
  ;;   Preview a file from disk.
  preview-file)
@@ -106,12 +111,12 @@
     [(preview-options-type options) => values]
     [else                             (detect-file-type maybe-path)]))
 
-;; preview-string : string? (or/c path-string? #f) preview-options? -> string?
-;;   Preview a source string.
-(define (preview-string source
-                        [maybe-path #f]
-                        [options (make-preview-options)]
-                        [out (current-output-port)])
+;; preview-string/rendered : string? (or/c path-string? #f) preview-options? output-port? -> string?
+;;   Preview a source string and return the rendered result.
+(define (preview-string/rendered source
+                                 [maybe-path #f]
+                                 [options (make-preview-options)]
+                                 [out (current-output-port)])
   (define file-type
     (effective-file-type maybe-path options))
   (cond
@@ -138,14 +143,53 @@
     [else
      source]))
 
+;; preview-string : string? (or/c path-string? #f) preview-options? -> string?
+;;   Preview a source string.
+(define (preview-string source
+                        [maybe-path #f]
+                        [options (make-preview-options)]
+                        [out (current-output-port)])
+  (preview-string/rendered source maybe-path options out))
+
+;; preview-port : input-port? (or/c path-string? #f) preview-options? output-port? -> void?
+;;   Preview from an input port to an output port.
+(define (preview-port in
+                      [maybe-path #f]
+                      [options (make-preview-options)]
+                      [out (current-output-port)])
+  (define file-type
+    (effective-file-type maybe-path options))
+  (cond
+    [(and (eq? file-type 'wat)
+          (color-enabled? out options))
+     (render-wat-preview-port in out)]
+    [(eq? file-type 'wat)
+     (copy-port in out)]
+    [else
+     (define source
+       (port->string in))
+     (display (preview-string/rendered source maybe-path options out)
+              out)]))
+
 ;; preview-file : path-string? preview-options? -> string?
 ;;   Preview a file from disk.
 (define (preview-file path
                       [options (make-preview-options)]
                       [out (current-output-port)])
-  (define source
-    (file->string path))
-  (preview-string source path options out))
+  (define file-type
+    (effective-file-type path options))
+  (cond
+    [(eq? file-type 'wat)
+     (define rendered
+       (open-output-string))
+     (call-with-input-file path
+       (lambda (in)
+         (preview-port in path options rendered)))
+     (get-output-string rendered)]
+    [else
+     (define source
+       (file->string path))
+     (preview-string/rendered source path options out)]))
 
 (module+ test
   (require rackunit
@@ -205,6 +249,21 @@
                   (preview-string "(module (func (result i32) (i32.const 42)))\n"
                                   "demo.wat"
                                   (make-preview-options #:color-mode 'always))))
+  (check-true
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "(module (func (result i32) (i32.const 42)))\n")
+                   "demo.wat"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (regexp-match? #px"\u001b\\[" (get-output-string out))))
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "(module (func))\n")
+                   "demo.wat"
+                   (make-preview-options #:color-mode 'never)
+                   out)
+     (get-output-string out))
+   "(module (func))\n")
   (check-true
    (regexp-match? #px"greet"
                   (preview-file demo-racket-path

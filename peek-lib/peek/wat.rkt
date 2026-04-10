@@ -6,81 +6,53 @@
 ;;
 ;; WAT-specific terminal preview rendering built on `lexers/wat`.
 
-;; render-wat-preview : string? -> string?
+;; render-wat-preview      : string? -> string?
 ;;   Render WAT for terminal preview.
+;; render-wat-preview-port : input-port? output-port? -> void?
+;;   Render WAT from an input port to an output port.
 
 (provide
  ;; render-wat-preview : string? -> string?
  ;;   Render WAT for terminal preview.
- render-wat-preview)
+ render-wat-preview
+ ;; render-wat-preview-port : input-port? output-port? -> void?
+ ;;   Render WAT for terminal preview from a port.
+ render-wat-preview-port)
 
 (require lexers/wat
          lexers/token
          parser-tools/lex
-         racket/list
          "common-style.rkt")
 
-(struct wat-token (category text tags start end) #:transparent)
+;; token-style/category : symbol? (listof symbol?) -> string?
+;;   Choose the ANSI style for one WAT token category/tag pair.
+(define (token-style/category category tags)
+  (wat-like-style category tags))
 
-;; wat-token-key : wat-token -> list?
-;;   Build a stable key for joining projected and derived tokens.
-(define (wat-token-key token)
-  (list (position-offset (wat-token-start token))
-        (position-offset (wat-token-end token))
-        (wat-token-text token)))
-
-;; derived-token-key : wat-derived-token? -> list?
-;;   Build a stable key for one derived WAT token.
-(define (derived-token-key token)
-  (list (position-offset (wat-derived-token-start token))
-        (position-offset (wat-derived-token-end token))
-        (wat-derived-token-text token)))
-
-;; annotate-wat-tokens : string? -> (listof wat-token?)
-;;   Combine projected WAT categories with derived tags.
-(define (annotate-wat-tokens source)
-  (define projected
-    (wat-string->tokens source
-                        #:profile 'coloring))
-  (define derived
-    (wat-string->derived-tokens source))
-  (define derived-tags-by-key
-    (for/hash ([token derived])
-      (values (derived-token-key token)
-              (wat-derived-token-tags token))))
-  (for/list ([token projected]
-             #:unless (lexer-token-eof? token))
-    (define start
-      (lexer-token-start token))
-    (define end
-      (lexer-token-end token))
-    (define text
-      (lexer-token-value token))
-    (define base
-      (wat-token (lexer-token-name token)
-                 text
-                 '()
-                 start
-                 end))
-    (define tags
-      (hash-ref derived-tags-by-key
-                (wat-token-key base)
-                '()))
-    (struct-copy wat-token base [tags tags])))
-
-;; token-style : wat-token -> string?
-;;   Choose the ANSI style for one normalized WAT token.
-(define (token-style token)
-  (wat-like-style (wat-token-category token)
-                  (wat-token-tags token)))
+;; render-wat-preview-port : input-port? output-port? -> void?
+;;   Render WAT from an input port directly to an output port.
+(define (render-wat-preview-port in
+                                 [out (current-output-port)])
+  (port-count-lines! in)
+  (define lexer
+    (make-wat-lexer #:profile 'coloring))
+  (let loop ()
+    (define token
+      (lexer in))
+    (unless (lexer-token-eof? token)
+      (display (colorize-text (token-style/category (lexer-token-name token) '())
+                              (lexer-token-value token))
+               out)
+      (loop))))
 
 ;; render-wat-preview : string? -> string?
 ;;   Render WAT for terminal preview.
 (define (render-wat-preview source)
-  (apply string-append
-         (for/list ([token (annotate-wat-tokens source)])
-           (colorize-text (token-style token)
-                          (wat-token-text token)))))
+  (define out
+    (open-output-string))
+  (render-wat-preview-port (open-input-string source)
+                           out)
+  (get-output-string out))
 
 (module+ test
   (require rackunit
@@ -113,6 +85,13 @@
                              wat-rendered))
   (check-equal? (length (regexp-match* #px"\n" wat-rendered))
                 5)
+  (check-equal? wat-rendered
+                (let ([out (open-output-string)])
+                  (render-wat-preview-port
+                   (open-input-string
+                    ";; note\n(module\n  (func $answer (result i32)\n    i32.const 42)\n  (export \"answer\" (func $answer)))\n")
+                   out)
+                  (get-output-string out)))
   (check-true (regexp-match? #px"42" malformed-rendered))
   (check-true (regexp-match? #px"module"
                              (render-wat-preview

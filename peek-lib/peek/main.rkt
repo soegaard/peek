@@ -61,9 +61,9 @@
      (error 'peek
             "could not find a pager; set PAGER or install `less`")]))
 
-;; write-through-pager : string? -> void?
-;;   Send rendered output through the configured pager.
-(define (write-through-pager text)
+;; call-with-pager-output : (output-port? -> any/c) -> void?
+;;   Run a writer with the configured pager's stdin as output.
+(define (call-with-pager-output writer)
   (define command
     (pager-command))
   (define-values (pager-pid pager-out pager-in pager-err)
@@ -72,7 +72,7 @@
            #f
            (current-error-port)
            command))
-  (display text pager-in)
+  (writer pager-in)
   (close-output-port pager-in)
   (subprocess-wait pager-pid))
 
@@ -129,26 +129,27 @@
     [list-file-types?
      (print-supported-file-types)]
     [else
+     (when file-path
+       (unless (file-exists? file-path)
+         (usage-error (format "file not found: ~a" file-path))))
      (define options
        (make-preview-options #:type      type
                              #:align?    align?
                              #:swatches? swatches?
                              #:color-mode color-mode))
-     (define output
+     (define (write-preview out)
        (cond
          [file-path
-          (unless (file-exists? file-path)
-            (usage-error (format "file not found: ~a" file-path)))
-          (preview-file file-path options (current-output-port))]
+          (call-with-input-file file-path
+            (lambda (in)
+              (preview-port in file-path options out)))]
          [else
-          (define source
-            (port->string (current-input-port)))
-          (preview-string source #f options (current-output-port))]))
+          (preview-port (current-input-port) #f options out)]))
      (cond
        [pager?
-        (write-through-pager output)]
+        (call-with-pager-output write-preview)]
        [else
-        (display output)])]))
+        (write-preview (current-output-port))])]))
 
 (module+ main
   (main))

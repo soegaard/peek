@@ -79,3 +79,4 @@ File-type-specific notes belong in separate files, such as:
 - [`Markdown.md`](/Users/soegaard/Dropbox/GitHub/peek/Markdown.md)
 - [`Racket.md`](/Users/soegaard/Dropbox/GitHub/peek/Racket.md)
 - [`Scribble.md`](/Users/soegaard/Dropbox/GitHub/peek/Scribble.md)
+- [`WAT.md`](/Users/soegaard/Dropbox/GitHub/peek/WAT.md)

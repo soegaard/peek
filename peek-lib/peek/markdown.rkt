@@ -82,6 +82,8 @@
      (css-like-style category tags)]
     [(memq 'embedded-javascript tags)
      (javascript-like-style category tags)]
+    [(memq 'embedded-wat tags)
+     (wat-like-style category tags)]
     [(memq 'embedded-racket tags)
      (racket-like-style category tags)]
     [(memq 'embedded-scribble tags)
@@ -144,7 +146,7 @@
 
   (define markdown-rendered
     (render-markdown-preview
-     "# Title\n\n> quote\n- [x] done\n\n`code` and [link](https://example.com) and <https://racket-lang.org>\n\n| A | B |\n| :- | -: |\n| 1 | 2 |\n\n```rkt\n(define x 1)\n```\n\n```js\nconst y = 2;\n```\n\n<div class=\"x\"><style>.x { color: #fff; }</style><script>const z = 3;</script></div>\n"))
+     "# Title\n\n> quote\n- [x] done\n\n`code` and [link](https://example.com) and <https://racket-lang.org>\n\n| A | B |\n| :- | -: |\n| 1 | 2 |\n\n```rkt\n(define x 1)\n```\n\n```js\nconst y = 2;\n```\n\n```wat\n(module (func $x (result i32) (i32.const 42)))\n```\n\n<div class=\"x\"><style>.x { color: #fff; }</style><script>const z = 3;</script></div>\n"))
   (define unknown-fence-rendered
     (render-markdown-preview
      "```unknown\nx\n```\n"))
@@ -164,6 +166,8 @@
                              markdown-rendered))
   (check-true (regexp-match? #px"\u001b\\[38;2;86;156;214mconst\u001b\\[0m"
                              markdown-rendered))
+  (check-true (regexp-match? #px"\u001b\\[38;2;86;156;214mi32\\.const\u001b\\[0m"
+                             markdown-rendered))
   (check-true (regexp-match? #px"\u001b\\[38;2;86;156;214mdiv\u001b\\[0m"
                              markdown-rendered))
   (check-true (regexp-match? #px"#fff" markdown-rendered))
@@ -171,7 +175,7 @@
                              markdown-rendered))
   (check-true (regexp-match? #px"x" unknown-fence-rendered))
   (check-equal? (length (regexp-match* #px"\n" markdown-rendered))
-                20)
+                24)
   (check-true (regexp-match? #px"broken" malformed-rendered))
   (check-true (regexp-match? #px"Demo Document"
                              (render-markdown-preview

@@ -17,6 +17,7 @@
 ;; colorize-text   -- Apply ANSI styling while preserving newlines.
 ;; css-like-style  -- Style CSS-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
+;; wat-like-style        -- Style WAT-like embedded tokens.
 ;; racket-like-style     -- Style Racket-like embedded tokens.
 ;; scribble-like-style   -- Style Scribble-like embedded tokens.
 ;; html-like-style       -- Style HTML-like embedded tokens.
@@ -42,6 +43,8 @@
  css-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
+ ;; wat-like-style Style WAT-like embedded tokens.
+ wat-like-style
  ;; racket-like-style Style Racket-like embedded tokens.
  racket-like-style
  ;; scribble-like-style Style Scribble-like embedded tokens.
@@ -137,6 +140,33 @@
      ansi-literal]
     [(eq? category 'identifier)
      ansi-identifier]
+    [else
+     ""]))
+
+;; wat-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for WAT-like roles.
+(define (wat-like-style category tags)
+  (cond
+    [(or (memq 'wat-form tags)
+         (memq 'wat-type tags)
+         (memq 'wat-instruction tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'wat-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'wat-string-literal tags)
+         (memq 'wat-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (eq? category 'comment)
+         (memq 'comment tags))
+     ansi-comment]
+    [(eq? category 'delimiter)
+     ansi-delimiter]
+    [(or (memq 'malformed-token tags)
+         (eq? category 'unknown))
+     ansi-malformed]
     [else
      ""]))
 

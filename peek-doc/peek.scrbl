@@ -7,6 +7,7 @@
                      lexers/markdown
                      lexers/racket
                      lexers/scribble
+                     lexers/wat
                      racket/base
                      (lib "peek/main.rkt")
                      (lib "peek/preview.rkt")))
@@ -22,7 +23,7 @@ previewing for supported file types.
 }
 
 @para{
-CSS, HTML, JavaScript, Markdown, Racket, and Scribble are currently supported. The CSS previewer uses
+CSS, HTML, JavaScript, Markdown, Racket, Scribble, and WAT are currently supported. The CSS previewer uses
 @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
@@ -33,7 +34,9 @@ classification for @tt{.jsx} files. The Markdown previewer uses
 languages in @tt{.md} files. The Racket previewer uses
 @tt{lexers/racket} and provides first-pass syntax coloring for @tt{.rkt}
 files. The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
-command syntax plus embedded Racket escapes in @tt{.scrbl} files.
+command syntax plus embedded Racket escapes in @tt{.scrbl} files. The WAT
+previewer uses @tt{lexers/wat} and provides first-pass syntax coloring for
+WebAssembly text-format files in @tt{.wat}.
 }
 
 @section{Command Line}
@@ -48,6 +51,7 @@ peek path/to/file.js
 peek path/to/file.md
 peek path/to/file.rkt
 peek path/to/file.scrbl
+peek path/to/file.wat
 }
 
 When reading from standard input, use @DFlag{--type} to select the file type:
@@ -58,6 +62,7 @@ cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.scrbl | peek --type scrbl
+cat path/to/file.wat | peek --type wat
 }
 
 To list the currently supported explicit file type names:
@@ -76,7 +81,7 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSX, Markdown, Racket, and Scribble examples:
+HTML, JavaScript, JSX, Markdown, Racket, Scribble, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
@@ -85,6 +90,7 @@ peek path/to/component.jsx
 peek path/to/file.md
 peek path/to/file.rkt
 peek path/to/file.scrbl
+peek path/to/file.wat
 }
 
 @subsection{Options}
@@ -93,7 +99,7 @@ peek path/to/file.scrbl
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
        input. Supported values are @tt{css}, @tt{html}, @tt{js}, @tt{jsx},
-       @tt{md}, @tt{rkt}, and @tt{scrbl}.}
+       @tt{md}, @tt{rkt}, @tt{scrbl}, and @tt{wat}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -166,6 +172,7 @@ The current explicit file type names are:
  @item{@tt{md}}
  @item{@tt{rkt}}
  @item{@tt{scrbl}}
+ @item{@tt{wat}}
 ]
 
 @subsection{CSS}
@@ -276,6 +283,29 @@ Example JSX preview input:
 
 @jsblock[#:jsx? #t]{
 const view = <Button kind="primary">Hello {name}</Button>;
+}
+
+@subsection{WAT}
+
+For WAT, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for WebAssembly text-format files in @tt{.wat}}
+ @item{best-effort previewing on malformed input}
+ @item{delegated WAT coloring in fenced Markdown code blocks when
+       @tt{lexers/markdown} exposes @tt{embedded-wat}}
+]
+
+The first WAT pass is intentionally color-only. It does not add
+indentation normalization, formatting, or spec-link behavior.
+
+Example WAT preview input:
+
+@verbatim[#:indent 2]{
+(module
+  (func $answer (result i32)
+    i32.const 42)
+  (export "answer" (func $answer)))
 }
 
 @subsection{Racket}

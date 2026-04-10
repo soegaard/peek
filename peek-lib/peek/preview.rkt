@@ -51,13 +51,14 @@
          "js.rkt"
          "markdown.rkt"
          "racket.rkt"
-         "scribble.rkt")
+         "scribble.rkt"
+         "wat.rkt")
 
 (struct preview-options (type align? swatches? color-mode) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(css html js jsx md rkt scrbl))
+  '(css html js jsx md rkt scrbl wat))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -90,6 +91,7 @@
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
+       [(regexp-match? #px"(?i:\\.wat)$" path-string) 'wat]
        [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
         'js]
        [(regexp-match? #px"(?i:\\.(?:rkt|ss|scm|rktd))$" path-string)
@@ -131,6 +133,8 @@
      (render-racket-preview source)]
     [(eq? file-type 'scrbl)
      (render-scribble-preview source)]
+    [(eq? file-type 'wat)
+     (render-wat-preview source)]
     [else
      source]))
 
@@ -153,6 +157,8 @@
     "../../test/fixtures/demo.rkt")
   (define-runtime-path demo-scribble-path
     "../../test/fixtures/demo.scrbl")
+  (define-runtime-path demo-wat-path
+    "../../test/fixtures/demo.wat")
 
   (check-equal? (detect-file-type "theme.css") 'css)
   (check-equal? (detect-file-type "index.html") 'html)
@@ -163,6 +169,7 @@
   (check-equal? (detect-file-type "widget.jsx") 'jsx)
   (check-equal? (detect-file-type "README.md") 'md)
   (check-equal? (detect-file-type "manual.scrbl") 'scrbl)
+  (check-equal? (detect-file-type "demo.wat") 'wat)
   (check-equal? (detect-file-type "program.rkt") 'rkt)
   (check-equal? (detect-file-type "program.ss") 'rkt)
   (check-equal? (detect-file-type "program.scm") 'rkt)
@@ -194,6 +201,11 @@
                                   "program.rkt"
                                   (make-preview-options #:color-mode 'always))))
   (check-true
+   (regexp-match? #px"module"
+                  (preview-string "(module (func (result i32) (i32.const 42)))\n"
+                                  "demo.wat"
+                                  (make-preview-options #:color-mode 'always))))
+  (check-true
    (regexp-match? #px"greet"
                   (preview-file demo-racket-path
                                 (make-preview-options #:color-mode 'always))))
@@ -209,4 +221,8 @@
   (check-true
    (regexp-match? #px"itemlist"
                   (preview-file demo-scribble-path
+                                (make-preview-options #:color-mode 'always))))
+  (check-true
+   (regexp-match? #px"answer"
+                  (preview-file demo-wat-path
                                 (make-preview-options #:color-mode 'always)))))

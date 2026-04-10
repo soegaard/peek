@@ -49,6 +49,7 @@
          "css.rkt"
          "html.rkt"
          "js.rkt"
+         "markdown.rkt"
          "racket.rkt"
          "scribble.rkt")
 
@@ -56,7 +57,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(css html js jsx rkt scrbl))
+  '(css html js jsx md rkt scrbl))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -87,6 +88,7 @@
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
+       [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
        [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
         'js]
@@ -123,6 +125,8 @@
     [(eq? file-type 'jsx)
      (render-javascript-preview source
                                 #:jsx? #t)]
+    [(eq? file-type 'md)
+     (render-markdown-preview source)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
     [(eq? file-type 'scrbl)
@@ -143,6 +147,8 @@
   (require rackunit
            racket/runtime-path)
 
+  (define-runtime-path demo-markdown-path
+    "../../test/fixtures/demo.md")
   (define-runtime-path demo-racket-path
     "../../test/fixtures/demo.rkt")
   (define-runtime-path demo-scribble-path
@@ -155,6 +161,7 @@
   (check-equal? (detect-file-type "widget.mjs") 'js)
   (check-equal? (detect-file-type "widget.cjs") 'js)
   (check-equal? (detect-file-type "widget.jsx") 'jsx)
+  (check-equal? (detect-file-type "README.md") 'md)
   (check-equal? (detect-file-type "manual.scrbl") 'scrbl)
   (check-equal? (detect-file-type "program.rkt") 'rkt)
   (check-equal? (detect-file-type "program.ss") 'rkt)
@@ -172,6 +179,11 @@
                                   "demo.jsx"
                                   (make-preview-options #:color-mode 'always))))
   (check-true
+   (regexp-match? #px"Title"
+                  (preview-string "# Title\n\nText\n"
+                                  "README.md"
+                                  (make-preview-options #:color-mode 'always))))
+  (check-true
    (regexp-match? #px"doctype"
                   (preview-string "<!doctype html><main id=\"app\">Hi</main>\n"
                                   "index.html"
@@ -184,6 +196,10 @@
   (check-true
    (regexp-match? #px"greet"
                   (preview-file demo-racket-path
+                                (make-preview-options #:color-mode 'always))))
+  (check-true
+   (regexp-match? #px"Demo Document"
+                  (preview-file demo-markdown-path
                                 (make-preview-options #:color-mode 'always))))
   (check-true
    (regexp-match? #px"title"

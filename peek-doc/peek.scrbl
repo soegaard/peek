@@ -4,6 +4,7 @@
           (for-label lexers/css
                      lexers/html
                      lexers/javascript
+                     lexers/markdown
                      lexers/racket
                      lexers/scribble
                      racket/base
@@ -21,13 +22,15 @@ previewing for supported file types.
 }
 
 @para{
-CSS, HTML, JavaScript, Racket, and Scribble are currently supported. The CSS previewer uses
+CSS, HTML, JavaScript, Markdown, Racket, and Scribble are currently supported. The CSS previewer uses
 @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
 color model for embedded @tt{<style>} and @tt{<script>} content.
 The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
-classification for @tt{.jsx} files. The Racket previewer uses
+classification for @tt{.jsx} files. The Markdown previewer uses
+@tt{lexers/markdown} and colors Markdown structure plus delegated embedded
+languages in @tt{.md} files. The Racket previewer uses
 @tt{lexers/racket} and provides first-pass syntax coloring for @tt{.rkt}
 files. The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
 command syntax plus embedded Racket escapes in @tt{.scrbl} files.
@@ -42,6 +45,7 @@ After installing the @exec{peek} package, the launcher is available as
 peek path/to/file.css
 peek path/to/file.html
 peek path/to/file.js
+peek path/to/file.md
 peek path/to/file.rkt
 peek path/to/file.scrbl
 }
@@ -51,6 +55,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 @shellblock[#:shell 'bash]{
 cat path/to/file.css | peek --type css
 cat path/to/file.html | peek --type html
+cat path/to/file.md | peek --type md
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.scrbl | peek --type scrbl
 }
@@ -71,12 +76,13 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSX, Racket, and Scribble examples:
+HTML, JavaScript, JSX, Markdown, Racket, and Scribble examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/component.jsx
+peek path/to/file.md
 peek path/to/file.rkt
 peek path/to/file.scrbl
 }
@@ -86,8 +92,8 @@ peek path/to/file.scrbl
 @itemlist[
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
-       input. Supported values are @tt{css}, @tt{html}, @tt{js}, and
-       @tt{jsx}, @tt{rkt}, and @tt{scrbl}.}
+       input. Supported values are @tt{css}, @tt{html}, @tt{js}, @tt{jsx},
+       @tt{md}, @tt{rkt}, and @tt{scrbl}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -157,6 +163,7 @@ The current explicit file type names are:
  @item{@tt{html}}
  @item{@tt{js}}
  @item{@tt{jsx}}
+ @item{@tt{md}}
  @item{@tt{rkt}}
  @item{@tt{scrbl}}
 ]
@@ -220,6 +227,35 @@ Example HTML preview input:
   <script>const root = document.querySelector("#app");</script>
   <p>Hello &amp; goodbye.</p>
 </main>
+}
+
+@subsection{Markdown}
+
+For Markdown, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for GitHub-Flavored Markdown structure in @tt{.md}
+       files}
+ @item{plain rendering for ordinary prose}
+ @item{embedded-language coloring for delegated raw HTML and recognized fenced
+       code languages}
+ @item{best-effort previewing on malformed input}
+]
+
+The first Markdown pass is intentionally color-only. It does not attempt to
+render Markdown as formatted documentation, and it does not rewrite table or
+list layout.
+
+Example Markdown preview input:
+
+@verbatim[#:indent 2]{
+# Demo
+
+Text with `code`, a [link](https://example.com), and:
+
+```rkt
+(define x 1)
+```
 }
 
 @subsection{JavaScript And JSX}

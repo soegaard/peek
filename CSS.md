@@ -39,6 +39,31 @@ The CSS previewer has three internal stages:
    - preserve source text as much as possible unless an explicit layout option
      changes it
 
+## Streaming Considerations
+
+Basic CSS token coloring can be streamed from `lexers/css`, but the current
+high-quality CSS preview in `peek` is not just a token-to-color pass.
+
+The existing CSS renderer depends on buffered, cross-token decisions such as:
+
+- swatch insertion
+- intra-rule and cross-rule alignment
+- decimal and unit alignment
+- repeated-function argument alignment
+- custom-property-aware value rendering
+
+CSS custom properties and `var(...)` usage are part of why this matters.
+Variable names participate in alignment columns, fallback values may contain
+colors, functions, and numbers, and inserted visible elements such as swatches
+change rendered width.
+
+That means a future streaming CSS path should be treated as a separate
+trade-off:
+
+- a streaming color-only path could be appropriate for very large CSS inputs
+- the current polished CSS preview should remain buffered while it depends on
+  rendered-width-aware layout decisions across multiple declarations or rules
+
 The file
 [`css-highlight-new35.rkt`](/Users/soegaard/Downloads/css-highlight-new35.rkt)
 is useful prior art for rendering ideas such as swatches and alignment, but not

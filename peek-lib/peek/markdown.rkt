@@ -19,6 +19,7 @@
          parser-tools/lex
          racket/file
          racket/list
+         racket/string
          "common-style.rkt")
 
 (struct markdown-token (category text tags start end) #:transparent)
@@ -166,9 +167,11 @@
   (check-true (regexp-match? #px"\u001b\\[38;2;86;156;214mdiv\u001b\\[0m"
                              markdown-rendered))
   (check-true (regexp-match? #px"#fff" markdown-rendered))
+  (check-true (regexp-match? #px"```(?:\u001b\\[[0-9;]*m)*rkt(?:\u001b\\[[0-9;]*m)*\n"
+                             markdown-rendered))
   (check-true (regexp-match? #px"x" unknown-fence-rendered))
   (check-equal? (length (regexp-match* #px"\n" markdown-rendered))
-                18)
+                20)
   (check-true (regexp-match? #px"broken" malformed-rendered))
   (check-true (regexp-match? #px"Demo Document"
                              (render-markdown-preview

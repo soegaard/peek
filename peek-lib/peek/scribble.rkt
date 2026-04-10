@@ -34,18 +34,19 @@
 (define ansi-delimiter  (ansi 38 2 212 212 212))
 (define ansi-malformed  (ansi 38 2 244 71 71))
 
-;; token-span-key : position? position? -> pair?
+;; scribble-token-key : scribble-token -> list?
 ;;   Build a stable key for joining projected and derived tokens.
-(define (token-span-key start end)
-  (cons (position-offset start)
-        (position-offset end)))
+(define (scribble-token-key token)
+  (list (position-offset (scribble-token-start token))
+        (position-offset (scribble-token-end token))
+        (scribble-token-text token)))
 
-;; source-span-text : string? position? position? -> string?
-;;   Recover exact source text for one token span.
-(define (source-span-text source start end)
-  (substring source
-             (sub1 (position-offset start))
-             (sub1 (position-offset end))))
+;; derived-token-key : scribble-derived-token? -> list?
+;;   Build a stable key for one derived Scribble token.
+(define (derived-token-key token)
+  (list (position-offset (scribble-derived-token-start token))
+        (position-offset (scribble-derived-token-end token))
+        (scribble-derived-token-text token)))
 
 ;; annotate-scribble-tokens : string? -> (listof scribble-token?)
 ;;   Combine projected Scribble categories with derived tags.
@@ -57,8 +58,7 @@
     (scribble-string->derived-tokens source))
   (define derived-tags-by-key
     (for/hash ([token derived])
-      (values (token-span-key (scribble-derived-token-start token)
-                              (scribble-derived-token-end token))
+      (values (derived-token-key token)
               (scribble-derived-token-tags token))))
   (for/list ([token projected]
              #:unless (lexer-token-eof? token))
@@ -67,7 +67,7 @@
     (define end
       (lexer-token-end token))
     (define text
-      (source-span-text source start end))
+      (lexer-token-value token))
     (define base
       (scribble-token (lexer-token-name token)
                       text
@@ -76,7 +76,7 @@
                       end))
     (define tags
       (hash-ref derived-tags-by-key
-                (token-span-key start end)
+                (scribble-token-key base)
                 '()))
     (struct-copy scribble-token base [tags tags])))
 

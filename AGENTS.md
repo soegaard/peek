@@ -28,6 +28,7 @@ Guidelines
 15. Racket-family files with extensions `.rkt`, `.ss`, `.scm`, and `.rktd` should use the Racket previewer.
 16. When a preview issue appears to stem from a lexer token stream rather than `peek`, call that out explicitly so the lexer can be fixed at the source.
 17. Standalone WAT preview should support true streaming for very large files.
+18. Markdown and JavaScript corpus round-trip tests should enforce a hard 1-minute timeout per file and report the file that timed out.
 
 
 Coding guidelines for Racket code.

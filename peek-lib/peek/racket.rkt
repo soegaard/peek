@@ -8,15 +8,21 @@
 
 ;; render-racket-preview : string? -> string?
 ;;   Render Racket for terminal preview.
+;; render-racket-preview-port : input-port? output-port? -> void?
+;;   Render Racket from a port for terminal preview.
 
 (provide
  ;; render-racket-preview : string? -> string?
  ;;   Render Racket for terminal preview.
- render-racket-preview)
+ render-racket-preview
+ ;; render-racket-preview-port : input-port? output-port? -> void?
+ ;;   Render Racket from a port for terminal preview.
+ render-racket-preview-port)
 
 (require lexers/racket
          lexers/token
          parser-tools/lex
+         "common-style.rkt"
          racket/list
          racket/string)
 
@@ -130,6 +136,12 @@
     [else
      ""]))
 
+;; derived-token-style : racket-derived-token? -> string?
+;;   Choose the ANSI style for one derived Racket token.
+(define (derived-token-style token)
+  (racket-like-style 'unknown
+                     (racket-derived-token-tags token)))
+
 ;; render-racket-preview : string? -> string?
 ;;   Render Racket for terminal preview.
 (define (render-racket-preview source)
@@ -137,6 +149,22 @@
          (for/list ([token (annotate-racket-tokens source)])
            (colorize-text (token-style token)
                           (racket-token-text token)))))
+
+;; render-racket-preview-port : input-port? output-port? -> void?
+;;   Render Racket from a port for terminal preview.
+(define (render-racket-preview-port in
+                                    [out (current-output-port)])
+  (port-count-lines! in)
+  (define lexer
+    (make-racket-derived-lexer))
+  (let loop ()
+    (define token
+      (lexer in))
+    (unless (eq? token 'eof)
+      (display (colorize-text (derived-token-style token)
+                              (racket-derived-token-text token))
+               out)
+      (loop))))
 
 (module+ test
   (require rackunit)

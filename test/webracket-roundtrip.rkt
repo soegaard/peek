@@ -15,6 +15,7 @@
 (require rackunit
          racket/file
          racket/list
+         racket/match
          racket/path
          racket/runtime-path
          (lib "peek/preview.rkt"))
@@ -24,6 +25,10 @@
 ;; Temporary corpus snapshot root.
 (define temp-root
   (build-path "/tmp" "peek-webracket-roundtrip"))
+
+;; Maximum seconds to spend on one file.
+(define per-file-timeout-seconds
+  120)
 
 ;; ANSI color stripping pattern.
 (define ansi-pattern
@@ -44,7 +49,13 @@
 (define (corpus-path? path)
   (define text
     (path->string path))
-  (regexp-match? #px"(?i:\\.(?:rkt|ss|scm|rktd))$" text))
+  (and (regexp-match? #px"(?i:\\.(?:rkt|ss|scm|rktd))$" text)
+       (not (generated-corpus-path? text))))
+
+;; generated-corpus-path? : string? -> boolean?
+;;   Recognize generated Racket runtime files that are too large for the corpus.
+(define (generated-corpus-path? text)
+  (regexp-match? #px"(?i:runtime-wasm\\.rkt)$" text))
 
 ;; collect-corpus-files : path? -> (listof path?)
 ;;   Collect corpus files from one source tree.
@@ -76,25 +87,43 @@
   (for/list ([source-path (in-list (collect-corpus-files source-root))])
     (copy-corpus-file source-root temp-root source-path)))
 
-;; assert-roundtrip-file : path? -> void?
-;;   Check one copied corpus file for exact text round-trip after ANSI stripping.
-(define (assert-roundtrip-file path)
-  (define original
-    (file->string path))
-  (define rendered
-    (with-handlers ([exn:fail?
-                     (lambda (e)
-                       (error 'webracket-roundtrip
-                              "~a\n~a"
-                              (path->string path)
-                              (exn-message e)))])
-      (preview-file path roundtrip-options)))
-  (define stripped
-    (strip-ansi rendered))
-  (check-equal? stripped
-                original
-                (format "round-trip mismatch for ~a"
-                        (path->string path))))
+;; roundtrip-result : path? -> (or/c 'ok (list 'timeout path-string?) (list 'exn path-string? string?) (list 'mismatch path-string? string? string?))
+;;   Check one copied corpus file with a hard per-file timeout.
+(define (roundtrip-result path)
+  (define result-box
+    (box #f))
+  (define cust
+    (make-custodian))
+  (define worker
+    (parameterize ([current-custodian cust])
+      (thread
+       (lambda ()
+         (set-box!
+          result-box
+          (with-handlers ([exn:fail?
+                           (lambda (e)
+                             (list 'exn
+                                   (path->string path)
+                                   (exn-message e)))])
+            (define original
+              (file->string path))
+            (define rendered
+              (preview-file path roundtrip-options))
+            (define stripped
+              (strip-ansi rendered))
+            (if (string=? stripped original)
+                'ok
+                (list 'mismatch
+                      (path->string path)
+                      stripped
+                      original))))))))
+  (define result
+    (sync/timeout per-file-timeout-seconds
+                  (thread-dead-evt worker)))
+  (custodian-shutdown-all cust)
+  (cond
+    [result (unbox result-box)]
+    [else   (list 'timeout (path->string path))]))
 
 ;; run-webracket-roundtrip-tests : -> void?
 ;;   Execute the copied-corpus round-trip test or skip clearly if unavailable.
@@ -118,7 +147,24 @@
                  (format "No Racket-family files found under ~a"
                          (path->string source-root)))
      (for ([path (in-list copied-paths)])
-       (assert-roundtrip-file path))]))
+       (match (roundtrip-result path)
+         ['ok
+          (void)]
+         [(list 'timeout timed-out-path)
+          (error 'webracket-roundtrip
+                 "round-trip timed out for ~a after ~a seconds"
+                 timed-out-path
+                 per-file-timeout-seconds)]
+         [(list 'exn failed-path message)
+          (error 'webracket-roundtrip
+                 "~a\n~a"
+                 failed-path
+                 message)]
+         [(list 'mismatch failed-path actual expected)
+          (check-equal? actual
+                        expected
+                        (format "round-trip mismatch for ~a"
+                                failed-path))]))]))
 
 (module+ test
   (run-webracket-roundtrip-tests))

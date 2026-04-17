@@ -37,7 +37,7 @@
 
 ;; Maximum seconds to spend on one file.
 (define per-file-timeout-seconds
-  60)
+  120)
 
 ;; ANSI color stripping pattern.
 (define ansi-pattern

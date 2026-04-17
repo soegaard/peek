@@ -165,6 +165,11 @@
      (render-wat-preview-port in out)]
     [(eq? file-type 'wat)
      (copy-port in out)]
+    [(and (eq? file-type 'rkt)
+          (color-enabled? out options))
+     (render-racket-preview-port in out)]
+    [(eq? file-type 'rkt)
+     (copy-port in out)]
     [else
      (define source
        (port->string in))
@@ -179,7 +184,8 @@
   (define file-type
     (effective-file-type path options))
   (cond
-    [(eq? file-type 'wat)
+    [(or (eq? file-type 'wat)
+         (eq? file-type 'rkt))
      (define rendered
        (open-output-string))
      (call-with-input-file path
@@ -225,6 +231,13 @@
                                   "demo.js"
                                   (make-preview-options #:color-mode 'always))))
   (check-true
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "#lang racket/base\n(define x 1)\n")
+                   "program.rkt"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (regexp-match? #px"\u001b\\[" (get-output-string out))))
+  (check-true
    (regexp-match? #px"Button"
                   (preview-string "const el = <Button>Hello</Button>;\n"
                                   "demo.jsx"
@@ -268,6 +281,14 @@
    (regexp-match? #px"greet"
                   (preview-file demo-racket-path
                                 (make-preview-options #:color-mode 'always))))
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "#lang racket/base\n(define x 1)\n")
+                   "program.rkt"
+                   (make-preview-options #:color-mode 'never)
+                   out)
+     (get-output-string out))
+   "#lang racket/base\n(define x 1)\n")
   (check-true
    (regexp-match? #px"Demo Document"
                   (preview-file demo-markdown-path

@@ -13,6 +13,7 @@
                      (lib "peek/preview.rkt")))
 
 @title{peek}
+@author[@author+email["Jens Axel Søgaard" "jensaxel@soegaard.net"]]
 @defmodule[(lib "peek/main.rkt")]
 
 @para{

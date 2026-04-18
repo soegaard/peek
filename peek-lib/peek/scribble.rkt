@@ -8,16 +8,22 @@
 
 ;; render-scribble-preview : string? -> string?
 ;;   Render Scribble for terminal preview.
+;; render-scribble-preview-port : input-port? output-port? -> void?
+;;   Render Scribble from a port for terminal preview.
 
 (provide
  ;; render-scribble-preview : string? -> string?
  ;;   Render Scribble for terminal preview.
- render-scribble-preview)
+ render-scribble-preview
+ ;; render-scribble-preview-port : input-port? output-port? -> void?
+ ;;   Render Scribble from a port for terminal preview.
+ render-scribble-preview-port)
 
 (require lexers/scribble
          lexers/token
          parser-tools/lex
          racket/list
+         racket/port
          racket/string)
 
 (struct scribble-token (category text tags start end) #:transparent)
@@ -80,6 +86,39 @@
                 '()))
     (struct-copy scribble-token base [tags tags])))
 
+;; scribble-like-style : (or/c symbol? #f) (listof symbol?) -> string?
+;;   Choose the ANSI style for one Scribble token/category pair.
+(define (scribble-like-style category tags)
+  (cond
+    [(or (memq 'scribble-error tags)
+         (eq? category 'unknown))
+     ansi-malformed]
+    [(or (memq 'scribble-comment tags)
+         (eq? category 'comment))
+     ansi-comment]
+    [(memq 'scribble-racket-escape tags)
+     (racket-like-style category tags)]
+    [(memq 'scribble-text tags)
+     ""]
+    [(memq 'scribble-command tags)
+     ansi-keyword]
+    [(or (memq 'scribble-command-char tags)
+         (memq 'scribble-body-delimiter tags)
+         (memq 'scribble-optional-delimiter tags)
+         (memq 'scribble-parenthesis tags)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [(or (memq 'scribble-string tags)
+         (memq 'scribble-constant tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'scribble-symbol tags)
+         (memq 'scribble-other tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [else
+     ""]))
+
 ;; colorize-text : string? string? -> string?
 ;;   Apply ANSI styling while preserving coloring across newlines.
 (define (colorize-text code text)
@@ -118,39 +157,8 @@
 ;; token-style : scribble-token -> string?
 ;;   Choose the ANSI style for one normalized Scribble token.
 (define (token-style token)
-  (define category
-    (scribble-token-category token))
-  (define tags
-    (scribble-token-tags token))
-  (cond
-    [(or (memq 'scribble-error tags)
-         (eq? category 'unknown))
-     ansi-malformed]
-    [(or (memq 'scribble-comment tags)
-         (eq? category 'comment))
-     ansi-comment]
-    [(memq 'scribble-racket-escape tags)
-     (racket-like-style category tags)]
-    [(memq 'scribble-text tags)
-     ""]
-    [(memq 'scribble-command tags)
-     ansi-keyword]
-    [(or (memq 'scribble-command-char tags)
-         (memq 'scribble-body-delimiter tags)
-         (memq 'scribble-optional-delimiter tags)
-         (memq 'scribble-parenthesis tags)
-         (eq? category 'delimiter))
-     ansi-delimiter]
-    [(or (memq 'scribble-string tags)
-         (memq 'scribble-constant tags)
-         (eq? category 'literal))
-     ansi-literal]
-    [(or (memq 'scribble-symbol tags)
-         (memq 'scribble-other tags)
-         (eq? category 'identifier))
-     ansi-identifier]
-    [else
-     ""]))
+  (scribble-like-style (scribble-token-category token)
+                       (scribble-token-tags token)))
 
 ;; render-scribble-preview : string? -> string?
 ;;   Render Scribble for terminal preview.
@@ -159,6 +167,23 @@
          (for/list ([token (annotate-scribble-tokens source)])
            (colorize-text (token-style token)
                           (scribble-token-text token)))))
+
+;; render-scribble-preview-port : input-port? output-port? -> void?
+;;   Render Scribble from a port for terminal preview.
+(define (render-scribble-preview-port in
+                                      [out (current-output-port)])
+  (port-count-lines! in)
+  (define lexer
+    (make-scribble-derived-lexer))
+  (let loop ()
+    (define token
+      (lexer in))
+    (unless (eq? token 'eof)
+      (display (colorize-text (scribble-like-style #f
+                                                   (scribble-derived-token-tags token))
+                              (scribble-derived-token-text token))
+               out)
+      (loop))))
 
 (module+ test
   (require rackunit)

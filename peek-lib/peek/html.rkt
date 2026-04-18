@@ -8,16 +8,22 @@
 
 ;; render-html-preview : string? -> string?
 ;;   Render HTML for terminal preview.
+;; render-html-preview-port : input-port? output-port? -> void?
+;;   Render HTML from a port for terminal preview.
 
 (provide
  ;; render-html-preview : string? -> string?
  ;;   Render HTML for terminal preview.
- render-html-preview)
+ render-html-preview
+ ;; render-html-preview-port : input-port? output-port? -> void?
+ ;;   Render HTML from a port for terminal preview.
+ render-html-preview-port)
 
 (require lexers/html
          lexers/token
          parser-tools/lex
          racket/list
+         racket/port
          "common-style.rkt")
 
 (struct html-token (category text tags start end) #:transparent)
@@ -78,6 +84,24 @@
          (for/list ([token (annotate-html-tokens source)])
            (colorize-text (token-style token)
                           (html-token-text token)))))
+
+;; render-html-preview-port : input-port? output-port? -> void?
+;;   Render HTML from a port for terminal preview.
+(define (render-html-preview-port in
+                                  [out (current-output-port)])
+  (port-count-lines! in)
+  (define lexer
+    (make-html-derived-lexer))
+  (let loop ()
+    (define token
+      (lexer in))
+    (unless (eq? token 'eof)
+      (display (colorize-text (html-like-style
+                               #f
+                               (html-derived-token-tags token))
+                              (html-derived-token-text token))
+               out)
+      (loop))))
 
 (module+ test
   (require rackunit)

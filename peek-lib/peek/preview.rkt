@@ -170,6 +170,21 @@
      (render-racket-preview-port in out)]
     [(eq? file-type 'rkt)
      (copy-port in out)]
+    [(and (or (eq? file-type 'html)
+              (eq? file-type 'js)
+              (eq? file-type 'jsx)
+              (eq? file-type 'scrbl))
+          (color-enabled? out options))
+     (case file-type
+       [(html)  (render-html-preview-port in out)]
+       [(js)    (render-javascript-preview-port in out)]
+       [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
+       [(scrbl) (render-scribble-preview-port in out)])]
+    [(or (eq? file-type 'html)
+         (eq? file-type 'js)
+         (eq? file-type 'jsx)
+         (eq? file-type 'scrbl))
+     (copy-port in out)]
     [else
      (define source
        (port->string in))
@@ -185,7 +200,11 @@
     (effective-file-type path options))
   (cond
     [(or (eq? file-type 'wat)
-         (eq? file-type 'rkt))
+         (eq? file-type 'rkt)
+         (eq? file-type 'html)
+         (eq? file-type 'js)
+         (eq? file-type 'jsx)
+         (eq? file-type 'scrbl))
      (define rendered
        (open-output-string))
      (call-with-input-file path
@@ -199,7 +218,8 @@
 
 (module+ test
   (require rackunit
-           racket/runtime-path)
+           racket/runtime-path
+           racket/string)
 
   (define-runtime-path demo-markdown-path
     "../../test/fixtures/demo.md")
@@ -209,6 +229,12 @@
     "../../test/fixtures/demo.scrbl")
   (define-runtime-path demo-wat-path
     "../../test/fixtures/demo.wat")
+
+  (define ansi-pattern
+    #px"\u001b\\[[0-9;]*m")
+
+  (define (strip-ansi text)
+    (regexp-replace* ansi-pattern text ""))
 
   (check-equal? (detect-file-type "theme.css") 'css)
   (check-equal? (detect-file-type "index.html") 'html)
@@ -237,6 +263,14 @@
                    (make-preview-options #:color-mode 'always)
                    out)
      (regexp-match? #px"\u001b\\[" (get-output-string out))))
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "<!doctype html><main id=\"app\">Hi</main>\n")
+                   "index.html"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (strip-ansi (get-output-string out)))
+   "<!doctype html><main id=\"app\">Hi</main>\n")
   (check-true
    (regexp-match? #px"Button"
                   (preview-string "const el = <Button>Hello</Button>;\n"
@@ -277,6 +311,30 @@
                    out)
      (get-output-string out))
    "(module (func))\n")
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "#lang at-exp racket/base\n@title{Hi}\n(define x 1)\n")
+                   "program.rkt"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (strip-ansi (get-output-string out)))
+   "#lang at-exp racket/base\n@title{Hi}\n(define x 1)\n")
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "const answer = 42;\n")
+                   "demo.js"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (strip-ansi (get-output-string out)))
+   "const answer = 42;\n")
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "# Title\n\nText\n")
+                   "README.md"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (strip-ansi (get-output-string out)))
+   "# Title\n\nText\n")
   (check-true
    (regexp-match? #px"greet"
                   (preview-file demo-racket-path
@@ -298,6 +356,14 @@
                   (preview-string "@title{Hi}\n"
                                   "manual.scrbl"
                                   (make-preview-options #:color-mode 'always))))
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "#lang scribble/manual\n@title{Hi}\n")
+                   "manual.scrbl"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (strip-ansi (get-output-string out)))
+   "#lang scribble/manual\n@title{Hi}\n")
   (check-true
    (regexp-match? #px"itemlist"
                   (preview-file demo-scribble-path

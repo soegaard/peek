@@ -9,16 +9,22 @@
 
 ;; render-javascript-preview : string? #:jsx? boolean? -> string?
 ;;   Render JavaScript or JSX with ANSI coloring.
+;; render-javascript-preview-port : input-port? output-port? #:jsx? boolean? -> void?
+;;   Render JavaScript or JSX from a port with ANSI coloring.
 
 (provide
  ;; render-javascript-preview : string? #:jsx? boolean? -> string?
  ;;   Render JavaScript or JSX for terminal preview.
- render-javascript-preview)
+ render-javascript-preview
+ ;; render-javascript-preview-port : input-port? output-port? #:jsx? boolean? -> void?
+ ;;   Render JavaScript or JSX from a port for terminal preview.
+ render-javascript-preview-port)
 
 (require lexers/javascript
          lexers/token
          parser-tools/lex
          racket/list
+         racket/port
          racket/string)
 
 (struct javascript-token (category text tags start end) #:transparent)
@@ -80,24 +86,9 @@
                 '()))
     (struct-copy javascript-token base [tags tags])))
 
-;; colorize-text : string? string? -> string?
-;;   Apply ANSI styling while preserving coloring across newlines.
-(define (colorize-text code text)
-  (cond
-    [(or (string=? code "") (string=? text "")) text]
-    [else
-     (string-append code
-                    (string-join (string-split text "\n" #:trim? #f)
-                                 (string-append ansi-reset "\n" code))
-                    ansi-reset)]))
-
-;; token-style : javascript-token -> string?
-;;   Choose the ANSI style for one normalized JavaScript token.
-(define (token-style token)
-  (define category
-    (javascript-token-category token))
-  (define tags
-    (javascript-token-tags token))
+;; javascript-like-style : (or/c symbol? #f) (listof symbol?) -> string?
+;;   Choose the ANSI style for one JavaScript token/category pair.
+(define (javascript-like-style category tags)
   (cond
     [(or (memq 'malformed-token tags)
          (eq? category 'unknown))
@@ -135,6 +126,23 @@
     [(eq? category 'identifier) ansi-identifier]
     [else                       ""]))
 
+;; colorize-text : string? string? -> string?
+;;   Apply ANSI styling while preserving coloring across newlines.
+(define (colorize-text code text)
+  (cond
+    [(or (string=? code "") (string=? text "")) text]
+    [else
+     (string-append code
+                    (string-join (string-split text "\n" #:trim? #f)
+                                 (string-append ansi-reset "\n" code))
+                    ansi-reset)]))
+
+;; token-style : javascript-token -> string?
+;;   Choose the ANSI style for one normalized JavaScript token.
+(define (token-style token)
+  (javascript-like-style (javascript-token-category token)
+                         (javascript-token-tags token)))
+
 ;; render-javascript-preview : string? #:jsx? boolean? -> string?
 ;;   Render JavaScript or JSX for terminal preview.
 (define (render-javascript-preview source
@@ -143,6 +151,24 @@
          (for/list ([token (annotate-javascript-tokens source jsx?)])
            (colorize-text (token-style token)
                           (javascript-token-text token)))))
+
+;; render-javascript-preview-port : input-port? output-port? #:jsx? boolean? -> void?
+;;   Render JavaScript or JSX from a port with ANSI coloring.
+(define (render-javascript-preview-port in
+                                       [out (current-output-port)]
+                                       #:jsx? [jsx? #f])
+  (port-count-lines! in)
+  (define lexer
+    (make-javascript-derived-lexer #:jsx? jsx?))
+  (let loop ()
+    (define token
+      (lexer in))
+    (unless (eq? token 'eof)
+      (display (colorize-text (javascript-like-style #f
+                                                     (javascript-derived-token-tags token))
+                              (javascript-derived-token-text token))
+               out)
+      (loop))))
 
 (module+ test
   (require rackunit)

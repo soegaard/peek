@@ -8,17 +8,23 @@
 
 ;; render-markdown-preview : string? -> string?
 ;;   Render Markdown for terminal preview.
+;; render-markdown-preview-port : input-port? output-port? -> void?
+;;   Render Markdown from a port for terminal preview.
 
 (provide
  ;; render-markdown-preview : string? -> string?
  ;;   Render Markdown for terminal preview.
- render-markdown-preview)
+ render-markdown-preview
+ ;; render-markdown-preview-port : input-port? output-port? -> void?
+ ;;   Render Markdown from a port for terminal preview.
+ render-markdown-preview-port)
 
 (require lexers/markdown
          lexers/token
          parser-tools/lex
          racket/file
          racket/list
+         racket/port
          racket/string
          "common-style.rkt")
 
@@ -70,13 +76,9 @@
                 '()))
     (struct-copy markdown-token base [tags tags])))
 
-;; token-style : markdown-token -> string?
-;;   Choose the ANSI style for one normalized Markdown token.
-(define (token-style token)
-  (define category
-    (markdown-token-category token))
-  (define tags
-    (markdown-token-tags token))
+;; markdown-like-style : symbol? (listof symbol?) -> string?
+;;   Choose the ANSI style for one Markdown token/category pair.
+(define (markdown-like-style category tags)
   (cond
     [(memq 'embedded-css tags)
      (css-like-style category tags)]
@@ -129,6 +131,12 @@
     [else
      ""]))
 
+;; token-style : markdown-token -> string?
+;;   Choose the ANSI style for one normalized Markdown token.
+(define (token-style token)
+  (markdown-like-style (markdown-token-category token)
+                       (markdown-token-tags token)))
+
 ;; render-markdown-preview : string? -> string?
 ;;   Render Markdown for terminal preview.
 (define (render-markdown-preview source)
@@ -136,6 +144,24 @@
          (for/list ([token (annotate-markdown-tokens source)])
            (colorize-text (token-style token)
                           (markdown-token-text token)))))
+
+;; render-markdown-preview-port : input-port? output-port? -> void?
+;;   Render Markdown from a port for terminal preview.
+(define (render-markdown-preview-port in
+                                     [out (current-output-port)])
+  (port-count-lines! in)
+  (define lexer
+    (make-markdown-derived-lexer))
+  (let loop ()
+    (define token
+      (lexer in))
+    (unless (eq? token 'eof)
+      (display (colorize-text (markdown-like-style
+                               'unknown
+                               (markdown-derived-token-tags token))
+                              (markdown-derived-token-text token))
+               out)
+      (loop))))
 
 (module+ test
   (require rackunit

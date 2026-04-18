@@ -173,16 +173,19 @@
     [(and (or (eq? file-type 'html)
               (eq? file-type 'js)
               (eq? file-type 'jsx)
+              (eq? file-type 'md)
               (eq? file-type 'scrbl))
           (color-enabled? out options))
      (case file-type
        [(html)  (render-html-preview-port in out)]
        [(js)    (render-javascript-preview-port in out)]
        [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
+       [(md)    (render-markdown-preview-port in out)]
        [(scrbl) (render-scribble-preview-port in out)])]
     [(or (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'jsx)
+         (eq? file-type 'md)
          (eq? file-type 'scrbl))
      (copy-port in out)]
     [else
@@ -204,6 +207,7 @@
          (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'jsx)
+         (eq? file-type 'md)
          (eq? file-type 'scrbl))
      (define rendered
        (open-output-string))
@@ -335,6 +339,14 @@
                    out)
      (strip-ansi (get-output-string out)))
    "# Title\n\nText\n")
+  (check-equal?
+   (let ([out (open-output-string)])
+     (preview-port (open-input-string "```sh\r\nx\r\n```\r\n")
+                   "README.md"
+                   (make-preview-options #:color-mode 'always)
+                   out)
+     (strip-ansi (get-output-string out)))
+   "```sh\r\nx\r\n```\r\n")
   (check-true
    (regexp-match? #px"greet"
                   (preview-file demo-racket-path

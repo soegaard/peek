@@ -17,6 +17,13 @@
 @defmodule[(lib "peek/main.rkt")]
 
 The tool @exec{peek} is a terminal utility for previewing files in the terminal.
+
+This package is not intended for use by other Racket programs.
+Installing the package will give you a command line tool @exec{peek} you
+can use instead of @exec{less} in the terminal. The command @exec{peek}
+appears in the same folder, the other Racket launchers do. 
+
+
 There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
@@ -27,7 +34,6 @@ CSS, HTML, JavaScript, Markdown, Racket, Scribble, and WAT.
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
 
-
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
 color model for embedded @tt{<style>} and @tt{<script>} content.
 
@@ -37,9 +43,8 @@ classification for @tt{.jsx} files.
 The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
 plus delegated embedded languages in @tt{.md} files.
 
-The Racket previewer uses @tt{lexers/racket} and provides first-pass
-syntax coloring for @tt{.rkt}
-files.
+The Racket previewer uses @tt{lexers/racket} and provides syntax coloring
+for @tt{.rkt} and @tt{.rktd} files.
 
 The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
 command syntax plus embedded Racket escapes in @tt{.scrbl} files.
@@ -47,6 +52,18 @@ command syntax plus embedded Racket escapes in @tt{.scrbl} files.
 The WAT previewer uses @tt{lexers/wat} and provides first-pass syntax coloring for
 WebAssembly text-format files in @tt{.wat}. 
 
+
+@section{Screenshots}
+
+A few small previews, rendered by @exec{peek}:
+
+@(image #:scale 0.5 "peek-doc/screenshots/example-css.png")
+
+@(image #:scale 0.5 "peek-doc/screenshots/example-html.png")
+
+@(image #:scale 0.5 "peek-doc/screenshots/example-racket.png")
+
+@(image #:scale 0.5 "peek-doc/screenshots/example-wat.png")
 
 @section{Command Line}
 
@@ -397,8 +414,7 @@ The command-line entry point lives in
 Unsupported file types currently fall back to plain text.
 
 The current implementation focuses on CSS, HTML, JavaScript, Markdown,
-Racket, Scribble, WAT, and a small generic preview pipeline. Standalone WAT
-preview uses the port-oriented streaming path, while the other current file
-types still use the existing buffered rendering path. Future file types may
-add their own previewers without forcing all file types into the same
-rendering model.
+Racket, Scribble, WAT, and a small generic preview pipeline. All supported
+lexers now use the port-oriented streaming path. Future file types may add
+their own previewers without forcing all file types into the same rendering
+model.

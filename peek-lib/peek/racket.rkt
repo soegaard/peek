@@ -54,6 +54,11 @@
         (position-offset (racket-derived-token-end token))
         (racket-derived-token-text token)))
 
+;; derived-token-category : racket-derived-token? -> symbol?
+;;   Extract the coarse category from one derived token.
+(define (derived-token-category token)
+  (vector-ref (struct->vector token) 1))
+
 ;; annotate-racket-tokens : string? -> (listof racket-token?)
 ;;   Combine projected Racket categories with derived tags.
 (define (annotate-racket-tokens source)
@@ -139,7 +144,7 @@
 ;; derived-token-style : racket-derived-token? -> string?
 ;;   Choose the ANSI style for one derived Racket token.
 (define (derived-token-style token)
-  (racket-like-style 'unknown
+  (racket-like-style (derived-token-category token)
                      (racket-derived-token-tags token)))
 
 ;; render-racket-preview : string? -> string?

@@ -16,31 +16,37 @@
 @author[@author+email["Jens Axel Søgaard" "jensaxel@soegaard.net"]]
 @defmodule[(lib "peek/main.rkt")]
 
-@para{
-@exec{peek} is a terminal-first preview tool for files and standard input.
-It is intentionally small: @exec{peek} does not try to replace a pager or a
-general-purpose file viewer. Instead, it provides file-type-aware terminal
-previewing for supported file types.
-}
+The tool @exec{peek} is a terminal utility for previewing files in the terminal.
+There is file-type-aware rendering for the supported file types.
 
-@para{
-CSS, HTML, JavaScript, Markdown, Racket, Scribble, and WAT are currently supported. The CSS previewer uses
-@tt{lexers/css} for lexing and adds terminal-oriented rendering
+The supported file types are:
+
+CSS, HTML, JavaScript, Markdown, Racket, Scribble, and WAT.
+
+
+The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
+
+
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
 color model for embedded @tt{<style>} and @tt{<script>} content.
+
 The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
-classification for @tt{.jsx} files. The Markdown previewer uses
-@tt{lexers/markdown} and colors Markdown structure plus delegated embedded
-languages in @tt{.md} files. The Racket previewer uses
-@tt{lexers/racket} and provides first-pass syntax coloring for @tt{.rkt}
-files. The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
-command syntax plus embedded Racket escapes in @tt{.scrbl} files. The WAT
-previewer uses @tt{lexers/wat} and provides first-pass syntax coloring for
-WebAssembly text-format files in @tt{.wat}. Standalone WAT preview uses a
-streaming render path, so large @tt{.wat} files and @tt{--type wat} stdin
-input do not need to be buffered as one giant string first.
-}
+classification for @tt{.jsx} files.
+
+The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
+plus delegated embedded languages in @tt{.md} files.
+
+The Racket previewer uses @tt{lexers/racket} and provides first-pass
+syntax coloring for @tt{.rkt}
+files.
+
+The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
+command syntax plus embedded Racket escapes in @tt{.scrbl} files.
+
+The WAT previewer uses @tt{lexers/wat} and provides first-pass syntax coloring for
+WebAssembly text-format files in @tt{.wat}. 
+
 
 @section{Command Line}
 

@@ -17,7 +17,7 @@
 ;; Corpus snapshot root.
 (define corpus-root
   (or (getenv "PEEK_PYTHON_CORPUS")
-      "/tmp/lexers-python-corpus"))
+      "/tmp/peek-python-corpus-large"))
 
 ;; Maximum seconds to spend on one file.
 (define per-file-timeout-seconds

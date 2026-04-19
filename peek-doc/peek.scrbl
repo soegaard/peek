@@ -7,6 +7,7 @@
           lexers/javascript
           lexers/json
           lexers/markdown
+          lexers/python
           lexers/racket
           lexers/rhombus
           lexers/shell
@@ -32,8 +33,8 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, HTML, JavaScript, JSON, Markdown, PowerShell, Rhombus, Racket,
-Scribble, WAT, and Zsh.
+CSS, Bash, HTML, JavaScript, JSON, Markdown, PowerShell, Python, Rhombus,
+Racket, Scribble, WAT, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -47,6 +48,9 @@ classification for @tt{.jsx} files.
 
 The JSON previewer uses @tt{lexers/json} and supports @tt{.json} and
 @tt{.webmanifest} files as @tt{json} preview targets.
+
+The Python previewer uses @tt{lexers/python} and supports @tt{.py},
+@tt{.pyi}, and @tt{.pyw} files as @tt{python} preview targets.
 
 The shell previewers use @tt{lexers/shell} and support @tt{.sh}, @tt{.bash},
 @tt{.zsh}, and @tt{.ps1} files as @tt{bash}, @tt{zsh}, and @tt{powershell}
@@ -95,6 +99,7 @@ peek path/to/file.css
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.py
 peek path/to/file.md
 peek path/to/file.rhm
 peek path/to/file.rkt
@@ -109,6 +114,7 @@ cat path/to/file.css | peek --type css
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json
+cat path/to/file.py | peek --type python
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.scrbl | peek --type scrbl
@@ -131,12 +137,14 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSON, JSX, Markdown, Rhombus, Racket, Scribble, and WAT examples:
+HTML, JavaScript, JSON, Python, JSX, Markdown, Rhombus, Racket, Scribble,
+and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.py
 peek path/to/component.jsx
 peek path/to/file.md
 peek path/to/file.rhm
@@ -164,10 +172,10 @@ peek path/to/script.ps1
 
 @itemlist[
  @item{@DFlag{--type} @italic{type}
-       selects the input type explicitly. This is mainly useful for standard
-       input. Supported values are @tt{bash}, @tt{css}, @tt{html}, @tt{js},
-       @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell}, @tt{rhombus}, @tt{rkt},
-       @tt{scrbl}, @tt{wat}, and @tt{zsh}.}
+    selects the input type explicitly. This is mainly useful for standard
+    input. Supported values are @tt{bash}, @tt{css}, @tt{html}, @tt{js},
+       @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell}, @tt{python},
+       @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{wat}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -239,9 +247,10 @@ The current explicit file type names are:
  @item{@tt{js}}
  @item{@tt{json}}
  @item{@tt{jsx}}
- @item{@tt{md}}
- @item{@tt{powershell}}
- @item{@tt{rhombus}}
+@item{@tt{md}}
+@item{@tt{powershell}}
+@item{@tt{python}}
+@item{@tt{rhombus}}
  @item{@tt{rkt}}
  @item{@tt{scrbl}}
  @item{@tt{wat}}

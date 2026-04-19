@@ -10,6 +10,7 @@
          "../json.rkt"
          "../main.rkt"
          "../markdown.rkt"
+         "../python.rkt"
          "../preview.rkt"
          "../racket.rkt"
          "../rhombus.rkt"
@@ -21,6 +22,8 @@
   "fixtures/demo.md")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
+(define-runtime-path demo-python-path
+  "fixtures/demo.py")
 (define-runtime-path demo-shell-path
   "fixtures/demo.sh")
 (define-runtime-path demo-racket-path
@@ -43,7 +46,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash css html js json jsx md powershell rhombus rkt scrbl wat zsh))
+              '(bash css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -62,6 +65,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
+(check-true
+ (regexp-match? #px"answer"
+                (render-python-preview "def answer(name):\n    return name\n")))
 (check-true
  (regexp-match? #px"answer"
                 (render-javascript-preview "const answer = 42;\nobj.run(answer);\n")))
@@ -130,6 +136,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-json-path))
 (check-equal?
+ (strip-ansi (preview-file demo-python-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-python-path))
+(check-equal?
  (strip-ansi (preview-file demo-zsh-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-zsh-path))
@@ -166,6 +176,12 @@
                              (make-preview-options #:type 'json
                                                    #:color-mode 'always)))
  "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")
+(check-equal?
+ (strip-ansi (preview-string "def answer(name):\n    return name\n"
+                             #f
+                             (make-preview-options #:type 'python
+                                                   #:color-mode 'always)))
+ "def answer(name):\n    return name\n")
 (check-equal?
  (strip-ansi (preview-string "autoload -Uz compinit\n"
                              #f

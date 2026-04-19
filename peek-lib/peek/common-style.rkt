@@ -18,6 +18,7 @@
 ;; css-like-style  -- Style CSS-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
+;; python-like-style     -- Style Python-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
 ;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
@@ -48,6 +49,8 @@
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
  json-like-style
+ ;; python-like-style Style Python-like embedded tokens.
+ python-like-style
  ;; shell-like-style Style shell-like embedded tokens.
  shell-like-style
  ;; rhombus-like-style Style Rhombus-like embedded tokens.
@@ -182,6 +185,37 @@
          (memq 'json-colon tags)
          (eq? category 'delimiter)
          (eq? category 'operator))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; python-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Python-like roles.
+(define (python-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'python-comment tags))
+     ansi-comment]
+    [(or (memq 'python-keyword tags)
+         (memq 'python-soft-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'python-string-literal tags)
+         (memq 'python-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'python-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'python-operator tags)
+         (memq 'python-delimiter tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
      ansi-delimiter]
     [else
      ""]))

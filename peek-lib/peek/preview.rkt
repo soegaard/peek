@@ -56,6 +56,7 @@
          "js.rkt"
          "json.rkt"
          "markdown.rkt"
+         "python.rkt"
          "racket.rkt"
          "rhombus.rkt"
          "shell.rkt"
@@ -66,7 +67,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash css html js json jsx md powershell rhombus rkt scrbl wat zsh))
+  '(bash css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -102,6 +103,7 @@
         'json]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
+       [(regexp-match? #px"(?i:\\.(?:py|pyi|pyw))$" path-string) 'python]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
        [(regexp-match? #px"(?i:\\.zsh)$" path-string) 'zsh]
@@ -149,6 +151,8 @@
      (render-markdown-preview source)]
     [(eq? file-type 'powershell)
      (render-shell-preview source #:shell 'powershell)]
+    [(eq? file-type 'python)
+     (render-python-preview source)]
     [(eq? file-type 'rhombus)
      (render-rhombus-preview source)]
     [(eq? file-type 'rkt)
@@ -209,6 +213,7 @@
     [(and (or (eq? file-type 'html)
               (eq? file-type 'js)
               (eq? file-type 'json)
+              (eq? file-type 'python)
               (eq? file-type 'jsx)
               (eq? file-type 'md)
               (eq? file-type 'scrbl))
@@ -217,12 +222,14 @@
        [(html)  (render-html-preview-port in out)]
        [(js)    (render-javascript-preview-port in out)]
        [(json)  (render-json-preview-port in out)]
+       [(python) (render-python-preview-port in out)]
        [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
        [(md)    (render-markdown-preview-port in out)]
        [(scrbl) (render-scribble-preview-port in out)])]
     [(or (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'json)
+         (eq? file-type 'python)
          (eq? file-type 'jsx)
          (eq? file-type 'md)
          (eq? file-type 'scrbl))
@@ -250,6 +257,7 @@
          (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'json)
+         (eq? file-type 'python)
          (eq? file-type 'jsx)
          (eq? file-type 'md)
          (eq? file-type 'scrbl))

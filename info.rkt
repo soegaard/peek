@@ -9,12 +9,15 @@
                "peek-doc"))
 
 (define build-deps '("base"
+                     "peek-lib"
+                     "peek-doc"
                      
                      "lexers-lib"                     
                      "rackunit-lib"
                      "scribble-lib"
                      "parser-tools-lib"
                      "syntax-color-lib"
+
                      "lexers-doc"
                      "parser-tools-doc"
                      "racket-doc"                     

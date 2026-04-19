@@ -1,16 +1,15 @@
 #lang info
 
-(define pkg-desc "Meta-package for the lexers library and documentation.")
+(define pkg-desc "Meta-package for the peek library and documentation.")
 (define pkg-authors '(soegaard))
 (define license 'MIT)
 
 (define deps '("base"
                "peek-lib"
-               "peek-doc"
-               "parser-tools-lib"
-               "syntax-color-lib"))
+               "peek-doc"))
 
 (define build-deps '("base"
+                     
                      "lexers-lib"                     
                      "rackunit-lib"
                      "scribble-lib"

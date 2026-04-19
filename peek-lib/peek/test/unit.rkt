@@ -7,6 +7,7 @@
          "../css.rkt"
          "../html.rkt"
          "../js.rkt"
+         "../json.rkt"
          "../main.rkt"
          "../markdown.rkt"
          "../preview.rkt"
@@ -18,6 +19,8 @@
 
 (define-runtime-path demo-markdown-path
   "fixtures/demo.md")
+(define-runtime-path demo-json-path
+  "fixtures/demo.json")
 (define-runtime-path demo-shell-path
   "fixtures/demo.sh")
 (define-runtime-path demo-racket-path
@@ -40,7 +43,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash css html js jsx md powershell rhombus rkt scrbl wat zsh))
+              '(bash css html js json jsx md powershell rhombus rkt scrbl wat zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -56,6 +59,9 @@
  (regexp-match? #px"doctype"
                 (render-html-preview
                  "<!doctype html><main id=\"app\">Hi &amp; bye<style>.x { color: #fff; }</style><script>const answer = 42;</script><!-- note --></main>")))
+(check-true
+ (regexp-match? #px"peek"
+                (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
 (check-true
  (regexp-match? #px"answer"
                 (render-javascript-preview "const answer = 42;\nobj.run(answer);\n")))
@@ -120,6 +126,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-shell-path))
 (check-equal?
+ (strip-ansi (preview-file demo-json-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-json-path))
+(check-equal?
  (strip-ansi (preview-file demo-zsh-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-zsh-path))
@@ -150,6 +160,12 @@
                              (make-preview-options #:type 'bash
                                                    #:color-mode 'always)))
  "#!/usr/bin/env bash\nexport PATH\n")
+(check-equal?
+ (strip-ansi (preview-string "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n"
+                             #f
+                             (make-preview-options #:type 'json
+                                                   #:color-mode 'always)))
+ "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")
 (check-equal?
  (strip-ansi (preview-string "autoload -Uz compinit\n"
                              #f

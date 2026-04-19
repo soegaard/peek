@@ -54,6 +54,7 @@
          "css.rkt"
          "html.rkt"
          "js.rkt"
+         "json.rkt"
          "markdown.rkt"
          "racket.rkt"
          "rhombus.rkt"
@@ -65,7 +66,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash css html js jsx md powershell rhombus rkt scrbl wat zsh))
+  '(bash css html js json jsx md powershell rhombus rkt scrbl wat zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -97,6 +98,8 @@
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.(?:sh|bash))$" path-string) 'bash]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
+       [(regexp-match? #px"(?i:\\.(?:json|webmanifest))$" path-string)
+        'json]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
@@ -137,6 +140,8 @@
      (render-html-preview source)]
     [(eq? file-type 'js)
      (render-javascript-preview source)]
+    [(eq? file-type 'json)
+     (render-json-preview source)]
     [(eq? file-type 'jsx)
      (render-javascript-preview source
                                 #:jsx? #t)]
@@ -203,6 +208,7 @@
      (copy-port in out)]
     [(and (or (eq? file-type 'html)
               (eq? file-type 'js)
+              (eq? file-type 'json)
               (eq? file-type 'jsx)
               (eq? file-type 'md)
               (eq? file-type 'scrbl))
@@ -210,11 +216,13 @@
      (case file-type
        [(html)  (render-html-preview-port in out)]
        [(js)    (render-javascript-preview-port in out)]
+       [(json)  (render-json-preview-port in out)]
        [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
        [(md)    (render-markdown-preview-port in out)]
        [(scrbl) (render-scribble-preview-port in out)])]
     [(or (eq? file-type 'html)
          (eq? file-type 'js)
+         (eq? file-type 'json)
          (eq? file-type 'jsx)
          (eq? file-type 'md)
          (eq? file-type 'scrbl))
@@ -241,6 +249,7 @@
          (eq? file-type 'rkt)
          (eq? file-type 'html)
          (eq? file-type 'js)
+         (eq? file-type 'json)
          (eq? file-type 'jsx)
          (eq? file-type 'md)
          (eq? file-type 'scrbl))

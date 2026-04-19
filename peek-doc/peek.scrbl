@@ -5,6 +5,7 @@
           (for-label lexers/css
                      lexers/html
           lexers/javascript
+          lexers/json
           lexers/markdown
           lexers/racket
           lexers/rhombus
@@ -31,8 +32,8 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, HTML, JavaScript, Markdown, PowerShell, Rhombus, Racket, Scribble,
-WAT, and Zsh.
+CSS, Bash, HTML, JavaScript, JSON, Markdown, PowerShell, Rhombus, Racket,
+Scribble, WAT, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -43,6 +44,9 @@ color model for embedded @tt{<style>} and @tt{<script>} content.
 
 The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
 classification for @tt{.jsx} files.
+
+The JSON previewer uses @tt{lexers/json} and supports @tt{.json} and
+@tt{.webmanifest} files as @tt{json} preview targets.
 
 The shell previewers use @tt{lexers/shell} and support @tt{.sh}, @tt{.bash},
 @tt{.zsh}, and @tt{.ps1} files as @tt{bash}, @tt{zsh}, and @tt{powershell}
@@ -90,6 +94,7 @@ After installing the @exec{peek} package, the launcher is available as
 peek path/to/file.css
 peek path/to/file.html
 peek path/to/file.js
+peek path/to/file.json
 peek path/to/file.md
 peek path/to/file.rhm
 peek path/to/file.rkt
@@ -103,6 +108,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 cat path/to/file.css | peek --type css
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
+cat path/to/file.json | peek --type json
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.scrbl | peek --type scrbl
@@ -125,11 +131,12 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSX, Markdown, Rhombus, Racket, Scribble, and WAT examples:
+HTML, JavaScript, JSON, JSX, Markdown, Rhombus, Racket, Scribble, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
 peek path/to/file.js
+peek path/to/file.json
 peek path/to/component.jsx
 peek path/to/file.md
 peek path/to/file.rhm
@@ -159,7 +166,7 @@ peek path/to/script.ps1
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
        input. Supported values are @tt{bash}, @tt{css}, @tt{html}, @tt{js},
-       @tt{jsx}, @tt{md}, @tt{powershell}, @tt{rhombus}, @tt{rkt},
+       @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell}, @tt{rhombus}, @tt{rkt},
        @tt{scrbl}, @tt{wat}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
@@ -230,6 +237,7 @@ The current explicit file type names are:
  @item{@tt{css}}
  @item{@tt{html}}
  @item{@tt{js}}
+ @item{@tt{json}}
  @item{@tt{jsx}}
  @item{@tt{md}}
  @item{@tt{powershell}}
@@ -392,6 +400,31 @@ Example JSX preview input:
 
 @jsblock[#:jsx? #t]{
 const view = <Button kind="primary">Hello {name}</Button>;
+}
+
+@subsection{JSON}
+
+For JSON, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for ordinary JSON source in @tt{.json} and
+       @tt{.webmanifest} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The JSON previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example JSON preview input:
+
+@verbatim[#:indent 2]{
+{
+  "name": "peek",
+  "ok": true,
+  "count": 2
+}
 }
 
 @subsection{WAT}

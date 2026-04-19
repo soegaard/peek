@@ -17,6 +17,7 @@
 ;; colorize-text   -- Apply ANSI styling while preserving newlines.
 ;; css-like-style  -- Style CSS-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
+;; json-like-style       -- Style JSON-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
 ;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
@@ -45,6 +46,8 @@
  css-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
+ ;; json-like-style       Style JSON-like embedded tokens.
+ json-like-style
  ;; shell-like-style Style shell-like embedded tokens.
  shell-like-style
  ;; rhombus-like-style Style Rhombus-like embedded tokens.
@@ -146,6 +149,40 @@
      ansi-literal]
     [(eq? category 'identifier)
      ansi-identifier]
+    [else
+     ""]))
+
+;; json-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for JSON-like roles.
+(define (json-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'json-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (memq 'json-object-key tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'json-string tags)
+         (memq 'json-number tags)
+         (memq 'json-true tags)
+         (memq 'json-false tags)
+         (memq 'json-null tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'json-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'json-object-start tags)
+         (memq 'json-object-end tags)
+         (memq 'json-array-start tags)
+         (memq 'json-array-end tags)
+         (memq 'json-comma tags)
+         (memq 'json-colon tags)
+         (eq? category 'delimiter)
+         (eq? category 'operator))
+     ansi-delimiter]
     [else
      ""]))
 

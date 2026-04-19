@@ -30,6 +30,7 @@ peek path/to/file.py
 peek path/to/file.md
 peek path/to/file.rhm
 peek path/to/file.rkt
+peek path/to/file.ss
 peek path/to/file.scrbl
 peek path/to/file.wat
 ```
@@ -44,6 +45,7 @@ cat path/to/file.json | peek --type json
 cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
 cat path/to/file.rkt | peek --type rkt
+cat path/to/file.ss | peek --type rkt
 cat path/to/file.wat | peek --type wat
 cat path/to/script.sh | peek --type bash
 ```
@@ -106,7 +108,8 @@ source text and line breaks without layout rewriting. Rhombus uses the
 rewriting. Shell files use the `bash`, `zsh`, and `powershell` previewers and
 preserve source text and line breaks without layout rewriting. YAML uses the
 `yaml` previewer and preserves source text and line breaks without layout
-rewriting.
+rewriting. Racket-family files use the `racket` previewer and preserve source
+text and line breaks without layout rewriting.
 
 ## Documentation
 

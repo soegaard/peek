@@ -36,6 +36,10 @@
   "fixtures/demo.sh")
 (define-runtime-path demo-racket-path
   "fixtures/demo.rkt")
+(define-runtime-path demo-ss-path
+  "fixtures/demo.ss")
+(define-runtime-path demo-rktd-path
+  "fixtures/demo.rktd")
 (define-runtime-path demo-rhombus-path
   "fixtures/demo.rhm")
 (define-runtime-path demo-scribble-path
@@ -161,6 +165,14 @@
  (strip-ansi (preview-file demo-yml-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-yml-path))
+(check-equal?
+ (strip-ansi (preview-file demo-ss-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-ss-path))
+(check-equal?
+ (strip-ansi (preview-file demo-rktd-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-rktd-path))
 (check-equal?
  (strip-ansi (preview-file demo-python-path
                            (make-preview-options #:color-mode 'always)))

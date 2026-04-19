@@ -71,7 +71,7 @@ The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
 plus delegated embedded languages in @tt{.md} files.
 
 The Racket previewer uses @tt{lexers/racket} and provides syntax coloring
-for @tt{.rkt} and @tt{.rktd} files.
+for @tt{.rkt}, @tt{.ss}, @tt{.scm}, and @tt{.rktd} files.
 
 The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
 command syntax plus embedded Racket escapes in @tt{.scrbl} files.
@@ -113,6 +113,7 @@ peek path/to/file.py
 peek path/to/file.md
 peek path/to/file.rhm
 peek path/to/file.rkt
+peek path/to/file.ss
 peek path/to/file.scrbl
 peek path/to/file.wat
 }
@@ -129,6 +130,7 @@ cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.rkt | peek --type rkt
+cat path/to/file.ss | peek --type rkt
 cat path/to/file.scrbl | peek --type scrbl
 cat path/to/file.wat | peek --type wat
 }
@@ -163,6 +165,7 @@ peek path/to/component.jsx
 peek path/to/file.md
 peek path/to/file.rhm
 peek path/to/file.rkt
+peek path/to/file.ss
 peek path/to/file.scrbl
 peek path/to/file.wat
 }

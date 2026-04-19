@@ -226,13 +226,13 @@
            racket/string)
 
   (define-runtime-path demo-markdown-path
-    "../../test/fixtures/demo.md")
+    "test/fixtures/demo.md")
   (define-runtime-path demo-racket-path
-    "../../test/fixtures/demo.rkt")
+    "test/fixtures/demo.rkt")
   (define-runtime-path demo-scribble-path
-    "../../test/fixtures/demo.scrbl")
+    "test/fixtures/demo.scrbl")
   (define-runtime-path demo-wat-path
-    "../../test/fixtures/demo.wat")
+    "test/fixtures/demo.wat")
 
   (define ansi-pattern
     #px"\u001b\\[[0-9;]*m")

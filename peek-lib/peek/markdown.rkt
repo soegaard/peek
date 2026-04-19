@@ -168,7 +168,7 @@
            racket/runtime-path)
 
   (define-runtime-path demo-markdown-path
-    "../../test/fixtures/demo.md")
+    "test/fixtures/demo.md")
 
   (define markdown-rendered
     (render-markdown-preview

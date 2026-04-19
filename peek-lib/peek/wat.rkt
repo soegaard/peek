@@ -60,7 +60,7 @@
            racket/runtime-path)
 
   (define-runtime-path demo-wat-path
-    "../../test/fixtures/demo.wat")
+    "test/fixtures/demo.wat")
 
   (define wat-rendered
     (render-wat-preview

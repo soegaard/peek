@@ -1,0 +1,8 @@
+{
+  "name": "peek",
+  "ok": true,
+  "count": 2,
+  "nested": {
+    "value": null
+  }
+}

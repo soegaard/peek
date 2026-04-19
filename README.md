@@ -24,6 +24,7 @@ peek path/to/file.sh
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.md
+peek path/to/file.rhm
 peek path/to/file.rkt
 peek path/to/file.scrbl
 peek path/to/file.wat
@@ -33,6 +34,7 @@ Preview from standard input by choosing a file type explicitly:
 
 ```sh
 cat path/to/file.md | peek --type md
+cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.wat | peek --type wat
 cat path/to/script.sh | peek --type bash
@@ -76,15 +78,17 @@ Current supported file types are:
 - `jsx`
 - `md`
 - `powershell`
+- `rhombus`
 - `rkt`
 - `scrbl`
 - `wat`
 - `zsh`
 
 CSS supports syntax coloring, swatches, and optional alignment. The other
-current file types are color-focused terminal previews. Shell files use the
-`bash`, `zsh`, and `powershell` previewers and preserve source text and line
-breaks without layout rewriting.
+current file types are color-focused terminal previews. Rhombus uses the
+`rhombus` previewer and preserves source text and line breaks without layout
+rewriting. Shell files use the `bash`, `zsh`, and `powershell` previewers and
+preserve source text and line breaks without layout rewriting.
 
 ## Documentation
 

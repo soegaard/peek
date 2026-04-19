@@ -4,12 +4,13 @@
           racket/runtime-path
           (for-label lexers/css
                      lexers/html
-                     lexers/javascript
-                     lexers/markdown
-                     lexers/racket
-                     lexers/shell
-                     lexers/scribble
-                     lexers/wat
+          lexers/javascript
+          lexers/markdown
+          lexers/racket
+          lexers/rhombus
+          lexers/shell
+          lexers/scribble
+          lexers/wat
                      racket/base                     
                      (lib "peek/main.rkt")
                      (lib "peek/preview.rkt")))
@@ -30,8 +31,8 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, HTML, JavaScript, Markdown, PowerShell, Racket, Scribble, WAT, and
-Zsh.
+CSS, Bash, HTML, JavaScript, Markdown, PowerShell, Rhombus, Racket, Scribble,
+WAT, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -46,6 +47,9 @@ classification for @tt{.jsx} files.
 The shell previewers use @tt{lexers/shell} and support @tt{.sh}, @tt{.bash},
 @tt{.zsh}, and @tt{.ps1} files as @tt{bash}, @tt{zsh}, and @tt{powershell}
 preview targets.
+
+The Rhombus previewer uses @tt{lexers/rhombus} and supports @tt{.rhm} files
+as @tt{rhombus} preview targets.
 
 The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
 plus delegated embedded languages in @tt{.md} files.
@@ -87,6 +91,7 @@ peek path/to/file.css
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.md
+peek path/to/file.rhm
 peek path/to/file.rkt
 peek path/to/file.scrbl
 peek path/to/file.wat
@@ -98,6 +103,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 cat path/to/file.css | peek --type css
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
+cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.scrbl | peek --type scrbl
 cat path/to/file.wat | peek --type wat
@@ -119,16 +125,23 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSX, Markdown, Racket, Scribble, and WAT examples:
+HTML, JavaScript, JSX, Markdown, Rhombus, Racket, Scribble, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/component.jsx
 peek path/to/file.md
+peek path/to/file.rhm
 peek path/to/file.rkt
 peek path/to/file.scrbl
 peek path/to/file.wat
+}
+
+Rhombus examples:
+
+@shellblock[#:shell 'bash]{
+peek path/to/file.rhm
 }
 
 Shell examples:
@@ -146,8 +159,8 @@ peek path/to/script.ps1
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
        input. Supported values are @tt{bash}, @tt{css}, @tt{html}, @tt{js},
-       @tt{jsx}, @tt{md}, @tt{powershell}, @tt{rkt}, @tt{scrbl}, @tt{wat},
-       and @tt{zsh}.}
+       @tt{jsx}, @tt{md}, @tt{powershell}, @tt{rhombus}, @tt{rkt},
+       @tt{scrbl}, @tt{wat}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -220,6 +233,7 @@ The current explicit file type names are:
  @item{@tt{jsx}}
  @item{@tt{md}}
  @item{@tt{powershell}}
+ @item{@tt{rhombus}}
  @item{@tt{rkt}}
  @item{@tt{scrbl}}
  @item{@tt{wat}}
@@ -307,6 +321,28 @@ Example shell preview input:
 #!/usr/bin/env bash
 export PATH
 echo "$PATH"
+}
+
+@subsection{Rhombus}
+
+For Rhombus, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for Rhombus source in @tt{.rhm} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Rhombus previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Rhombus preview input:
+
+@shellblock[#:shell 'bash]{
+#lang rhombus
+fun greet(name):
+  println("hello, $(name)")
 }
 
 @subsection{Markdown}

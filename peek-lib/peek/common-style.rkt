@@ -18,6 +18,7 @@
 ;; css-like-style  -- Style CSS-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
+;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
 ;; racket-like-style     -- Style Racket-like embedded tokens.
 ;; scribble-like-style   -- Style Scribble-like embedded tokens.
@@ -46,6 +47,8 @@
  javascript-like-style
  ;; shell-like-style Style shell-like embedded tokens.
  shell-like-style
+ ;; rhombus-like-style Style Rhombus-like embedded tokens.
+ rhombus-like-style
  ;; wat-like-style Style WAT-like embedded tokens.
  wat-like-style
  ;; racket-like-style Style Racket-like embedded tokens.
@@ -174,6 +177,46 @@
          (eq? category 'literal))
      ansi-literal]
     [(or (memq 'shell-punctuation tags)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; rhombus-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Rhombus-like roles.
+(define (rhombus-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'rhombus-error tags)
+         (memq 'rhombus-fail tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'rhombus-comment tags))
+     ansi-comment]
+    [(or (memq 'rhombus-keyword tags)
+         (memq 'rhombus-builtin tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'rhombus-string tags)
+         (memq 'rhombus-constant tags)
+         (memq 'rhombus-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'rhombus-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'rhombus-parenthesis tags)
+         (memq 'rhombus-separator tags)
+         (memq 'rhombus-opener tags)
+         (memq 'rhombus-closer tags)
+         (memq 'rhombus-operator tags)
+         (memq 'rhombus-block-operator tags)
+         (memq 'rhombus-comma-operator tags)
+         (memq 'rhombus-at tags)
+         (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]
     [else

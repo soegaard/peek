@@ -56,6 +56,7 @@
          "js.rkt"
          "markdown.rkt"
          "racket.rkt"
+         "rhombus.rkt"
          "shell.rkt"
          "scribble.rkt"
          "wat.rkt")
@@ -64,7 +65,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash css html js jsx md powershell rkt scrbl wat zsh))
+  '(bash css html js jsx md powershell rhombus rkt scrbl wat zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -98,6 +99,7 @@
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
+       [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
        [(regexp-match? #px"(?i:\\.zsh)$" path-string) 'zsh]
        [(regexp-match? #px"(?i:\\.wat)$" path-string) 'wat]
@@ -142,6 +144,8 @@
      (render-markdown-preview source)]
     [(eq? file-type 'powershell)
      (render-shell-preview source #:shell 'powershell)]
+    [(eq? file-type 'rhombus)
+     (render-rhombus-preview source)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
     [(eq? file-type 'scrbl)
@@ -192,6 +196,11 @@
      (render-racket-preview-port in out)]
     [(eq? file-type 'rkt)
      (copy-port in out)]
+    [(and (eq? file-type 'rhombus)
+          (color-enabled? out options))
+     (render-rhombus-preview-port in out)]
+    [(eq? file-type 'rhombus)
+     (copy-port in out)]
     [(and (or (eq? file-type 'html)
               (eq? file-type 'js)
               (eq? file-type 'jsx)
@@ -227,6 +236,7 @@
     [(or (eq? file-type 'wat)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)
+         (eq? file-type 'rhombus)
          (eq? file-type 'zsh)
          (eq? file-type 'rkt)
          (eq? file-type 'html)

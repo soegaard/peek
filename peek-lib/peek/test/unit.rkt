@@ -11,6 +11,7 @@
          "../markdown.rkt"
          "../preview.rkt"
          "../racket.rkt"
+         "../rhombus.rkt"
          "../shell.rkt"
          "../scribble.rkt"
          "../wat.rkt")
@@ -21,6 +22,8 @@
   "fixtures/demo.sh")
 (define-runtime-path demo-racket-path
   "fixtures/demo.rkt")
+(define-runtime-path demo-rhombus-path
+  "fixtures/demo.rhm")
 (define-runtime-path demo-scribble-path
   "fixtures/demo.scrbl")
 (define-runtime-path demo-zsh-path
@@ -37,7 +40,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash css html js jsx md powershell rkt scrbl wat zsh))
+              '(bash css html js jsx md powershell rhombus rkt scrbl wat zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -128,6 +131,10 @@
  (regexp-match? #px"greet"
                 (preview-file demo-racket-path
                               (make-preview-options #:color-mode 'always))))
+(check-equal?
+ (strip-ansi (preview-file demo-rhombus-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-rhombus-path))
 (check-true
  (regexp-match? #px"Title"
                 (preview-string "# Title\n\nText\n"
@@ -155,6 +162,12 @@
                              (make-preview-options #:type 'powershell
                                                    #:color-mode 'always)))
  "$name = \"world\"\n")
+(check-equal?
+ (strip-ansi (preview-string "#lang rhombus\nfun greet(name): name\n"
+                             #f
+                             (make-preview-options #:type 'rhombus
+                                                   #:color-mode 'always)))
+ "#lang rhombus\nfun greet(name): name\n")
 (check-true
  (regexp-match? #px"itemlist"
                 (preview-file demo-scribble-path

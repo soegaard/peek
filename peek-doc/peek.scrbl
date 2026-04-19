@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble-tools
+          racket/runtime-path
           (for-label lexers/css
                      lexers/html
                      lexers/javascript
@@ -8,7 +9,7 @@
                      lexers/racket
                      lexers/scribble
                      lexers/wat
-                     racket/base
+                     racket/base                     
                      (lib "peek/main.rkt")
                      (lib "peek/preview.rkt")))
 
@@ -57,13 +58,18 @@ WebAssembly text-format files in @tt{.wat}.
 
 A few small previews, rendered by @exec{peek}:
 
-@(image #:scale 0.5 "peek-doc/screenshots/example-css.png")
+@(define-runtime-path img-css    "screenshots/example-css.png")
+@(define-runtime-path img-html   "screenshots/example-html.png")
+@(define-runtime-path img-racket "screenshots/example-racket.png")
+@(define-runtime-path img-wat    "screenshots/example-wat.png")
 
-@(image #:scale 0.5 "peek-doc/screenshots/example-html.png")
+@(image #:scale 0.5 img-css)
 
-@(image #:scale 0.5 "peek-doc/screenshots/example-racket.png")
+@(image #:scale 0.5 img-html)
 
-@(image #:scale 0.5 "peek-doc/screenshots/example-wat.png")
+@(image #:scale 0.5 img-racket)
+
+@(image #:scale 0.5 img-wat)
 
 @section{Command Line}
 

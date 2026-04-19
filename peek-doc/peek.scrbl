@@ -7,6 +7,7 @@
                      lexers/javascript
                      lexers/markdown
                      lexers/racket
+                     lexers/shell
                      lexers/scribble
                      lexers/wat
                      racket/base                     
@@ -29,7 +30,8 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, HTML, JavaScript, Markdown, Racket, Scribble, and WAT.
+CSS, Bash, HTML, JavaScript, Markdown, PowerShell, Racket, Scribble, WAT, and
+Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -40,6 +42,10 @@ color model for embedded @tt{<style>} and @tt{<script>} content.
 
 The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
 classification for @tt{.jsx} files.
+
+The shell previewers use @tt{lexers/shell} and support @tt{.sh}, @tt{.bash},
+@tt{.zsh}, and @tt{.ps1} files as @tt{bash}, @tt{zsh}, and @tt{powershell}
+preview targets.
 
 The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
 plus delegated embedded languages in @tt{.md} files.
@@ -125,13 +131,23 @@ peek path/to/file.scrbl
 peek path/to/file.wat
 }
 
+Shell examples:
+
+@shellblock[#:shell 'bash]{
+peek path/to/script.sh
+peek path/to/script.bash
+peek path/to/script.zsh
+peek path/to/script.ps1
+}
+
 @subsection{Options}
 
 @itemlist[
  @item{@DFlag{--type} @italic{type}
        selects the input type explicitly. This is mainly useful for standard
-       input. Supported values are @tt{css}, @tt{html}, @tt{js}, @tt{jsx},
-       @tt{md}, @tt{rkt}, @tt{scrbl}, and @tt{wat}.}
+       input. Supported values are @tt{bash}, @tt{css}, @tt{html}, @tt{js},
+       @tt{jsx}, @tt{md}, @tt{powershell}, @tt{rkt}, @tt{scrbl}, @tt{wat},
+       and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -197,14 +213,17 @@ fail with an error instead of silently falling back to plain output.
 The current explicit file type names are:
 
 @itemlist[
+ @item{@tt{bash}}
  @item{@tt{css}}
  @item{@tt{html}}
  @item{@tt{js}}
  @item{@tt{jsx}}
  @item{@tt{md}}
+ @item{@tt{powershell}}
  @item{@tt{rkt}}
  @item{@tt{scrbl}}
  @item{@tt{wat}}
+ @item{@tt{zsh}}
 ]
 
 @subsection{CSS}
@@ -266,6 +285,28 @@ Example HTML preview input:
   <script>const root = document.querySelector("#app");</script>
   <p>Hello &amp; goodbye.</p>
 </main>
+}
+
+@subsection{Shell}
+
+For Shell, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for Bash, Zsh, and PowerShell source}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The shell previewers are intentionally color-only. They do not add layout
+rewriting or alignment, and they preserve source text and line breaks after
+ANSI stripping.
+
+Example shell preview input:
+
+@shellblock[#:shell 'bash]{
+#!/usr/bin/env bash
+export PATH
+echo "$PATH"
 }
 
 @subsection{Markdown}

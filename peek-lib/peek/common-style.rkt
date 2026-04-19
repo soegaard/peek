@@ -17,6 +17,7 @@
 ;; colorize-text   -- Apply ANSI styling while preserving newlines.
 ;; css-like-style  -- Style CSS-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
+;; shell-like-style      -- Style shell-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
 ;; racket-like-style     -- Style Racket-like embedded tokens.
 ;; scribble-like-style   -- Style Scribble-like embedded tokens.
@@ -43,6 +44,8 @@
  css-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
+ ;; shell-like-style Style shell-like embedded tokens.
+ shell-like-style
  ;; wat-like-style Style WAT-like embedded tokens.
  wat-like-style
  ;; racket-like-style Style Racket-like embedded tokens.
@@ -140,6 +143,39 @@
      ansi-literal]
     [(eq? category 'identifier)
      ansi-identifier]
+    [else
+     ""]))
+
+;; shell-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for shell-like roles.
+(define (shell-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'shell-comment tags))
+     ansi-comment]
+    [(or (memq 'shell-keyword tags)
+         (memq 'shell-builtin tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'shell-variable tags)
+         (memq 'shell-word tags)
+         (memq 'shell-assignment tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'shell-string-literal tags)
+         (memq 'shell-command-substitution tags)
+         (memq 'shell-option tags)
+         (memq 'shell-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'shell-punctuation tags)
+         (eq? category 'delimiter))
+     ansi-delimiter]
     [else
      ""]))
 

@@ -11,15 +11,22 @@
          "../markdown.rkt"
          "../preview.rkt"
          "../racket.rkt"
+         "../shell.rkt"
          "../scribble.rkt"
          "../wat.rkt")
 
 (define-runtime-path demo-markdown-path
   "fixtures/demo.md")
+(define-runtime-path demo-shell-path
+  "fixtures/demo.sh")
 (define-runtime-path demo-racket-path
   "fixtures/demo.rkt")
 (define-runtime-path demo-scribble-path
   "fixtures/demo.scrbl")
+(define-runtime-path demo-zsh-path
+  "fixtures/demo.zsh")
+(define-runtime-path demo-powershell-path
+  "fixtures/demo.ps1")
 (define-runtime-path demo-wat-path
   "fixtures/demo.wat")
 
@@ -30,7 +37,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(css html js jsx md rkt scrbl wat))
+              '(bash css html js jsx md powershell rkt scrbl wat zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -57,6 +64,10 @@
  (regexp-match? #px"Title"
                 (render-markdown-preview "# Title\n\nText\n")))
 (check-true
+ (regexp-match? #px"export"
+                (render-shell-preview "#!/usr/bin/env bash\nexport PATH\n"
+                                      #:shell 'bash)))
+(check-true
  (regexp-match? #px"#lang"
                 (render-racket-preview "#lang racket/base\n(define x 1)\n")))
 (check-true
@@ -72,12 +83,25 @@
                                 "demo.js"
                                 (make-preview-options #:color-mode 'always))))
 (check-true
+ (regexp-match? #px"\u001b\\["
+                (preview-string "echo \"$HOME\"\n"
+                                "script.bash"
+                                (make-preview-options #:color-mode 'always))))
+(check-true
  (let ([out (open-output-string)])
    (preview-port (open-input-string "#lang racket/base\n(define x 1)\n")
                  "program.rkt"
                  (make-preview-options #:color-mode 'always)
                  out)
    (regexp-match? #px"\u001b\\[" (get-output-string out))))
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string "$name = \"world\"\n")
+                 "script.ps1"
+                 (make-preview-options #:color-mode 'always)
+                 out)
+   (strip-ansi (get-output-string out)))
+ "$name = \"world\"\n")
 
 (check-equal?
  (let ([out (open-output-string)])
@@ -88,6 +112,18 @@
    (strip-ansi (get-output-string out)))
  "<!doctype html><main id=\"app\">Hi</main>\n")
 
+(check-equal?
+ (strip-ansi (preview-file demo-shell-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-shell-path))
+(check-equal?
+ (strip-ansi (preview-file demo-zsh-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-zsh-path))
+(check-equal?
+ (strip-ansi (preview-file demo-powershell-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-powershell-path))
 (check-true
  (regexp-match? #px"greet"
                 (preview-file demo-racket-path
@@ -101,6 +137,24 @@
  (regexp-match? #px"Demo Document"
                 (preview-file demo-markdown-path
                               (make-preview-options #:color-mode 'always))))
+(check-equal?
+ (strip-ansi (preview-string "#!/usr/bin/env bash\nexport PATH\n"
+                             #f
+                             (make-preview-options #:type 'bash
+                                                   #:color-mode 'always)))
+ "#!/usr/bin/env bash\nexport PATH\n")
+(check-equal?
+ (strip-ansi (preview-string "autoload -Uz compinit\n"
+                             #f
+                             (make-preview-options #:type 'zsh
+                                                   #:color-mode 'always)))
+ "autoload -Uz compinit\n")
+(check-equal?
+ (strip-ansi (preview-string "$name = \"world\"\n"
+                             #f
+                             (make-preview-options #:type 'powershell
+                                                   #:color-mode 'always)))
+ "$name = \"world\"\n")
 (check-true
  (regexp-match? #px"itemlist"
                 (preview-file demo-scribble-path

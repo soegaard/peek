@@ -20,6 +20,7 @@ Preview a file directly:
 
 ```sh
 peek path/to/file.css
+peek path/to/file.sh
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.md
@@ -34,6 +35,7 @@ Preview from standard input by choosing a file type explicitly:
 cat path/to/file.md | peek --type md
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.wat | peek --type wat
+cat path/to/script.sh | peek --type bash
 ```
 
 List the currently supported explicit file types:
@@ -68,16 +70,21 @@ opens Terminal, runs `peek`, and captures the window as a PNG.
 Current supported file types are:
 
 - `css`
+- `bash`
 - `html`
 - `js`
 - `jsx`
 - `md`
+- `powershell`
 - `rkt`
 - `scrbl`
 - `wat`
+- `zsh`
 
 CSS supports syntax coloring, swatches, and optional alignment. The other
-current file types are color-focused terminal previews.
+current file types are color-focused terminal previews. Shell files use the
+`bash`, `zsh`, and `powershell` previewers and preserve source text and line
+breaks without layout rewriting.
 
 ## Documentation
 

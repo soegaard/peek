@@ -56,6 +56,7 @@
          "js.rkt"
          "markdown.rkt"
          "racket.rkt"
+         "shell.rkt"
          "scribble.rkt"
          "wat.rkt")
 
@@ -63,7 +64,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(css html js jsx md rkt scrbl wat))
+  '(bash css html js jsx md powershell rkt scrbl wat zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -93,9 +94,12 @@
      (cond
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
+       [(regexp-match? #px"(?i:\\.(?:sh|bash))$" path-string) 'bash]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
+       [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
+       [(regexp-match? #px"(?i:\\.zsh)$" path-string) 'zsh]
        [(regexp-match? #px"(?i:\\.wat)$" path-string) 'wat]
        [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
         'js]
@@ -125,6 +129,8 @@
      (render-css-preview source
                          #:align?    (preview-options-align? options)
                          #:swatches? (preview-options-swatches? options))]
+    [(eq? file-type 'bash)
+     (render-shell-preview source #:shell 'bash)]
     [(eq? file-type 'html)
      (render-html-preview source)]
     [(eq? file-type 'js)
@@ -134,10 +140,14 @@
                                 #:jsx? #t)]
     [(eq? file-type 'md)
      (render-markdown-preview source)]
+    [(eq? file-type 'powershell)
+     (render-shell-preview source #:shell 'powershell)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
     [(eq? file-type 'scrbl)
      (render-scribble-preview source)]
+    [(eq? file-type 'zsh)
+     (render-shell-preview source #:shell 'zsh)]
     [(eq? file-type 'wat)
      (render-wat-preview source)]
     [else
@@ -160,6 +170,18 @@
   (define file-type
     (effective-file-type maybe-path options))
   (cond
+    [(and (or (eq? file-type 'bash)
+              (eq? file-type 'powershell)
+              (eq? file-type 'zsh))
+          (color-enabled? out options))
+     (case file-type
+       [(bash)       (render-shell-preview-port in out #:shell 'bash)]
+       [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
+       [(zsh)        (render-shell-preview-port in out #:shell 'zsh)])]
+    [(or (eq? file-type 'bash)
+         (eq? file-type 'powershell)
+         (eq? file-type 'zsh))
+     (copy-port in out)]
     [(and (eq? file-type 'wat)
           (color-enabled? out options))
      (render-wat-preview-port in out)]
@@ -203,6 +225,9 @@
     (effective-file-type path options))
   (cond
     [(or (eq? file-type 'wat)
+         (eq? file-type 'bash)
+         (eq? file-type 'powershell)
+         (eq? file-type 'zsh)
          (eq? file-type 'rkt)
          (eq? file-type 'html)
          (eq? file-type 'js)

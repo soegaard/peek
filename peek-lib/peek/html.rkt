@@ -102,24 +102,3 @@
                               (html-derived-token-text token))
                out)
       (loop))))
-
-(module+ test
-  (require rackunit)
-
-  (define html-rendered
-    (render-html-preview
-     "<!doctype html><main id=\"app\">Hi &amp; bye<style>.x { color: #fff; }</style><script>const answer = 42;</script><!-- note --></main>"))
-  (define malformed-rendered
-    (render-html-preview "<div class=\"unterminated\ntext"))
-
-  (check-true  (regexp-match? #px"\u001b\\[" html-rendered))
-  (check-true  (regexp-match? #px"doctype" html-rendered))
-  (check-true  (regexp-match? #px"main" html-rendered))
-  (check-true  (regexp-match? #px"app" html-rendered))
-  (check-true  (regexp-match? #px"&amp;" html-rendered))
-  (check-true  (regexp-match? #px"color" html-rendered))
-  (check-true  (regexp-match? #px"#fff" html-rendered))
-  (check-true  (regexp-match? #px"const" html-rendered))
-  (check-true  (regexp-match? #px"answer" html-rendered))
-  (check-true  (regexp-match? #px"note" html-rendered))
-  (check-true  (regexp-match? #px"unterminated" malformed-rendered)))

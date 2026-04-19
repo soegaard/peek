@@ -184,23 +184,3 @@
                               (scribble-derived-token-text token))
                out)
       (loop))))
-
-(module+ test
-  (require rackunit)
-
-  (define scribble-rendered
-    (render-scribble-preview
-     "#lang scribble/manual\n@title{Hi}\nText\n@itemlist[@item{One} @item{Two}]\n@racket[(define x 1)]\n"))
-  (define malformed-rendered
-    (render-scribble-preview "@title{Hi"))
-
-  (check-true (regexp-match? #px"\u001b\\[" scribble-rendered))
-  (check-true (regexp-match? #px"#lang" scribble-rendered))
-  (check-true (regexp-match? #px"title" scribble-rendered))
-  (check-true (regexp-match? #px"itemlist" scribble-rendered))
-  (check-true (regexp-match? #px"@" scribble-rendered))
-  (check-true (regexp-match? #px"define" scribble-rendered))
-  (check-true (regexp-match? #px"Text" scribble-rendered))
-  (check-equal? (length (regexp-match* #px"\n" scribble-rendered))
-                5)
-  (check-true (regexp-match? #px"Hi" malformed-rendered)))

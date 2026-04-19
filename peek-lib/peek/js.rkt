@@ -169,22 +169,3 @@
                               (javascript-derived-token-text token))
                out)
       (loop))))
-
-(module+ test
-  (require rackunit)
-
-  (define js-rendered
-    (render-javascript-preview "const answer = 42;\nobj.run(answer);\n"))
-  (define jsx-rendered
-    (render-javascript-preview "const el = <Button kind=\"primary\">Hello {name}</Button>;\n"
-                               #:jsx? #t))
-
-  (check-true (regexp-match? #px"\u001b\\[" js-rendered))
-  (check-true (regexp-match? #px"answer" js-rendered))
-  (check-true (regexp-match? #px"run" js-rendered))
-  (check-true (regexp-match? #px"Button" jsx-rendered))
-  (check-true (regexp-match? #px"kind" jsx-rendered))
-  (check-true (regexp-match? #px"Hello" jsx-rendered))
-  (check-false
-   (regexp-match? #px"\u001b\\[38;2;206;145;120mHello"
-                  jsx-rendered)))

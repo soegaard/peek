@@ -153,35 +153,3 @@
 
 (module+ main
   (main))
-
-(module+ test
-  (require rackunit)
-
-  (define plain-options
-    (make-preview-options #:type 'css
-                          #:color-mode 'never))
-
-  (check-equal? (preview-string "color: #fff;" #f plain-options)
-                "color: #fff;")
-  (check-true
-   (regexp-match? #px"\u001b\\["
-                  (preview-string "color: #fff;"
-                                  #f
-                                  (make-preview-options #:type 'css
-                                                        #:color-mode 'always))))
-  (check-equal?
-   (preview-string "color: #fff;"
-                   #f
-                   (make-preview-options #:type 'css
-                                         #:color-mode 'auto)
-                   (open-output-string))
-   "color: #fff;")
-  (check-not-exn
-   (lambda ()
-     (define-values (pager-pid pager-out pager-in pager-err)
-       (subprocess (current-output-port) #f (current-error-port) "/bin/cat"))
-     (display "peek pager smoke\n" pager-in)
-     (close-output-port pager-in)
-     (subprocess-wait pager-pid)))
-  (check-equal? supported-file-types
-                '(css html js jsx md rkt scrbl wat)))

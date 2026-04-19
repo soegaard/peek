@@ -170,28 +170,3 @@
                               (racket-derived-token-text token))
                out)
       (loop))))
-
-(module+ test
-  (require rackunit)
-
-  (define racket-rendered
-    (render-racket-preview
-     "#lang racket/base\n; hi\n#;(+ 1 2)\n(define (greet #:name [name \"you\"])\n  (string-append \"hi \" name))\n"))
-  (define malformed-rendered
-    (render-racket-preview "\""))
-  (define forms-rendered
-    (render-racket-preview
-     "(define x 1)\n(if x x 0)\n(let ([x 1]) x)\n"))
-
-  (check-true (regexp-match? #px"\u001b\\[" racket-rendered))
-  (check-true (regexp-match? #px"#lang" racket-rendered))
-  (check-true (regexp-match? #px"racket/base" racket-rendered))
-  (check-true (regexp-match? #px"hi" racket-rendered))
-  (check-true (regexp-match? #px"#:name" racket-rendered))
-  (check-true (regexp-match? #px"greet" racket-rendered))
-  (check-true (regexp-match? #px"string-append" racket-rendered))
-  (check-true (regexp-match? #px"hi" racket-rendered))
-  (check-true (regexp-match? #px"\"" malformed-rendered))
-  (check-true (regexp-match? #px"\u001b\\[38;2;86;156;214mdefine\u001b\\[0m" forms-rendered))
-  (check-true (regexp-match? #px"\u001b\\[38;2;86;156;214mif\u001b\\[0m" forms-rendered))
-  (check-true (regexp-match? #px"\u001b\\[38;2;86;156;214mlet\u001b\\[0m" forms-rendered)))

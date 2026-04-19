@@ -25,6 +25,7 @@ peek path/to/file.sh
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.yaml
 peek path/to/file.py
 peek path/to/file.md
 peek path/to/file.rhm
@@ -40,6 +41,7 @@ cat path/to/file.md | peek --type md
 cat path/to/file.c | peek --type c
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.json | peek --type json
+cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.wat | peek --type wat
@@ -91,6 +93,7 @@ Current supported file types are:
 - `rkt`
 - `scrbl`
 - `wat`
+- `yaml`
 - `zsh`
 
 CSS supports syntax coloring, swatches, and optional alignment. The other
@@ -101,7 +104,9 @@ without layout rewriting. Python uses the `python` previewer and preserves
 source text and line breaks without layout rewriting. Rhombus uses the
 `rhombus` previewer and preserves source text and line breaks without layout
 rewriting. Shell files use the `bash`, `zsh`, and `powershell` previewers and
-preserve source text and line breaks without layout rewriting.
+preserve source text and line breaks without layout rewriting. YAML uses the
+`yaml` previewer and preserves source text and line breaks without layout
+rewriting.
 
 ## Documentation
 

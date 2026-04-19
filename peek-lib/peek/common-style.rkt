@@ -19,6 +19,7 @@
 ;; c-like-style          -- Style C-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
+;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
 ;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
@@ -52,6 +53,8 @@
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
  json-like-style
+ ;; yaml-like-style Style YAML-like embedded tokens.
+ yaml-like-style
  ;; python-like-style Style Python-like embedded tokens.
  python-like-style
  ;; shell-like-style Style shell-like embedded tokens.
@@ -216,6 +219,47 @@
          (memq 'json-array-end tags)
          (memq 'json-comma tags)
          (memq 'json-colon tags)
+         (eq? category 'delimiter)
+         (eq? category 'operator))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; yaml-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for YAML-like roles.
+(define (yaml-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'yaml-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (memq 'yaml-comment tags)
+         (eq? category 'comment))
+     ansi-comment]
+    [(or (memq 'yaml-key-scalar tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'yaml-anchor tags)
+         (memq 'yaml-tag tags)
+         (memq 'yaml-alias tags))
+     ansi-identifier]
+    [(or (memq 'yaml-string-literal tags)
+         (memq 'yaml-plain-scalar tags)
+         (memq 'yaml-block-scalar-content tags)
+         (memq 'yaml-number tags)
+         (memq 'yaml-boolean tags)
+         (memq 'yaml-null tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'yaml-directive tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'yaml-document-marker tags)
+         (memq 'yaml-value-indicator tags)
+         (memq 'yaml-sequence-indicator tags)
+         (memq 'yaml-flow-delimiter tags)
+         (memq 'yaml-block-scalar-header tags)
          (eq? category 'delimiter)
          (eq? category 'operator))
      ansi-delimiter]

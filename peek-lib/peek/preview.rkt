@@ -51,8 +51,8 @@
 (require racket/file
          racket/path
          racket/port
-        "css.rkt"
-        "c.rkt"
+         "css.rkt"
+         "c.rkt"
          "html.rkt"
          "js.rkt"
          "json.rkt"
@@ -61,6 +61,7 @@
          "racket.rkt"
          "rhombus.rkt"
          "shell.rkt"
+         "yaml.rkt"
          "scribble.rkt"
          "wat.rkt")
 
@@ -68,7 +69,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
+  '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -107,6 +108,7 @@
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.(?:py|pyi|pyw))$" path-string) 'python]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
+       [(regexp-match? #px"(?i:\\.(?:ya?ml))$" path-string) 'yaml]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
        [(regexp-match? #px"(?i:\\.zsh)$" path-string) 'zsh]
        [(regexp-match? #px"(?i:\\.wat)$" path-string) 'wat]
@@ -159,6 +161,8 @@
      (render-python-preview source)]
     [(eq? file-type 'rhombus)
      (render-rhombus-preview source)]
+    [(eq? file-type 'yaml)
+     (render-yaml-preview source)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
     [(eq? file-type 'scrbl)
@@ -241,10 +245,15 @@
          (eq? file-type 'md)
          (eq? file-type 'scrbl))
      (copy-port in out)]
+    [(and (eq? file-type 'yaml)
+          (color-enabled? out options))
+     (render-yaml-preview-port in out)]
+    [(eq? file-type 'yaml)
+     (copy-port in out)]
     [else
      (define source
        (port->string in))
-     (display (preview-string/rendered source maybe-path options out)
+       (display (preview-string/rendered source maybe-path options out)
               out)]))
 
 ;; preview-file : path-string? preview-options? -> string?
@@ -268,6 +277,7 @@
          (eq? file-type 'python)
          (eq? file-type 'jsx)
          (eq? file-type 'md)
+         (eq? file-type 'yaml)
          (eq? file-type 'scrbl))
      (define rendered
        (open-output-string))

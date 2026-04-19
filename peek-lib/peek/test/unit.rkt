@@ -13,6 +13,7 @@
          "../markdown.rkt"
          "../python.rkt"
          "../preview.rkt"
+         "../yaml.rkt"
          "../racket.rkt"
          "../rhombus.rkt"
          "../shell.rkt"
@@ -25,6 +26,10 @@
   "fixtures/demo.c")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
+(define-runtime-path demo-yaml-path
+  "fixtures/demo.yaml")
+(define-runtime-path demo-yml-path
+  "fixtures/demo.yml")
 (define-runtime-path demo-python-path
   "fixtures/demo.py")
 (define-runtime-path demo-shell-path
@@ -49,7 +54,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
+              '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -71,6 +76,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
+(check-true
+ (regexp-match? #px"anchor"
+                (render-yaml-preview "---\nname: &anchor !tag value\n")))
 (check-true
  (regexp-match? #px"answer"
                 (render-python-preview "def answer(name):\n    return name\n")))
@@ -146,6 +154,14 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-json-path))
 (check-equal?
+ (strip-ansi (preview-file demo-yaml-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-yaml-path))
+(check-equal?
+ (strip-ansi (preview-file demo-yml-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-yml-path))
+(check-equal?
  (strip-ansi (preview-file demo-python-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-python-path))
@@ -192,6 +208,12 @@
                              (make-preview-options #:type 'json
                                                    #:color-mode 'always)))
  "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")
+(check-equal?
+ (strip-ansi (preview-string "---\nname: &anchor !tag value\n"
+                             #f
+                             (make-preview-options #:type 'yaml
+                                                   #:color-mode 'always)))
+ "---\nname: &anchor !tag value\n")
 (check-equal?
  (strip-ansi (preview-string "def answer(name):\n    return name\n"
                              #f

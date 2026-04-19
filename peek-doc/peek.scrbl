@@ -12,6 +12,7 @@
           lexers/racket
           lexers/rhombus
           lexers/shell
+          lexers/yaml
           lexers/scribble
           lexers/wat
                      racket/base                     
@@ -35,7 +36,7 @@ There is file-type-aware rendering for the supported file types.
 The supported file types are:
 
 CSS, Bash, C, HTML, JavaScript, JSON, Markdown, PowerShell, Python, Rhombus,
-Racket, Scribble, WAT, and Zsh.
+Racket, Scribble, WAT, YAML, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -62,6 +63,9 @@ preview targets.
 
 The Rhombus previewer uses @tt{lexers/rhombus} and supports @tt{.rhm} files
 as @tt{rhombus} preview targets.
+
+The YAML previewer uses @tt{lexers/yaml} and supports @tt{.yaml} and
+@tt{.yml} files as @tt{yaml} preview targets.
 
 The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
 plus delegated embedded languages in @tt{.md} files.
@@ -104,6 +108,7 @@ peek path/to/file.c
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.yaml
 peek path/to/file.py
 peek path/to/file.md
 peek path/to/file.rhm
@@ -120,6 +125,7 @@ cat path/to/file.c | peek --type c
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json
+cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.rkt | peek --type rkt
@@ -144,13 +150,14 @@ peek -p path/to/file.css
 }
 
 HTML, JavaScript, JSON, Python, JSX, Markdown, Rhombus, Racket, Scribble,
-and WAT examples:
+YAML, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
 peek path/to/file.c
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.yaml
 peek path/to/file.py
 peek path/to/component.jsx
 peek path/to/file.md
@@ -182,7 +189,7 @@ peek path/to/script.ps1
     selects the input type explicitly. This is mainly useful for standard
     input. Supported values are @tt{bash}, @tt{c}, @tt{css}, @tt{html}, @tt{js},
        @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell}, @tt{python},
-       @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{wat}, and @tt{zsh}.}
+       @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{wat}, @tt{yaml}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}

@@ -6,11 +6,16 @@
 
 (define deps '("base"
                "peek-lib"
-               "peek-doc"))
+               "peek-doc"
+               "lexers-lib"
+               "parser-tools-lib"
+               "rackunit-lib"))
 
 (define build-deps '("base"
                      "peek-lib"
                      "peek-doc"
+
+                     "scribble-tools"
                      
                      "lexers-lib"                     
                      "rackunit-lib"

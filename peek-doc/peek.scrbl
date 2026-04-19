@@ -3,6 +3,7 @@
 @(require scribble-tools
           racket/runtime-path
           (for-label lexers/css
+                     lexers/c
                      lexers/html
           lexers/javascript
           lexers/json
@@ -33,12 +34,15 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, HTML, JavaScript, JSON, Markdown, PowerShell, Python, Rhombus,
+CSS, Bash, C, HTML, JavaScript, JSON, Markdown, PowerShell, Python, Rhombus,
 Racket, Scribble, WAT, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
 features such as syntax coloring, color swatches, and optional alignment.
+
+The C previewer uses @tt{lexers/c} and supports @tt{.c} and @tt{.h} files as
+@tt{c} preview targets.
 
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
 color model for embedded @tt{<style>} and @tt{<script>} content.
@@ -96,6 +100,7 @@ After installing the @exec{peek} package, the launcher is available as
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
+peek path/to/file.c
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
@@ -111,6 +116,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 
 @shellblock[#:shell 'bash]{
 cat path/to/file.css | peek --type css
+cat path/to/file.c | peek --type c
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json
@@ -142,6 +148,7 @@ and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
+peek path/to/file.c
 peek path/to/file.js
 peek path/to/file.json
 peek path/to/file.py
@@ -173,7 +180,7 @@ peek path/to/script.ps1
 @itemlist[
  @item{@DFlag{--type} @italic{type}
     selects the input type explicitly. This is mainly useful for standard
-    input. Supported values are @tt{bash}, @tt{css}, @tt{html}, @tt{js},
+    input. Supported values are @tt{bash}, @tt{c}, @tt{css}, @tt{html}, @tt{js},
        @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell}, @tt{python},
        @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{wat}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
@@ -242,15 +249,16 @@ The current explicit file type names are:
 
 @itemlist[
  @item{@tt{bash}}
+ @item{@tt{c}}
  @item{@tt{css}}
  @item{@tt{html}}
  @item{@tt{js}}
  @item{@tt{json}}
  @item{@tt{jsx}}
-@item{@tt{md}}
-@item{@tt{powershell}}
-@item{@tt{python}}
-@item{@tt{rhombus}}
+ @item{@tt{md}}
+ @item{@tt{powershell}}
+ @item{@tt{python}}
+ @item{@tt{rhombus}}
  @item{@tt{rkt}}
  @item{@tt{scrbl}}
  @item{@tt{wat}}

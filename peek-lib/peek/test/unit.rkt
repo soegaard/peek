@@ -4,6 +4,7 @@
          racket/file
          racket/runtime-path
          racket/string
+         "../c.rkt"
          "../css.rkt"
          "../html.rkt"
          "../js.rkt"
@@ -20,6 +21,8 @@
 
 (define-runtime-path demo-markdown-path
   "fixtures/demo.md")
+(define-runtime-path demo-c-path
+  "fixtures/demo.c")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
 (define-runtime-path demo-python-path
@@ -46,7 +49,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
+              '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -62,6 +65,9 @@
  (regexp-match? #px"doctype"
                 (render-html-preview
                  "<!doctype html><main id=\"app\">Hi &amp; bye<style>.x { color: #fff; }</style><script>const answer = 42;</script><!-- note --></main>")))
+(check-true
+ (regexp-match? #px"main"
+                (render-c-preview "#include <stdio.h>\nint main(void) { return 0; }\n")))
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
@@ -128,6 +134,10 @@
  "<!doctype html><main id=\"app\">Hi</main>\n")
 
 (check-equal?
+ (strip-ansi (preview-file demo-c-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-c-path))
+(check-equal?
  (strip-ansi (preview-file demo-shell-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-shell-path))
@@ -164,6 +174,12 @@
  (regexp-match? #px"Demo Document"
                 (preview-file demo-markdown-path
                               (make-preview-options #:color-mode 'always))))
+(check-equal?
+ (strip-ansi (preview-string "#include <stdio.h>\nint main(void) { return 0; }\n"
+                             #f
+                             (make-preview-options #:type 'c
+                                                   #:color-mode 'always)))
+ "#include <stdio.h>\nint main(void) { return 0; }\n")
 (check-equal?
  (strip-ansi (preview-string "#!/usr/bin/env bash\nexport PATH\n"
                              #f

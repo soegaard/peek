@@ -51,7 +51,8 @@
 (require racket/file
          racket/path
          racket/port
-         "css.rkt"
+        "css.rkt"
+        "c.rkt"
          "html.rkt"
          "js.rkt"
          "json.rkt"
@@ -67,7 +68,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
+  '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -96,6 +97,7 @@
        (path->string (simple-form-path maybe-path)))
      (cond
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
+       [(regexp-match? #px"(?i:\\.(?:c|h))$" path-string) 'c]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.(?:sh|bash))$" path-string) 'bash]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
@@ -136,6 +138,8 @@
      (render-css-preview source
                          #:align?    (preview-options-align? options)
                          #:swatches? (preview-options-swatches? options))]
+    [(eq? file-type 'c)
+     (render-c-preview source)]
     [(eq? file-type 'bash)
      (render-shell-preview source #:shell 'bash)]
     [(eq? file-type 'html)
@@ -184,14 +188,17 @@
     (effective-file-type maybe-path options))
   (cond
     [(and (or (eq? file-type 'bash)
+              (eq? file-type 'c)
               (eq? file-type 'powershell)
               (eq? file-type 'zsh))
           (color-enabled? out options))
      (case file-type
+       [(c)          (render-c-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
        [(zsh)        (render-shell-preview-port in out #:shell 'zsh)])]
     [(or (eq? file-type 'bash)
+         (eq? file-type 'c)
          (eq? file-type 'powershell)
          (eq? file-type 'zsh))
      (copy-port in out)]
@@ -249,6 +256,7 @@
     (effective-file-type path options))
   (cond
     [(or (eq? file-type 'wat)
+         (eq? file-type 'c)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)
          (eq? file-type 'rhombus)

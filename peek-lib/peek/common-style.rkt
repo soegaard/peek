@@ -16,6 +16,7 @@
 ;; ansi-malformed  -- Error color.
 ;; colorize-text   -- Apply ANSI styling while preserving newlines.
 ;; css-like-style  -- Style CSS-like embedded tokens.
+;; c-like-style          -- Style C-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
@@ -45,6 +46,8 @@
  colorize-text
  ;; css-like-style  Style CSS-like embedded tokens.
  css-like-style
+ ;; c-like-style Style C-like embedded tokens.
+ c-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
@@ -115,6 +118,36 @@
      ansi-literal]
     [(eq? category 'identifier)
      ansi-identifier]
+    [else
+     ""]))
+
+;; c-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for C-like roles.
+(define (c-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'c-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags))
+     ansi-comment]
+    [(or (memq 'c-preprocessor-directive tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'c-header-name tags)
+         (memq 'c-string-literal tags)
+         (memq 'c-char-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'c-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'c-delimiter tags)
+         (eq? category 'delimiter)
+         (eq? category 'operator))
+     ansi-delimiter]
     [else
      ""]))
 

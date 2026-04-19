@@ -20,6 +20,7 @@ Preview a file directly:
 
 ```sh
 peek path/to/file.css
+peek path/to/file.c
 peek path/to/file.sh
 peek path/to/file.html
 peek path/to/file.js
@@ -36,6 +37,7 @@ Preview from standard input by choosing a file type explicitly:
 
 ```sh
 cat path/to/file.md | peek --type md
+cat path/to/file.c | peek --type c
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.json | peek --type json
 cat path/to/file.py | peek --type python
@@ -76,6 +78,7 @@ opens Terminal, runs `peek`, and captures the window as a PNG.
 Current supported file types are:
 
 - `css`
+- `c`
 - `bash`
 - `html`
 - `js`
@@ -91,13 +94,14 @@ Current supported file types are:
 - `zsh`
 
 CSS supports syntax coloring, swatches, and optional alignment. The other
-current file types are color-focused terminal previews. JSON uses the
-`json` previewer and preserves source text and line breaks without layout
-rewriting. Python uses the `python` previewer and preserves source text and
-line breaks without layout rewriting. Rhombus uses the `rhombus` previewer and
-preserves source text and line breaks without layout rewriting. Shell files use
-the `bash`, `zsh`, and `powershell` previewers and preserve source text and
-line breaks without layout rewriting.
+current file types are color-focused terminal previews. C uses the `c`
+previewer and preserves source text and line breaks without layout rewriting.
+JSON uses the `json` previewer and preserves source text and line breaks
+without layout rewriting. Python uses the `python` previewer and preserves
+source text and line breaks without layout rewriting. Rhombus uses the
+`rhombus` previewer and preserves source text and line breaks without layout
+rewriting. Shell files use the `bash`, `zsh`, and `powershell` previewers and
+preserve source text and line breaks without layout rewriting.
 
 ## Documentation
 

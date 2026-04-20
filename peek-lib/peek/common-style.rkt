@@ -19,6 +19,7 @@
 ;; c-like-style          -- Style C-like embedded tokens.
 ;; cpp-like-style        -- Style C++-like embedded tokens.
 ;; objc-like-style       -- Style Objective-C-like embedded tokens.
+;; makefile-like-style   -- Style Makefile-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
@@ -57,6 +58,8 @@
  cpp-like-style
  ;; objc-like-style Style Objective-C-like embedded tokens.
  objc-like-style
+ ;; makefile-like-style Style Makefile-like embedded tokens.
+ makefile-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
@@ -234,6 +237,37 @@
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]
+    [else
+     ""]))
+
+;; makefile-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Makefile-like roles.
+(define (makefile-like-style category tags)
+  (cond
+    [(or (memq 'makefile-error tags)
+         (memq 'malformed-token tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'makefile-comment tags))
+     ansi-comment]
+    [(or (memq 'makefile-directive tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'makefile-variable tags)
+         (memq 'makefile-rule-target tags)
+         (memq 'makefile-variable-reference tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'makefile-assignment-operator tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [(or (eq? category 'literal)
+         (memq 'makefile-ignored tags))
+     ansi-literal]
     [else
      ""]))
 

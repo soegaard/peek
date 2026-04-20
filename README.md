@@ -23,6 +23,9 @@ peek path/to/file.css
 peek path/to/file.c
 peek path/to/file.cpp
 peek path/to/file.m
+peek Makefile
+peek GNUmakefile
+peek path/to/file.mk
 peek path/to/file.csv
 peek path/to/file.sh
 peek path/to/file.html
@@ -46,6 +49,7 @@ cat path/to/file.md | peek --type md
 cat path/to/file.c | peek --type c
 cat path/to/file.cpp | peek --type cpp
 cat path/to/file.m | peek --type objc
+cat path/to/file.mk | peek --type makefile
 cat path/to/file.csv | peek --type csv
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.json | peek --type json
@@ -94,6 +98,7 @@ Current supported file types are:
 - `cpp`
 - `objc`
 - `bash`
+- `makefile`
 - `html`
 - `js`
 - `json`
@@ -116,7 +121,9 @@ current file types are color-focused terminal previews. C uses the `c`
 previewer and preserves source text and line breaks without layout rewriting.
 C++ uses the `cpp` previewer and preserves source text and line breaks without
 layout rewriting. Objective-C uses the `objc` previewer and preserves source
-text and line breaks without layout rewriting. CSV and TSV use the `csv` and
+text and line breaks without layout rewriting. Makefiles use the `makefile`
+previewer and preserve source text and line breaks without layout rewriting.
+CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
 rewriting. JSON uses the `json` previewer and preserves source text and line
 breaks without layout rewriting. Python uses the `python` previewer and

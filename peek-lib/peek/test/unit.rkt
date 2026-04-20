@@ -15,6 +15,7 @@
          "../python.rkt"
          "../cpp.rkt"
          "../objc.rkt"
+         "../makefile.rkt"
          "../swift.rkt"
          "../preview.rkt"
          "../yaml.rkt"
@@ -34,6 +35,8 @@
   "fixtures/demo.hpp")
 (define-runtime-path demo-objc-path
   "fixtures/demo.m")
+(define-runtime-path demo-makefile-path
+  "fixtures/demo.mk")
 (define-runtime-path demo-csv-path
   "fixtures/demo.csv")
 (define-runtime-path demo-json-path
@@ -74,7 +77,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash c cpp objc css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+              '(bash c cpp css csv html js json jsx makefile md objc powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -99,6 +102,9 @@
 (check-true
  (regexp-match? #px"interface"
                 (render-objc-preview "#import <Foundation/Foundation.h>\n@interface Foo : NSObject\n@end\n")))
+(check-true
+ (regexp-match? #px"include"
+                (render-makefile-preview "CC := gcc\nall: main.o\n\t$(CC) -o app main.o\ninclude local.mk\n")))
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
@@ -196,6 +202,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-objc-path))
 (check-equal?
+ (strip-ansi (preview-file demo-makefile-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-makefile-path))
+(check-equal?
  (strip-ansi (preview-file demo-csv-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-csv-path))
@@ -278,6 +288,12 @@
                              (make-preview-options #:type 'objc
                                                    #:color-mode 'always)))
  "#import <Foundation/Foundation.h>\n@interface Foo : NSObject\n@end\n")
+(check-equal?
+ (strip-ansi (preview-string "CC := gcc\nall: main.o\n\t$(CC) -o app main.o\ninclude local.mk\n"
+                             #f
+                             (make-preview-options #:type 'makefile
+                                                   #:color-mode 'always)))
+ "CC := gcc\nall: main.o\n\t$(CC) -o app main.o\ninclude local.mk\n")
 (check-equal?
  (strip-ansi (preview-string "#!/usr/bin/env bash\nexport PATH\n"
                              #f

@@ -4,6 +4,7 @@
           racket/runtime-path
           (for-label lexers/css
                      lexers/c
+                     lexers/csv
                      lexers/html
           lexers/javascript
           lexers/json
@@ -13,6 +14,7 @@
           lexers/rhombus
           lexers/shell
           lexers/yaml
+          lexers/tsv
           lexers/scribble
           lexers/wat
                      racket/base                     
@@ -35,8 +37,8 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, C, HTML, JavaScript, JSON, Markdown, PowerShell, Python, Rhombus,
-Racket, Scribble, WAT, YAML, and Zsh.
+CSS, Bash, C, CSV, HTML, JavaScript, JSON, Markdown, PowerShell, Python,
+Rhombus, Racket, Scribble, TSV, WAT, YAML, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -44,6 +46,9 @@ features such as syntax coloring, color swatches, and optional alignment.
 
 The C previewer uses @tt{lexers/c} and supports @tt{.c} and @tt{.h} files as
 @tt{c} preview targets.
+
+The CSV previewer uses @tt{lexers/csv} and supports @tt{.csv} files as
+@tt{csv} preview targets.
 
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
 color model for embedded @tt{<style>} and @tt{<script>} content.
@@ -66,6 +71,9 @@ as @tt{rhombus} preview targets.
 
 The YAML previewer uses @tt{lexers/yaml} and supports @tt{.yaml} and
 @tt{.yml} files as @tt{yaml} preview targets.
+
+The TSV previewer uses @tt{lexers/tsv} and supports @tt{.tsv} files as
+@tt{tsv} preview targets.
 
 The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
 plus delegated embedded languages in @tt{.md} files.
@@ -105,6 +113,7 @@ After installing the @exec{peek} package, the launcher is available as
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
 peek path/to/file.c
+peek path/to/file.csv
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
@@ -123,6 +132,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 @shellblock[#:shell 'bash]{
 cat path/to/file.css | peek --type css
 cat path/to/file.c | peek --type c
+cat path/to/file.csv | peek --type csv
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json
@@ -152,11 +162,12 @@ peek -p path/to/file.css
 }
 
 HTML, JavaScript, JSON, Python, JSX, Markdown, Rhombus, Racket, Scribble,
-YAML, and WAT examples:
+TSV, YAML, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
 peek path/to/file.c
+peek path/to/file.csv
 peek path/to/file.js
 peek path/to/file.json
 peek path/to/file.yaml

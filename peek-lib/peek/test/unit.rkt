@@ -6,6 +6,7 @@
          racket/string
          "../c.rkt"
          "../css.rkt"
+         "../delimited.rkt"
          "../html.rkt"
          "../js.rkt"
          "../json.rkt"
@@ -24,6 +25,8 @@
   "fixtures/demo.md")
 (define-runtime-path demo-c-path
   "fixtures/demo.c")
+(define-runtime-path demo-csv-path
+  "fixtures/demo.csv")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
 (define-runtime-path demo-yaml-path
@@ -34,6 +37,8 @@
   "fixtures/demo.py")
 (define-runtime-path demo-shell-path
   "fixtures/demo.sh")
+(define-runtime-path demo-tsv-path
+  "fixtures/demo.tsv")
 (define-runtime-path demo-racket-path
   "fixtures/demo.rkt")
 (define-runtime-path demo-ss-path
@@ -58,7 +63,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat yaml zsh))
+              '(bash c css csv html js json jsx md powershell python rhombus rkt scrbl tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -80,6 +85,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
+(check-true
+ (regexp-match? #px"London"
+                (render-csv-preview "name,age,city\nAda,37,London\n")))
 (check-true
  (regexp-match? #px"anchor"
                 (render-yaml-preview "---\nname: &anchor !tag value\n")))
@@ -150,6 +158,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-c-path))
 (check-equal?
+ (strip-ansi (preview-file demo-csv-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-csv-path))
+(check-equal?
  (strip-ansi (preview-file demo-shell-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-shell-path))
@@ -185,6 +197,10 @@
  (strip-ansi (preview-file demo-powershell-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-powershell-path))
+(check-equal?
+ (strip-ansi (preview-file demo-tsv-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-tsv-path))
 (check-true
  (regexp-match? #px"greet"
                 (preview-file demo-racket-path
@@ -221,6 +237,12 @@
                                                    #:color-mode 'always)))
  "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")
 (check-equal?
+ (strip-ansi (preview-string "name,age,city\nAda,37,London\n"
+                             #f
+                             (make-preview-options #:type 'csv
+                                                   #:color-mode 'always)))
+ "name,age,city\nAda,37,London\n")
+(check-equal?
  (strip-ansi (preview-string "---\nname: &anchor !tag value\n"
                              #f
                              (make-preview-options #:type 'yaml
@@ -238,6 +260,12 @@
                              (make-preview-options #:type 'zsh
                                                    #:color-mode 'always)))
  "autoload -Uz compinit\n")
+(check-equal?
+ (strip-ansi (preview-string "name\tage\tcity\nAda\t37\tLondon\n"
+                             #f
+                             (make-preview-options #:type 'tsv
+                                                   #:color-mode 'always)))
+ "name\tage\tcity\nAda\t37\tLondon\n")
 (check-equal?
  (strip-ansi (preview-string "$name = \"world\"\n"
                              #f

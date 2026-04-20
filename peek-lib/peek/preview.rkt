@@ -53,6 +53,7 @@
          racket/port
          "css.rkt"
          "c.rkt"
+         "delimited.rkt"
          "html.rkt"
          "js.rkt"
          "json.rkt"
@@ -69,7 +70,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c css html js json jsx md powershell python rhombus rkt scrbl wat yaml zsh))
+  '(bash c css csv html js json jsx md powershell python rhombus rkt scrbl tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -99,6 +100,7 @@
      (cond
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
        [(regexp-match? #px"(?i:\\.(?:c|h))$" path-string) 'c]
+       [(regexp-match? #px"(?i:\\.csv)$" path-string) 'csv]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.(?:sh|bash))$" path-string) 'bash]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
@@ -111,6 +113,7 @@
        [(regexp-match? #px"(?i:\\.(?:ya?ml))$" path-string) 'yaml]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
        [(regexp-match? #px"(?i:\\.zsh)$" path-string) 'zsh]
+       [(regexp-match? #px"(?i:\\.tsv)$" path-string) 'tsv]
        [(regexp-match? #px"(?i:\\.wat)$" path-string) 'wat]
        [(regexp-match? #px"(?i:\\.(?:js|mjs|cjs))$" path-string)
         'js]
@@ -142,6 +145,8 @@
                          #:swatches? (preview-options-swatches? options))]
     [(eq? file-type 'c)
      (render-c-preview source)]
+    [(eq? file-type 'csv)
+     (render-csv-preview source)]
     [(eq? file-type 'bash)
      (render-shell-preview source #:shell 'bash)]
     [(eq? file-type 'html)
@@ -163,6 +168,8 @@
      (render-rhombus-preview source)]
     [(eq? file-type 'yaml)
      (render-yaml-preview source)]
+    [(eq? file-type 'tsv)
+     (render-tsv-preview source)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
     [(eq? file-type 'scrbl)
@@ -193,16 +200,19 @@
   (cond
     [(and (or (eq? file-type 'bash)
               (eq? file-type 'c)
+              (eq? file-type 'csv)
               (eq? file-type 'powershell)
               (eq? file-type 'zsh))
           (color-enabled? out options))
      (case file-type
        [(c)          (render-c-preview-port in out)]
+       [(csv)        (render-csv-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
        [(zsh)        (render-shell-preview-port in out #:shell 'zsh)])]
     [(or (eq? file-type 'bash)
          (eq? file-type 'c)
+         (eq? file-type 'csv)
          (eq? file-type 'powershell)
          (eq? file-type 'zsh))
      (copy-port in out)]
@@ -245,6 +255,11 @@
          (eq? file-type 'md)
          (eq? file-type 'scrbl))
      (copy-port in out)]
+    [(and (eq? file-type 'tsv)
+          (color-enabled? out options))
+     (render-tsv-preview-port in out)]
+    [(eq? file-type 'tsv)
+     (copy-port in out)]
     [(and (eq? file-type 'yaml)
           (color-enabled? out options))
      (render-yaml-preview-port in out)]
@@ -266,6 +281,7 @@
   (cond
     [(or (eq? file-type 'wat)
          (eq? file-type 'c)
+         (eq? file-type 'csv)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)
          (eq? file-type 'rhombus)
@@ -278,6 +294,7 @@
          (eq? file-type 'jsx)
          (eq? file-type 'md)
          (eq? file-type 'yaml)
+         (eq? file-type 'tsv)
          (eq? file-type 'scrbl))
      (define rendered
        (open-output-string))

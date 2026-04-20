@@ -19,6 +19,7 @@
 ;; c-like-style          -- Style C-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
+;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
@@ -53,6 +54,8 @@
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
  json-like-style
+ ;; delimited-like-style Style CSV/TSV-like embedded tokens.
+ delimited-like-style
  ;; yaml-like-style Style YAML-like embedded tokens.
  yaml-like-style
  ;; python-like-style Style Python-like embedded tokens.
@@ -219,6 +222,38 @@
          (memq 'json-array-end tags)
          (memq 'json-comma tags)
          (memq 'json-colon tags)
+         (eq? category 'delimiter)
+         (eq? category 'operator))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; delimited-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for CSV/TSV-like roles.
+(define (delimited-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'delimited-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (memq 'comment tags)
+         (eq? category 'comment))
+     ansi-comment]
+    [(or (memq 'delimited-field-name tags)
+         (memq 'delimited-header tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'delimited-quoted-field tags)
+         (memq 'delimited-unquoted-field tags)
+         (memq 'delimited-empty-field tags)
+         (memq 'delimited-bare-field tags)
+         (memq 'delimited-field-value tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'delimited-separator tags)
+         (memq 'delimited-record-separator tags)
+         (memq 'delimited-quote tags)
          (eq? category 'delimiter)
          (eq? category 'operator))
      ansi-delimiter]

@@ -31,6 +31,7 @@ The Markdown lexer can delegate recognized embedded regions to other lexers.
 - embedded CSS uses the CSS style mapping
 - embedded JavaScript uses the JavaScript style mapping
 - embedded Racket uses the Racket style mapping
+- embedded Swift uses the Swift style mapping
 - embedded Scribble uses the Scribble style mapping
 
 `peek` should not parse fenced code info strings or raw HTML itself. Delegation

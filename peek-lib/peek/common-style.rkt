@@ -22,6 +22,7 @@
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
+;; swift-like-style      -- Style Swift-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
 ;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
@@ -60,6 +61,8 @@
  yaml-like-style
  ;; python-like-style Style Python-like embedded tokens.
  python-like-style
+ ;; swift-like-style Style Swift-like embedded tokens.
+ swift-like-style
  ;; shell-like-style Style shell-like embedded tokens.
  shell-like-style
  ;; rhombus-like-style Style Rhombus-like embedded tokens.
@@ -326,6 +329,38 @@
      ansi-identifier]
     [(or (memq 'python-operator tags)
          (memq 'python-delimiter tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; swift-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Swift-like roles.
+(define (swift-like-style category tags)
+  (cond
+    [(or (memq 'swift-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'swift-comment tags))
+     ansi-comment]
+    [(or (memq 'swift-keyword tags)
+         (memq 'swift-attribute tags)
+         (memq 'swift-pound-directive tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'swift-string-literal tags)
+         (memq 'swift-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'swift-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'swift-operator tags)
+         (memq 'swift-delimiter tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]

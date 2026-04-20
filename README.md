@@ -28,6 +28,7 @@ peek path/to/file.js
 peek path/to/file.json
 peek path/to/file.yaml
 peek path/to/file.py
+peek path/to/file.swift
 peek path/to/file.md
 peek path/to/file.rhm
 peek path/to/file.rkt
@@ -46,6 +47,7 @@ cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.json | peek --type json
 cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
+cat path/to/file.swift | peek --type swift
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.ss | peek --type rkt
 cat path/to/file.wat | peek --type wat
@@ -96,6 +98,7 @@ Current supported file types are:
 - `rhombus`
 - `rkt`
 - `scrbl`
+- `swift`
 - `csv`
 - `tsv`
 - `wat`
@@ -112,10 +115,11 @@ the `python` previewer and preserves source text and line breaks without
 layout rewriting. Rhombus uses the `rhombus` previewer and preserves source
 text and line breaks without layout rewriting. Shell files use the `bash`,
 `zsh`, and `powershell` previewers and preserve source text and line breaks
-without layout rewriting. YAML uses the `yaml` previewer and preserves source
-text and line breaks without layout rewriting. Racket-family files use the
-`racket` previewer and preserve source text and line breaks without layout
-rewriting.
+without layout rewriting. Swift uses the `swift` previewer and preserves
+source text and line breaks without layout rewriting. YAML uses the `yaml`
+previewer and preserves source text and line breaks without layout rewriting.
+Racket-family files use the `racket` previewer and preserve source text and
+line breaks without layout rewriting.
 
 ## Documentation
 

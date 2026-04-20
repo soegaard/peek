@@ -96,6 +96,7 @@ File-type-specific notes belong in separate files, such as:
 - [`Racket.md`](/Users/soegaard/Dropbox/GitHub/peek/Racket.md)
 - [`Rhombus.md`](/Users/soegaard/Dropbox/GitHub/peek/Rhombus.md)
 - [`Shell.md`](/Users/soegaard/Dropbox/GitHub/peek/Shell.md)
+- [`Swift.md`](/Users/soegaard/Dropbox/GitHub/peek/Swift.md)
 - [`Yaml.md`](/Users/soegaard/Dropbox/GitHub/peek/Yaml.md)
 - [`Scribble.md`](/Users/soegaard/Dropbox/GitHub/peek/Scribble.md)
 - [`WAT.md`](/Users/soegaard/Dropbox/GitHub/peek/WAT.md)

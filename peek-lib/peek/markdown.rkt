@@ -26,7 +26,8 @@
          racket/list
          racket/port
          racket/string
-         "common-style.rkt")
+         "common-style.rkt"
+         "swift.rkt")
 
 (struct markdown-token (category text tags start end) #:transparent)
 
@@ -92,6 +93,8 @@
      (scribble-like-style category tags)]
     [(memq 'embedded-html tags)
      (html-like-style category tags)]
+    [(memq 'embedded-swift tags)
+     (swift-like-style category tags)]
     [(or (memq 'malformed-token tags)
          (eq? category 'unknown))
      ansi-malformed]

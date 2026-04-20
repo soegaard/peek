@@ -13,6 +13,7 @@
          "../main.rkt"
          "../markdown.rkt"
          "../python.rkt"
+         "../swift.rkt"
          "../preview.rkt"
          "../yaml.rkt"
          "../racket.rkt"
@@ -35,6 +36,8 @@
   "fixtures/demo.yml")
 (define-runtime-path demo-python-path
   "fixtures/demo.py")
+(define-runtime-path demo-swift-path
+  "fixtures/demo.swift")
 (define-runtime-path demo-shell-path
   "fixtures/demo.sh")
 (define-runtime-path demo-tsv-path
@@ -63,7 +66,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash c css csv html js json jsx md powershell python rhombus rkt scrbl tsv wat yaml zsh))
+              '(bash c css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -95,6 +98,9 @@
  (regexp-match? #px"answer"
                 (render-python-preview "def answer(name):\n    return name\n")))
 (check-true
+ (regexp-match? #px"greet"
+                (render-swift-preview "import Foundation\nfunc greet() { print(\"hi\") }\n")))
+(check-true
  (regexp-match? #px"answer"
                 (render-javascript-preview "const answer = 42;\nobj.run(answer);\n")))
 (check-true
@@ -104,6 +110,9 @@
 (check-true
  (regexp-match? #px"Title"
                 (render-markdown-preview "# Title\n\nText\n")))
+(check-equal?
+ (strip-ansi (render-markdown-preview "```swift\nimport Foundation\nlet value = 42\n```\n"))
+ "```swift\nimport Foundation\nlet value = 42\n```\n")
 (check-true
  (regexp-match? #px"export"
                 (render-shell-preview "#!/usr/bin/env bash\nexport PATH\n"
@@ -190,6 +199,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-python-path))
 (check-equal?
+ (strip-ansi (preview-file demo-swift-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-swift-path))
+(check-equal?
  (strip-ansi (preview-file demo-zsh-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-zsh-path))
@@ -254,6 +267,12 @@
                              (make-preview-options #:type 'python
                                                    #:color-mode 'always)))
  "def answer(name):\n    return name\n")
+(check-equal?
+ (strip-ansi (preview-string "import Foundation\nfunc greet() { print(\"hi\") }\n"
+                             #f
+                             (make-preview-options #:type 'swift
+                                                   #:color-mode 'always)))
+ "import Foundation\nfunc greet() { print(\"hi\") }\n")
 (check-equal?
  (strip-ansi (preview-string "autoload -Uz compinit\n"
                              #f

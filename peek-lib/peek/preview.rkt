@@ -61,6 +61,7 @@
          "python.rkt"
          "racket.rkt"
          "rhombus.rkt"
+         "swift.rkt"
          "shell.rkt"
          "yaml.rkt"
          "scribble.rkt"
@@ -70,7 +71,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c css csv html js json jsx md powershell python rhombus rkt scrbl tsv wat yaml zsh))
+  '(bash c css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -110,6 +111,7 @@
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.(?:py|pyi|pyw))$" path-string) 'python]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
+       [(regexp-match? #px"(?i:\\.swift)$" path-string) 'swift]
        [(regexp-match? #px"(?i:\\.(?:ya?ml))$" path-string) 'yaml]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
        [(regexp-match? #px"(?i:\\.zsh)$" path-string) 'zsh]
@@ -166,6 +168,8 @@
      (render-python-preview source)]
     [(eq? file-type 'rhombus)
      (render-rhombus-preview source)]
+    [(eq? file-type 'swift)
+     (render-swift-preview source)]
     [(eq? file-type 'yaml)
      (render-yaml-preview source)]
     [(eq? file-type 'tsv)
@@ -202,6 +206,7 @@
               (eq? file-type 'c)
               (eq? file-type 'csv)
               (eq? file-type 'powershell)
+              (eq? file-type 'swift)
               (eq? file-type 'zsh))
           (color-enabled? out options))
      (case file-type
@@ -209,11 +214,13 @@
        [(csv)        (render-csv-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
+       [(swift)      (render-swift-preview-port in out)]
        [(zsh)        (render-shell-preview-port in out #:shell 'zsh)])]
     [(or (eq? file-type 'bash)
          (eq? file-type 'c)
          (eq? file-type 'csv)
          (eq? file-type 'powershell)
+         (eq? file-type 'swift)
          (eq? file-type 'zsh))
      (copy-port in out)]
     [(and (eq? file-type 'wat)
@@ -236,6 +243,7 @@
               (eq? file-type 'json)
               (eq? file-type 'python)
               (eq? file-type 'jsx)
+              (eq? file-type 'swift)
               (eq? file-type 'md)
               (eq? file-type 'scrbl))
           (color-enabled? out options))
@@ -245,6 +253,7 @@
        [(json)  (render-json-preview-port in out)]
        [(python) (render-python-preview-port in out)]
        [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
+       [(swift) (render-swift-preview-port in out)]
        [(md)    (render-markdown-preview-port in out)]
        [(scrbl) (render-scribble-preview-port in out)])]
     [(or (eq? file-type 'html)
@@ -252,6 +261,7 @@
          (eq? file-type 'json)
          (eq? file-type 'python)
          (eq? file-type 'jsx)
+         (eq? file-type 'swift)
          (eq? file-type 'md)
          (eq? file-type 'scrbl))
      (copy-port in out)]
@@ -292,6 +302,7 @@
          (eq? file-type 'json)
          (eq? file-type 'python)
          (eq? file-type 'jsx)
+         (eq? file-type 'swift)
          (eq? file-type 'md)
          (eq? file-type 'yaml)
          (eq? file-type 'tsv)

@@ -27,6 +27,7 @@
          racket/port
          racket/string
          "common-style.rkt"
+         "cpp.rkt"
          "swift.rkt")
 
 (struct markdown-token (category text tags start end) #:transparent)
@@ -83,6 +84,8 @@
   (cond
     [(memq 'embedded-css tags)
      (css-like-style category tags)]
+    [(memq 'embedded-cpp tags)
+     (cpp-like-style category tags)]
     [(memq 'embedded-javascript tags)
      (javascript-like-style category tags)]
     [(memq 'embedded-wat tags)

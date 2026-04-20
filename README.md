@@ -21,6 +21,7 @@ Preview a file directly:
 ```sh
 peek path/to/file.css
 peek path/to/file.c
+peek path/to/file.cpp
 peek path/to/file.csv
 peek path/to/file.sh
 peek path/to/file.html
@@ -42,6 +43,7 @@ Preview from standard input by choosing a file type explicitly:
 ```sh
 cat path/to/file.md | peek --type md
 cat path/to/file.c | peek --type c
+cat path/to/file.cpp | peek --type cpp
 cat path/to/file.csv | peek --type csv
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.json | peek --type json
@@ -87,6 +89,7 @@ Current supported file types are:
 
 - `css`
 - `c`
+- `cpp`
 - `bash`
 - `html`
 - `js`
@@ -108,18 +111,19 @@ Current supported file types are:
 CSS supports syntax coloring, swatches, and optional alignment. The other
 current file types are color-focused terminal previews. C uses the `c`
 previewer and preserves source text and line breaks without layout rewriting.
-CSV and TSV use the `csv` and `tsv` previewers and preserve source text and
-line breaks without layout rewriting. JSON uses the `json` previewer and
-preserves source text and line breaks without layout rewriting. Python uses
-the `python` previewer and preserves source text and line breaks without
-layout rewriting. Rhombus uses the `rhombus` previewer and preserves source
-text and line breaks without layout rewriting. Shell files use the `bash`,
-`zsh`, and `powershell` previewers and preserve source text and line breaks
-without layout rewriting. Swift uses the `swift` previewer and preserves
-source text and line breaks without layout rewriting. YAML uses the `yaml`
+C++ uses the `cpp` previewer and preserves source text and line breaks without
+layout rewriting. CSV and TSV use the `csv` and `tsv` previewers and preserve
+source text and line breaks without layout rewriting. JSON uses the `json`
 previewer and preserves source text and line breaks without layout rewriting.
-Racket-family files use the `racket` previewer and preserve source text and
-line breaks without layout rewriting.
+Python uses the `python` previewer and preserves source text and line breaks
+without layout rewriting. Rhombus uses the `rhombus` previewer and preserves
+source text and line breaks without layout rewriting. Shell files use the
+`bash`, `zsh`, and `powershell` previewers and preserve source text and line
+breaks without layout rewriting. Swift uses the `swift` previewer and
+preserves source text and line breaks without layout rewriting. YAML uses the
+`yaml` previewer and preserves source text and line breaks without layout
+rewriting. Racket-family files use the `racket` previewer and preserve source
+text and line breaks without layout rewriting.
 
 ## Documentation
 

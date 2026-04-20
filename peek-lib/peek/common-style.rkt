@@ -17,6 +17,7 @@
 ;; colorize-text   -- Apply ANSI styling while preserving newlines.
 ;; css-like-style  -- Style CSS-like embedded tokens.
 ;; c-like-style          -- Style C-like embedded tokens.
+;; cpp-like-style        -- Style C++-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
@@ -51,6 +52,8 @@
  css-like-style
  ;; c-like-style Style C-like embedded tokens.
  c-like-style
+ ;; cpp-like-style Style C++-like embedded tokens.
+ cpp-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
@@ -156,6 +159,40 @@
     [(or (memq 'c-delimiter tags)
          (eq? category 'delimiter)
          (eq? category 'operator))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; cpp-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for C++-like roles.
+(define (cpp-like-style category tags)
+  (cond
+    [(or (memq 'cpp-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'cpp-comment tags))
+     ansi-comment]
+    [(or (memq 'cpp-preprocessor-directive tags)
+         (memq 'cpp-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'cpp-header-name tags)
+         (memq 'cpp-string-literal tags)
+         (memq 'cpp-char-literal tags)
+         (memq 'cpp-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'cpp-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'cpp-line-splice tags)
+         (memq 'cpp-operator tags)
+         (memq 'cpp-delimiter tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
      ansi-delimiter]
     [else
      ""]))

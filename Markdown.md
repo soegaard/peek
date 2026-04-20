@@ -30,6 +30,7 @@ The Markdown lexer can delegate recognized embedded regions to other lexers.
 - embedded HTML uses the HTML style mapping
 - embedded CSS uses the CSS style mapping
 - embedded JavaScript uses the JavaScript style mapping
+- embedded C++ uses the C++ style mapping
 - embedded Racket uses the Racket style mapping
 - embedded Swift uses the Swift style mapping
 - embedded Scribble uses the Scribble style mapping

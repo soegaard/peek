@@ -4,6 +4,7 @@
           racket/runtime-path
           (for-label lexers/css
                      lexers/c
+                     lexers/cpp
                      lexers/csv
                      lexers/html
                      lexers/javascript
@@ -38,8 +39,8 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, C, CSV, HTML, JavaScript, JSON, Markdown, PowerShell, Python,
-Rhombus, Racket, Scribble, Swift, TSV, WAT, YAML, and Zsh.
+CSS, Bash, C, C++, CSV, HTML, JavaScript, JSON, Markdown, PowerShell,
+Python, Rhombus, Racket, Scribble, Swift, TSV, WAT, YAML, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -47,6 +48,11 @@ features such as syntax coloring, color swatches, and optional alignment.
 
 The C previewer uses @tt{lexers/c} and supports @tt{.c} and @tt{.h} files as
 @tt{c} preview targets.
+
+The C++ previewer uses @tt{lexers/cpp} and supports common C++ source and
+header extensions such as @tt{.cpp}, @tt{.cc}, @tt{.cxx}, @tt{.cp},
+@tt{.c++}, @tt{.cppm}, @tt{.ixx}, @tt{.hpp}, @tt{.hh}, @tt{.hxx},
+@tt{.h++}, @tt{.ipp}, and @tt{.tpp} files as @tt{cpp} preview targets.
 
 The CSV previewer uses @tt{lexers/csv} and supports @tt{.csv} files as
 @tt{csv} preview targets.
@@ -117,6 +123,7 @@ After installing the @exec{peek} package, the launcher is available as
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
 peek path/to/file.c
+peek path/to/file.cpp
 peek path/to/file.csv
 peek path/to/file.html
 peek path/to/file.js
@@ -137,6 +144,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 @shellblock[#:shell 'bash]{
 cat path/to/file.css | peek --type css
 cat path/to/file.c | peek --type c
+cat path/to/file.cpp | peek --type cpp
 cat path/to/file.csv | peek --type csv
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
@@ -207,10 +215,10 @@ peek path/to/script.ps1
 @itemlist[
  @item{@DFlag{--type} @italic{type}
     selects the input type explicitly. This is mainly useful for standard
-    input. Supported values are @tt{bash}, @tt{c}, @tt{css}, @tt{html}, @tt{js},
-       @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell}, @tt{python},
-       @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{swift}, @tt{wat}, @tt{yaml},
-       and @tt{zsh}.}
+       input. Supported values are @tt{bash}, @tt{c}, @tt{cpp}, @tt{css},
+       @tt{html}, @tt{js}, @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell},
+       @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{swift},
+       @tt{wat}, @tt{yaml}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -278,6 +286,7 @@ The current explicit file type names are:
 @itemlist[
  @item{@tt{bash}}
  @item{@tt{c}}
+ @item{@tt{cpp}}
  @item{@tt{css}}
  @item{@tt{html}}
  @item{@tt{js}}

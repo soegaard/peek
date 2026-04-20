@@ -13,6 +13,7 @@
          "../main.rkt"
          "../markdown.rkt"
          "../python.rkt"
+         "../cpp.rkt"
          "../swift.rkt"
          "../preview.rkt"
          "../yaml.rkt"
@@ -26,6 +27,10 @@
   "fixtures/demo.md")
 (define-runtime-path demo-c-path
   "fixtures/demo.c")
+(define-runtime-path demo-cpp-path
+  "fixtures/demo.cpp")
+(define-runtime-path demo-cpp-header-path
+  "fixtures/demo.hpp")
 (define-runtime-path demo-csv-path
   "fixtures/demo.csv")
 (define-runtime-path demo-json-path
@@ -66,7 +71,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash c css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+              '(bash c cpp css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -85,6 +90,9 @@
 (check-true
  (regexp-match? #px"main"
                 (render-c-preview "#include <stdio.h>\nint main(void) { return 0; }\n")))
+(check-true
+ (regexp-match? #px"vector"
+                (render-cpp-preview "#include <vector>\n#define ANSWER 42\n")))
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
@@ -113,6 +121,9 @@
 (check-equal?
  (strip-ansi (render-markdown-preview "```swift\nimport Foundation\nlet value = 42\n```\n"))
  "```swift\nimport Foundation\nlet value = 42\n```\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "```cpp\n#include <vector>\n```\n"))
+ "```cpp\n#include <vector>\n```\n")
 (check-true
  (regexp-match? #px"export"
                 (render-shell-preview "#!/usr/bin/env bash\nexport PATH\n"
@@ -166,6 +177,14 @@
  (strip-ansi (preview-file demo-c-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-c-path))
+(check-equal?
+ (strip-ansi (preview-file demo-cpp-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-cpp-path))
+(check-equal?
+ (strip-ansi (preview-file demo-cpp-header-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-cpp-header-path))
 (check-equal?
  (strip-ansi (preview-file demo-csv-path
                            (make-preview-options #:color-mode 'always)))
@@ -237,6 +256,12 @@
                              (make-preview-options #:type 'c
                                                    #:color-mode 'always)))
  "#include <stdio.h>\nint main(void) { return 0; }\n")
+(check-equal?
+ (strip-ansi (preview-string "#include <vector>\n#define ANSWER 42\n"
+                             #f
+                             (make-preview-options #:type 'cpp
+                                                   #:color-mode 'always)))
+ "#include <vector>\n#define ANSWER 42\n")
 (check-equal?
  (strip-ansi (preview-string "#!/usr/bin/env bash\nexport PATH\n"
                              #f

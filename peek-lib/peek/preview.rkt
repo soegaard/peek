@@ -58,6 +58,7 @@
          "html.rkt"
          "js.rkt"
          "json.rkt"
+         "objc.rkt"
          "markdown.rkt"
          "python.rkt"
          "racket.rkt"
@@ -72,7 +73,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+  '(bash c cpp objc css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -106,6 +107,7 @@
         'cpp]
        [(regexp-match? #px"(?i:\\.(?:hpp|hh|hxx|h\\+\\+|ipp|tpp))$" path-string)
         'cpp]
+       [(regexp-match? #px"(?i:\\.m)$" path-string) 'objc]
        [(regexp-match? #px"(?i:\\.csv)$" path-string) 'csv]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.(?:sh|bash))$" path-string) 'bash]
@@ -154,6 +156,8 @@
      (render-c-preview source)]
     [(eq? file-type 'cpp)
      (render-cpp-preview source)]
+    [(eq? file-type 'objc)
+     (render-objc-preview source)]
     [(eq? file-type 'csv)
      (render-csv-preview source)]
     [(eq? file-type 'bash)
@@ -212,6 +216,7 @@
     [(and (or (eq? file-type 'bash)
               (eq? file-type 'c)
               (eq? file-type 'cpp)
+              (eq? file-type 'objc)
               (eq? file-type 'csv)
               (eq? file-type 'powershell)
               (eq? file-type 'swift)
@@ -220,6 +225,7 @@
      (case file-type
        [(c)          (render-c-preview-port in out)]
        [(cpp)        (render-cpp-preview-port in out)]
+       [(objc)       (render-objc-preview-port in out)]
        [(csv)        (render-csv-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
@@ -228,6 +234,7 @@
     [(or (eq? file-type 'bash)
          (eq? file-type 'c)
          (eq? file-type 'cpp)
+         (eq? file-type 'objc)
          (eq? file-type 'csv)
          (eq? file-type 'powershell)
          (eq? file-type 'swift)
@@ -302,6 +309,7 @@
     [(or (eq? file-type 'wat)
          (eq? file-type 'c)
          (eq? file-type 'cpp)
+         (eq? file-type 'objc)
          (eq? file-type 'csv)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)

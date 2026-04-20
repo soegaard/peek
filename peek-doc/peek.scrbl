@@ -5,6 +5,7 @@
           (for-label lexers/css
                      lexers/c
                      lexers/cpp
+                     lexers/objc
                      lexers/csv
                      lexers/html
                      lexers/javascript
@@ -39,8 +40,9 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, C, C++, CSV, HTML, JavaScript, JSON, Markdown, PowerShell,
-Python, Rhombus, Racket, Scribble, Swift, TSV, WAT, YAML, and Zsh.
+CSS, Bash, C, Objective-C, C++, CSV, HTML, JavaScript, JSON, Markdown,
+PowerShell, Python, Rhombus, Racket, Scribble, Swift, TSV, WAT, YAML,
+and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -48,6 +50,9 @@ features such as syntax coloring, color swatches, and optional alignment.
 
 The C previewer uses @tt{lexers/c} and supports @tt{.c} and @tt{.h} files as
 @tt{c} preview targets.
+
+The Objective-C previewer uses @tt{lexers/objc} and supports @tt{.m} files as
+@tt{objc} preview targets.
 
 The C++ previewer uses @tt{lexers/cpp} and supports common C++ source and
 header extensions such as @tt{.cpp}, @tt{.cc}, @tt{.cxx}, @tt{.cp},
@@ -124,6 +129,7 @@ After installing the @exec{peek} package, the launcher is available as
 peek path/to/file.css
 peek path/to/file.c
 peek path/to/file.cpp
+peek path/to/file.m
 peek path/to/file.csv
 peek path/to/file.html
 peek path/to/file.js
@@ -145,6 +151,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 cat path/to/file.css | peek --type css
 cat path/to/file.c | peek --type c
 cat path/to/file.cpp | peek --type cpp
+cat path/to/file.m | peek --type objc
 cat path/to/file.csv | peek --type csv
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md

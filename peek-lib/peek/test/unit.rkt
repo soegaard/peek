@@ -14,6 +14,7 @@
          "../markdown.rkt"
          "../python.rkt"
          "../cpp.rkt"
+         "../objc.rkt"
          "../swift.rkt"
          "../preview.rkt"
          "../yaml.rkt"
@@ -31,6 +32,8 @@
   "fixtures/demo.cpp")
 (define-runtime-path demo-cpp-header-path
   "fixtures/demo.hpp")
+(define-runtime-path demo-objc-path
+  "fixtures/demo.m")
 (define-runtime-path demo-csv-path
   "fixtures/demo.csv")
 (define-runtime-path demo-json-path
@@ -71,7 +74,7 @@
   (regexp-replace* ansi-pattern text ""))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+              '(bash c cpp objc css csv html js json jsx md powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -93,6 +96,9 @@
 (check-true
  (regexp-match? #px"vector"
                 (render-cpp-preview "#include <vector>\n#define ANSWER 42\n")))
+(check-true
+ (regexp-match? #px"interface"
+                (render-objc-preview "#import <Foundation/Foundation.h>\n@interface Foo : NSObject\n@end\n")))
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
@@ -186,6 +192,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-cpp-header-path))
 (check-equal?
+ (strip-ansi (preview-file demo-objc-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-objc-path))
+(check-equal?
  (strip-ansi (preview-file demo-csv-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-csv-path))
@@ -262,6 +272,12 @@
                              (make-preview-options #:type 'cpp
                                                    #:color-mode 'always)))
  "#include <vector>\n#define ANSWER 42\n")
+(check-equal?
+ (strip-ansi (preview-string "#import <Foundation/Foundation.h>\n@interface Foo : NSObject\n@end\n"
+                             #f
+                             (make-preview-options #:type 'objc
+                                                   #:color-mode 'always)))
+ "#import <Foundation/Foundation.h>\n@interface Foo : NSObject\n@end\n")
 (check-equal?
  (strip-ansi (preview-string "#!/usr/bin/env bash\nexport PATH\n"
                              #f

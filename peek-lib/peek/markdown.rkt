@@ -86,6 +86,8 @@
      (css-like-style category tags)]
     [(memq 'embedded-cpp tags)
      (cpp-like-style category tags)]
+    [(memq 'embedded-objc tags)
+     (objc-like-style category tags)]
     [(memq 'embedded-javascript tags)
      (javascript-like-style category tags)]
     [(memq 'embedded-wat tags)

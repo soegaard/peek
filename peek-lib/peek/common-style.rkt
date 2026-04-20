@@ -18,6 +18,7 @@
 ;; css-like-style  -- Style CSS-like embedded tokens.
 ;; c-like-style          -- Style C-like embedded tokens.
 ;; cpp-like-style        -- Style C++-like embedded tokens.
+;; objc-like-style       -- Style Objective-C-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
@@ -54,6 +55,8 @@
  c-like-style
  ;; cpp-like-style Style C++-like embedded tokens.
  cpp-like-style
+ ;; objc-like-style Style Objective-C-like embedded tokens.
+ objc-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
@@ -191,6 +194,43 @@
     [(or (memq 'cpp-line-splice tags)
          (memq 'cpp-operator tags)
          (memq 'cpp-delimiter tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; objc-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Objective-C-like roles.
+(define (objc-like-style category tags)
+  (cond
+    [(or (memq 'objc-error tags)
+         (memq 'malformed-token tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'objc-comment tags))
+     ansi-comment]
+    [(or (memq 'objc-keyword tags)
+         (memq 'objc-at-keyword tags)
+         (memq 'objc-preprocessor-directive tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'objc-header-name tags)
+         (memq 'objc-string-literal tags)
+         (memq 'objc-char-literal tags)
+         (memq 'objc-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'objc-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'objc-literal-introducer tags)
+         (memq 'objc-line-splice tags)
+         (memq 'objc-operator tags)
+         (memq 'objc-delimiter tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]

@@ -32,6 +32,7 @@
 ;; rust-like-style       -- Style Rust-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
 ;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
+;; haskell-like-style    -- Style Haskell-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
 ;; racket-like-style     -- Style Racket-like embedded tokens.
 ;; scribble-like-style   -- Style Scribble-like embedded tokens.
@@ -88,6 +89,8 @@
  shell-like-style
  ;; rhombus-like-style Style Rhombus-like embedded tokens.
  rhombus-like-style
+ ;; haskell-like-style Style Haskell-like embedded tokens.
+ haskell-like-style
  ;; wat-like-style Style WAT-like embedded tokens.
  wat-like-style
  ;; racket-like-style Style Racket-like embedded tokens.
@@ -667,6 +670,43 @@
          (eq? category 'literal))
      ansi-literal]
     [(or (memq 'shell-punctuation tags)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; haskell-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Haskell-like roles.
+(define (haskell-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'haskell-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'haskell-comment tags)
+         (memq 'haskell-line-comment tags)
+         (memq 'haskell-nested-comment tags)
+         (memq 'haskell-pragma tags))
+     ansi-comment]
+    [(or (memq 'haskell-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'haskell-variable-identifier tags)
+         (memq 'haskell-constructor-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'haskell-string-literal tags)
+         (memq 'haskell-char-literal tags)
+         (memq 'haskell-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'haskell-variable-operator tags)
+         (memq 'haskell-constructor-operator tags)
+         (memq 'haskell-delimiter tags)
+         (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]
     [else

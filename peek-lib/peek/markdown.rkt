@@ -31,6 +31,7 @@
          "plist.rkt"
          "tex.rkt"
          "latex.rkt"
+         "haskell.rkt"
          "swift.rkt")
 
 (struct markdown-token (category text tags start end) #:transparent)
@@ -111,6 +112,8 @@
      (html-like-style category tags)]
     [(memq 'embedded-swift tags)
      (swift-like-style category tags)]
+    [(memq 'embedded-haskell tags)
+     (haskell-like-style category tags)]
     [(or (memq 'malformed-token tags)
          (eq? category 'unknown))
      ansi-malformed]

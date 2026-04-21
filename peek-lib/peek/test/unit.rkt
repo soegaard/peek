@@ -11,6 +11,7 @@
          "../html.rkt"
          "../js.rkt"
          "../json.rkt"
+         "../haskell.rkt"
          "../main.rkt"
          "../markdown.rkt"
          "../plist.rkt"
@@ -53,6 +54,8 @@
   "fixtures/demo.csv")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
+(define-runtime-path demo-haskell-path
+  "fixtures/demo.hs")
 (define-runtime-path demo-plist-path
   "fixtures/demo.plist")
 (define-runtime-path demo-pascal-path
@@ -109,7 +112,7 @@
    "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(bash c cpp css csv haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -181,6 +184,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
+(check-equal?
+ (strip-ansi (render-haskell-preview "{-# LANGUAGE OverloadedStrings #-}\nmodule Demo where\nmain = putStrLn \"hello\"\n"))
+ "{-# LANGUAGE OverloadedStrings #-}\nmodule Demo where\nmain = putStrLn \"hello\"\n")
 (check-true
  (regexp-match? #px"peek"
                 (render-plist-preview plist-sample)))
@@ -202,6 +208,12 @@
 (check-true
  (regexp-match? #px"greet"
                 (render-swift-preview "import Foundation\nfunc greet() { print(\"hi\") }\n")))
+(check-equal?
+ (strip-ansi (preview-string "{-# LANGUAGE OverloadedStrings #-}\nmodule Demo where\nmain = putStrLn \"hello\"\n"
+                             #f
+                             (make-preview-options #:type 'haskell
+                                                   #:color-mode 'always)))
+ "{-# LANGUAGE OverloadedStrings #-}\nmodule Demo where\nmain = putStrLn \"hello\"\n")
 (check-true
  (regexp-match? #px"answer"
                 (render-javascript-preview "const answer = 42;\nobj.run(answer);\n")))
@@ -224,6 +236,13 @@
 (check-equal?
  (strip-ansi (render-markdown-preview "```cpp\n#include <vector>\n```\n"))
  "```cpp\n#include <vector>\n```\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "```haskell\nmain = putStrLn \"hello\"\n```\n"))
+ "```haskell\nmain = putStrLn \"hello\"\n```\n")
+(check-equal?
+ (strip-ansi (preview-file demo-haskell-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-haskell-path))
 (check-true
  (regexp-match? #px"export"
                 (render-shell-preview "#!/usr/bin/env bash\nexport PATH\n"

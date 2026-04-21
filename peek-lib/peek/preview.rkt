@@ -58,6 +58,7 @@
          "html.rkt"
          "js.rkt"
          "json.rkt"
+         "haskell.rkt"
          "objc.rkt"
          "makefile.rkt"
          "markdown.rkt"
@@ -79,7 +80,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(bash c cpp css csv haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -107,6 +108,7 @@
      (define path-string
        (path->string (simple-form-path maybe-path)))
      (cond
+       [(regexp-match? #px"(?i:\\.(?:hs|lhs)(?:-boot)?)$" path-string) 'haskell]
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
        [(regexp-match? #px"(?i:\\.(?:c|h))$" path-string) 'c]
        [(regexp-match? #px"(?i:\\.(?:cpp|cc|cxx|cp|c\\+\\+|cppm|ixx))$" path-string)
@@ -176,6 +178,8 @@
      (render-objc-preview source)]
     [(eq? file-type 'csv)
      (render-csv-preview source)]
+    [(eq? file-type 'haskell)
+     (render-haskell-preview source)]
     [(eq? file-type 'bash)
      (render-shell-preview source #:shell 'bash)]
     [(eq? file-type 'html)
@@ -245,6 +249,7 @@
               (eq? file-type 'makefile)
               (eq? file-type 'objc)
               (eq? file-type 'csv)
+              (eq? file-type 'haskell)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
               (eq? file-type 'pascal)
@@ -259,6 +264,7 @@
        [(makefile)   (render-makefile-preview-port in out)]
        [(objc)       (render-objc-preview-port in out)]
        [(csv)        (render-csv-preview-port in out)]
+       [(haskell)    (render-haskell-preview-port in out)]
        [(plist)      (render-plist-preview-port in out)]
        [(latex)      (render-latex-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
@@ -274,6 +280,7 @@
          (eq? file-type 'makefile)
          (eq? file-type 'objc)
          (eq? file-type 'csv)
+         (eq? file-type 'haskell)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
          (eq? file-type 'pascal)
@@ -360,6 +367,7 @@
          (eq? file-type 'objc)
          (eq? file-type 'makefile)
          (eq? file-type 'csv)
+         (eq? file-type 'haskell)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)
          (eq? file-type 'rhombus)

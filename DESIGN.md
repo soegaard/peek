@@ -95,6 +95,7 @@ File-type-specific notes belong in separate files, such as:
 - [`JSON.md`](/Users/soegaard/Dropbox/GitHub/peek/JSON.md)
 - [`Makefile.md`](/Users/soegaard/Dropbox/GitHub/peek/Makefile.md)
 - [`Plist.md`](/Users/soegaard/Dropbox/GitHub/peek/Plist.md)
+- [`Pascal.md`](/Users/soegaard/Dropbox/GitHub/peek/Pascal.md)
 - [`Python.md`](/Users/soegaard/Dropbox/GitHub/peek/Python.md)
 - [`TeX.md`](/Users/soegaard/Dropbox/GitHub/peek/TeX.md)
 - [`LaTeX.md`](/Users/soegaard/Dropbox/GitHub/peek/LaTeX.md)

@@ -65,6 +65,7 @@
          "latex.rkt"
          "plist.rkt"
          "python.rkt"
+         "pascal.rkt"
          "rust.rkt"
          "racket.rkt"
          "rhombus.rkt"
@@ -78,7 +79,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv html js json jsx latex makefile md objc plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(bash c cpp css csv html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -127,6 +128,7 @@
        [(regexp-match? #px"(?i:\\.plist)$" path-string) 'plist]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.(?:py|pyi|pyw))$" path-string) 'python]
+       [(regexp-match? #px"(?i:\\.(?:pas|pp|dpr|lpr|inc))$" path-string) 'pascal]
        [(regexp-match? #px"(?i:\\.rs)$" path-string) 'rust]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
        [(regexp-match? #px"(?i:\\.tex)$" path-string) 'tex]
@@ -195,6 +197,8 @@
      (render-shell-preview source #:shell 'powershell)]
     [(eq? file-type 'python)
      (render-python-preview source)]
+    [(eq? file-type 'pascal)
+     (render-pascal-preview source)]
     [(eq? file-type 'rust)
      (render-rust-preview source)]
     [(eq? file-type 'rhombus)
@@ -243,6 +247,7 @@
               (eq? file-type 'csv)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
+              (eq? file-type 'pascal)
               (eq? file-type 'rust)
               (eq? file-type 'tex)
               (eq? file-type 'swift)
@@ -258,6 +263,7 @@
        [(latex)      (render-latex-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
+       [(pascal)     (render-pascal-preview-port in out)]
        [(rust)       (render-rust-preview-port in out)]
        [(tex)        (render-tex-preview-port in out)]
        [(swift)      (render-swift-preview-port in out)]
@@ -270,6 +276,7 @@
          (eq? file-type 'csv)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
+         (eq? file-type 'pascal)
          (eq? file-type 'rust)
          (eq? file-type 'tex)
          (eq? file-type 'swift)

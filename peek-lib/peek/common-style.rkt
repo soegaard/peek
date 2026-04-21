@@ -27,6 +27,7 @@
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
+;; pascal-like-style     -- Style Pascal-like embedded tokens.
 ;; swift-like-style      -- Style Swift-like embedded tokens.
 ;; rust-like-style       -- Style Rust-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
@@ -77,6 +78,8 @@
  yaml-like-style
  ;; python-like-style Style Python-like embedded tokens.
  python-like-style
+ ;; pascal-like-style Style Pascal-like embedded tokens.
+ pascal-like-style
  ;; swift-like-style Style Swift-like embedded tokens.
  swift-like-style
  ;; rust-like-style Style Rust-like embedded tokens.
@@ -526,6 +529,39 @@
      ansi-identifier]
     [(or (memq 'python-operator tags)
          (memq 'python-delimiter tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; pascal-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Pascal-like roles.
+(define (pascal-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'pascal-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'pascal-comment tags))
+     ansi-comment]
+    [(or (memq 'pascal-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'pascal-string-literal tags)
+         (memq 'pascal-control-string tags)
+         (memq 'pascal-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'pascal-identifier tags)
+         (memq 'pascal-escaped-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'pascal-operator tags)
+         (memq 'pascal-delimiter tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]

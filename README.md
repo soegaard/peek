@@ -37,6 +37,7 @@ peek path/to/file.sty
 peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
+peek path/to/file.pas
 peek path/to/file.rs
 peek path/to/file.swift
 peek path/to/file.md
@@ -115,6 +116,7 @@ Current supported file types are:
 - `latex`
 - `md`
 - `plist`
+- `pascal`
 - `powershell`
 - `python`
 - `rhombus`
@@ -138,19 +140,20 @@ text and line breaks without layout rewriting. Makefiles use the `makefile`
 previewer; recipe bodies are shell-aware while preserving Makefile variable
 references, source text, and line breaks without layout rewriting. Rust uses
 the `rust` previewer and preserves source text and line breaks without layout
-rewriting.
-CSV and TSV use the `csv` and
+rewriting. CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
 rewriting. JSON uses the `json` previewer and preserves source text and line
 breaks without layout rewriting. Plist uses the `plist` previewer and
-preserves source text and line breaks without layout rewriting. Python uses
-the `python` previewer and preserves source text and line breaks without
-layout rewriting. Rhombus uses the `rhombus` previewer and preserves source
-text and line breaks without layout rewriting. Shell files use the `bash`,
-`zsh`, and `powershell` previewers and preserve source text and line breaks
-without layout rewriting. Swift uses the `swift` previewer and preserves
-source text and line breaks without layout rewriting. YAML uses the `yaml`
+preserves source text and line breaks without layout rewriting. Pascal uses
+the `pascal` previewer and preserves source text and line breaks without
+layout rewriting. Python uses the `python` previewer and preserves source text
+and line breaks without layout rewriting. Rhombus uses the `rhombus`
 previewer and preserves source text and line breaks without layout rewriting.
+Shell files use the `bash`, `zsh`, and `powershell` previewers and preserve
+source text and line breaks without layout rewriting. Swift uses the `swift`
+previewer and preserves source text and line breaks without layout rewriting.
+YAML uses the `yaml` previewer and preserves source text and line breaks
+without layout rewriting.
 TeX uses the `tex` previewer and preserves source text and line breaks
 without layout rewriting. LaTeX uses the `latex` previewer and preserves
 source text and line breaks without layout rewriting.

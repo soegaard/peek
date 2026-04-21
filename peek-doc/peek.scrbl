@@ -12,6 +12,7 @@
                      lexers/json
                      lexers/makefile
                      lexers/markdown
+                     lexers/pascal
                      lexers/plist
                      lexers/tex
                      lexers/latex
@@ -46,8 +47,8 @@ There is file-type-aware rendering for the supported file types.
 The supported file types are:
 
 CSS, Bash, C, Objective-C, C++, CSV, HTML, JavaScript, JSON, LaTeX, Makefile,
-Markdown, Plist, PowerShell, Python, Rhombus, Racket, Rust, Scribble, Swift,
-TeX, TSV, WAT, YAML, and Zsh.
+Markdown, Pascal, Plist, PowerShell, Python, Rhombus, Racket, Rust, Scribble,
+Swift, TeX, TSV, WAT, YAML, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -92,6 +93,10 @@ The Swift previewer uses @tt{lexers/swift} and supports @tt{.swift} files as
 
 The Rust previewer uses @tt{lexers/rust} and supports @tt{.rs} files as
 @tt{rust} preview targets.
+
+The Pascal previewer uses @tt{lexers/pascal} and supports common Pascal source
+files such as @tt{.pas}, @tt{.pp}, @tt{.dpr}, @tt{.lpr}, and @tt{.inc} files
+as @tt{pascal} preview targets.
 
 The shell previewers use @tt{lexers/shell} and support @tt{.sh}, @tt{.bash},
 @tt{.zsh}, and @tt{.ps1} files as @tt{bash}, @tt{zsh}, and @tt{powershell}
@@ -159,6 +164,7 @@ peek path/to/file.sty
 peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
+peek path/to/file.pas
 peek path/to/file.rs
 peek path/to/file.swift
 peek path/to/file.md
@@ -187,6 +193,7 @@ cat path/to/file.sty | peek --type latex
 cat path/to/file.plist | peek --type plist
 cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
+cat path/to/file.pas | peek --type pascal
 cat path/to/file.rs | peek --type rust
 cat path/to/file.swift | peek --type swift
 cat path/to/file.rhm | peek --type rhombus
@@ -212,8 +219,8 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSON, LaTeX, Plist, Python, JSX, Markdown, Rhombus, Racket,
-Rust, Scribble, TeX, TSV, YAML, and WAT examples:
+HTML, JavaScript, JSON, LaTeX, Pascal, Plist, Python, JSX, Markdown, Rhombus,
+Racket, Rust, Scribble, TeX, TSV, YAML, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
@@ -227,6 +234,7 @@ peek path/to/file.sty
 peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
+peek path/to/file.pas
 peek path/to/file.rs
 peek path/to/component.jsx
 peek path/to/file.md
@@ -259,9 +267,9 @@ peek path/to/script.ps1
     selects the input type explicitly. This is mainly useful for standard
        input. Supported values are @tt{bash}, @tt{c}, @tt{cpp}, @tt{css},
        @tt{html}, @tt{js}, @tt{json}, @tt{jsx}, @tt{latex}, @tt{md},
-       @tt{plist}, @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt},
-       @tt{rust}, @tt{scrbl}, @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, and
-       @tt{zsh}.}
+       @tt{pascal}, @tt{plist}, @tt{powershell}, @tt{python}, @tt{rhombus},
+       @tt{rkt}, @tt{rust}, @tt{scrbl}, @tt{swift}, @tt{tex}, @tt{wat},
+       @tt{yaml}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}

@@ -14,6 +14,7 @@
          "../main.rkt"
          "../markdown.rkt"
          "../plist.rkt"
+         "../pascal.rkt"
          "../python.rkt"
          "../rust.rkt"
          "../cpp.rkt"
@@ -54,6 +55,8 @@
   "fixtures/demo.json")
 (define-runtime-path demo-plist-path
   "fixtures/demo.plist")
+(define-runtime-path demo-pascal-path
+  "fixtures/demo.pas")
 (define-runtime-path demo-yaml-path
   "fixtures/demo.yaml")
 (define-runtime-path demo-yml-path
@@ -106,7 +109,7 @@
    "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv html js json jsx latex makefile md objc plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(bash c cpp css csv html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -181,6 +184,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-plist-preview plist-sample)))
+(check-true
+ (regexp-match? #px"Demo"
+                (render-pascal-preview "program Demo;\nbegin\nend.\n")))
 (check-true
  (regexp-match? #px"London"
                 (render-csv-preview "name,age,city\nAda,37,London\n")))
@@ -317,11 +323,21 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-plist-path))
 (check-equal?
+ (strip-ansi (preview-file demo-pascal-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-pascal-path))
+(check-equal?
  (strip-ansi (preview-string plist-sample
                              #f
                              (make-preview-options #:type 'plist
                                                    #:color-mode 'always)))
  plist-sample)
+(check-equal?
+ (strip-ansi (preview-string "program Demo;\nvar &do: Integer;\nbegin\n  writeln('hi');\nend.\n"
+                             #f
+                             (make-preview-options #:type 'pascal
+                                                   #:color-mode 'always)))
+ "program Demo;\nvar &do: Integer;\nbegin\n  writeln('hi');\nend.\n")
 (check-equal?
  (let ([out (open-output-string)])
    (preview-port (open-input-string plist-sample)
@@ -330,6 +346,14 @@
                  out)
    (strip-ansi (get-output-string out)))
  plist-sample)
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string "program Demo;\nvar &do: Integer;\nbegin\n  writeln('hi');\nend.\n")
+                 "demo.pas"
+                 (make-preview-options #:color-mode 'always)
+                 out)
+   (strip-ansi (get-output-string out)))
+ "program Demo;\nvar &do: Integer;\nbegin\n  writeln('hi');\nend.\n")
 (check-equal?
  (strip-ansi (preview-file demo-yaml-path
                            (make-preview-options #:color-mode 'always)))

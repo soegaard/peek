@@ -65,7 +65,8 @@ header extensions such as @tt{.cpp}, @tt{.cc}, @tt{.cxx}, @tt{.cp},
 
 The Makefile previewer uses @tt{lexers/makefile} and supports ordinary
 @tt{Makefile}, @tt{GNUmakefile}, and @tt{.mk} inputs as @tt{makefile}
-preview targets.
+preview targets. Recipe bodies now preserve Makefile-specific expansions such
+as @tt{$(CC)} while using shell-aware roles for the command text itself.
 
 The CSV previewer uses @tt{lexers/csv} and supports @tt{.csv} files as
 @tt{csv} preview targets.

@@ -4,6 +4,7 @@
          racket/file
          racket/runtime-path
          racket/string
+         "../common-style.rkt"
          "../c.rkt"
          "../css.rkt"
          "../delimited.rkt"
@@ -127,9 +128,32 @@
 (check-true
  (regexp-match? #px"interface"
                 (render-objc-preview "#import <Foundation/Foundation.h>\n@interface Foo : NSObject\n@end\n")))
+(define makefile-shell-sample
+  (string-append
+   "APP = scribble-tools\n"
+   ".PHONY: docs test\n"
+   "docs:\n"
+   "\traco scribble +m --html --dest html scribblings/scribble-tools.scrbl\n"
+   "\n"
+   "test:\n"
+   "\t$(CC) -o app main.o util.o\n"
+   "\ttest -n \"$HOME\" && raco test private/lang-code.rkt\n"))
+
 (check-true
  (regexp-match? #px"include"
                 (render-makefile-preview "CC := gcc\nall: main.o\n\t$(CC) -o app main.o\ninclude local.mk\n")))
+(check-equal?
+ (strip-ansi (render-makefile-preview makefile-shell-sample))
+ makefile-shell-sample)
+(check-true
+ (regexp-match? #px"\u001b\\[[0-9;]*mtest\u001b\\[0m"
+                (render-makefile-preview makefile-shell-sample)))
+(check-true
+ (regexp-match? #px"\u001b\\[[0-9;]*m--dest\u001b\\[0m"
+                (render-makefile-preview makefile-shell-sample)))
+(check-true
+ (regexp-match? #px"\u001b\\[[0-9;]*m\\$\\(CC\\)\u001b\\[0m"
+                (render-makefile-preview makefile-shell-sample)))
 (check-equal?
  (strip-ansi (render-tex-preview "\\section{Hi}\nText\n"))
  "\\section{Hi}\nText\n")

@@ -133,7 +133,8 @@ previewer and preserves source text and line breaks without layout rewriting.
 C++ uses the `cpp` previewer and preserves source text and line breaks without
 layout rewriting. Objective-C uses the `objc` previewer and preserves source
 text and line breaks without layout rewriting. Makefiles use the `makefile`
-previewer and preserve source text and line breaks without layout rewriting.
+previewer; recipe bodies are shell-aware while preserving Makefile variable
+references, source text, and line breaks without layout rewriting.
 CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
 rewriting. JSON uses the `json` previewer and preserves source text and line

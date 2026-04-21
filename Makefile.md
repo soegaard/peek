@@ -10,6 +10,10 @@ input. That keeps directives, assignments, rule targets, variable references,
 and recipe lines visually distinct without reimplementing Makefile lexing
 locally.
 
+Recipe bodies are now shell-aware: the leading tab stays in Makefile space,
+Makefile variable references still remain Makefile tokens, and the recipe body
+inherits shell-style roles from `lexers/makefile`.
+
 The first-pass file-type support maps ordinary `Makefile`, `GNUmakefile`, and
 `.mk` files to the `makefile` previewer. Markdown fenced code blocks labeled
 `make`, `makefile`, or `mk` should also delegate to `lexers/makefile`.
@@ -20,6 +24,7 @@ The current styling should color:
 - directives
 - rule targets and variable names
 - variable references
+- recipe bodies
 - assignment operators and delimiters
 - malformed input
 

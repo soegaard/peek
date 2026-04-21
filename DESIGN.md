@@ -101,6 +101,7 @@ File-type-specific notes belong in separate files, such as:
 - [`Markdown.md`](/Users/soegaard/Dropbox/GitHub/peek/Markdown.md)
 - [`Racket.md`](/Users/soegaard/Dropbox/GitHub/peek/Racket.md)
 - [`Rhombus.md`](/Users/soegaard/Dropbox/GitHub/peek/Rhombus.md)
+- [`Rust.md`](/Users/soegaard/Dropbox/GitHub/peek/Rust.md)
 - [`Shell.md`](/Users/soegaard/Dropbox/GitHub/peek/Shell.md)
 - [`Swift.md`](/Users/soegaard/Dropbox/GitHub/peek/Swift.md)
 - [`Yaml.md`](/Users/soegaard/Dropbox/GitHub/peek/Yaml.md)

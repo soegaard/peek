@@ -28,6 +28,7 @@
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
 ;; swift-like-style      -- Style Swift-like embedded tokens.
+;; rust-like-style       -- Style Rust-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
 ;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
@@ -78,6 +79,8 @@
  python-like-style
  ;; swift-like-style Style Swift-like embedded tokens.
  swift-like-style
+ ;; rust-like-style Style Rust-like embedded tokens.
+ rust-like-style
  ;; shell-like-style Style shell-like embedded tokens.
  shell-like-style
  ;; rhombus-like-style Style Rhombus-like embedded tokens.
@@ -555,6 +558,45 @@
      ansi-identifier]
     [(or (memq 'swift-operator tags)
          (memq 'swift-delimiter tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; rust-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Rust-like roles.
+(define (rust-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'rust-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'rust-comment tags)
+         (memq 'rust-doc-comment tags))
+     ansi-comment]
+    [(or (memq 'rust-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'rust-string-literal tags)
+         (memq 'rust-raw-string-literal tags)
+         (memq 'rust-char-literal tags)
+         (memq 'rust-byte-literal tags)
+         (memq 'rust-byte-string-literal tags)
+         (memq 'rust-c-string-literal tags)
+         (memq 'rust-numeric-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'rust-identifier tags)
+         (memq 'rust-raw-identifier tags)
+         (memq 'rust-lifetime tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'rust-punctuation tags)
+         (memq 'rust-delimiter tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]

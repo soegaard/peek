@@ -37,6 +37,7 @@ peek path/to/file.sty
 peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
+peek path/to/file.rs
 peek path/to/file.swift
 peek path/to/file.md
 peek path/to/file.rhm
@@ -118,6 +119,7 @@ Current supported file types are:
 - `python`
 - `rhombus`
 - `rkt`
+- `rust`
 - `scrbl`
 - `swift`
 - `tex`
@@ -134,7 +136,9 @@ C++ uses the `cpp` previewer and preserves source text and line breaks without
 layout rewriting. Objective-C uses the `objc` previewer and preserves source
 text and line breaks without layout rewriting. Makefiles use the `makefile`
 previewer; recipe bodies are shell-aware while preserving Makefile variable
-references, source text, and line breaks without layout rewriting.
+references, source text, and line breaks without layout rewriting. Rust uses
+the `rust` previewer and preserves source text and line breaks without layout
+rewriting.
 CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
 rewriting. JSON uses the `json` previewer and preserves source text and line

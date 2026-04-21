@@ -15,6 +15,7 @@
          "../markdown.rkt"
          "../plist.rkt"
          "../python.rkt"
+         "../rust.rkt"
          "../cpp.rkt"
          "../objc.rkt"
          "../makefile.rkt"
@@ -59,6 +60,8 @@
   "fixtures/demo.yml")
 (define-runtime-path demo-python-path
   "fixtures/demo.py")
+(define-runtime-path demo-rust-path
+  "fixtures/demo.rs")
 (define-runtime-path demo-swift-path
   "fixtures/demo.swift")
 (define-runtime-path demo-shell-path
@@ -103,7 +106,7 @@
    "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv html js json jsx latex makefile md objc plist powershell python rhombus rkt scrbl swift tex tsv wat yaml zsh))
+              '(bash c cpp css csv html js json jsx latex makefile md objc plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -187,6 +190,9 @@
 (check-true
  (regexp-match? #px"answer"
                 (render-python-preview "def answer(name):\n    return name\n")))
+(check-true
+ (regexp-match? #px"greet"
+                (render-rust-preview "/// Demo\nfn greet(name: &str) -> String {\n    format!(\"hello, {name}\")\n}\n")))
 (check-true
  (regexp-match? #px"greet"
                 (render-swift-preview "import Foundation\nfunc greet() { print(\"hi\") }\n")))
@@ -345,6 +351,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-python-path))
 (check-equal?
+ (strip-ansi (preview-file demo-rust-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-rust-path))
+(check-equal?
  (strip-ansi (preview-file demo-swift-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-swift-path))
@@ -431,6 +441,12 @@
                              (make-preview-options #:type 'python
                                                    #:color-mode 'always)))
  "def answer(name):\n    return name\n")
+(check-equal?
+ (strip-ansi (preview-string "/// Demo\nfn greet(name: &str) -> String {\n    format!(\"hello, {name}\")\n}\n"
+                             #f
+                             (make-preview-options #:type 'rust
+                                                   #:color-mode 'always)))
+ "/// Demo\nfn greet(name: &str) -> String {\n    format!(\"hello, {name}\")\n}\n")
 (check-equal?
  (strip-ansi (preview-string "import Foundation\nfunc greet() { print(\"hi\") }\n"
                              #f

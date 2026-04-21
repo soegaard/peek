@@ -12,6 +12,7 @@
                      lexers/json
                      lexers/makefile
                      lexers/markdown
+                     lexers/plist
                      lexers/python
                      lexers/racket
                      lexers/rhombus
@@ -42,8 +43,8 @@ There is file-type-aware rendering for the supported file types.
 The supported file types are:
 
 CSS, Bash, C, Objective-C, C++, CSV, HTML, JavaScript, JSON, Makefile,
-Markdown, PowerShell, Python, Rhombus, Racket, Scribble, Swift, TSV, WAT,
-YAML, and Zsh.
+Markdown, Plist, PowerShell, Python, Rhombus, Racket, Scribble, Swift, TSV,
+WAT, YAML, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -75,6 +76,9 @@ classification for @tt{.jsx} files.
 
 The JSON previewer uses @tt{lexers/json} and supports @tt{.json} and
 @tt{.webmanifest} files as @tt{json} preview targets.
+
+The Plist previewer uses @tt{lexers/plist} and supports XML property-list
+files such as @tt{.plist} inputs as @tt{plist} preview targets.
 
 The Python previewer uses @tt{lexers/python} and supports @tt{.py},
 @tt{.pyi}, and @tt{.pyw} files as @tt{python} preview targets.
@@ -142,6 +146,7 @@ peek path/to/file.csv
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
 peek path/to/file.swift
@@ -165,6 +170,7 @@ cat path/to/file.csv | peek --type csv
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json
+cat path/to/file.plist | peek --type plist
 cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
 cat path/to/file.swift | peek --type swift
@@ -191,8 +197,8 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSON, Python, JSX, Markdown, Rhombus, Racket, Scribble,
-TSV, YAML, and WAT examples:
+HTML, JavaScript, JSON, Plist, Python, JSX, Markdown, Rhombus, Racket,
+Scribble, TSV, YAML, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
@@ -200,6 +206,7 @@ peek path/to/file.c
 peek path/to/file.csv
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
 peek path/to/component.jsx
@@ -232,9 +239,9 @@ peek path/to/script.ps1
  @item{@DFlag{--type} @italic{type}
     selects the input type explicitly. This is mainly useful for standard
        input. Supported values are @tt{bash}, @tt{c}, @tt{cpp}, @tt{css},
-       @tt{html}, @tt{js}, @tt{json}, @tt{jsx}, @tt{md}, @tt{powershell},
-       @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{swift},
-       @tt{wat}, @tt{yaml}, and @tt{zsh}.}
+       @tt{html}, @tt{js}, @tt{json}, @tt{jsx}, @tt{md}, @tt{plist},
+       @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{scrbl},
+       @tt{swift}, @tt{wat}, @tt{yaml}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -309,6 +316,7 @@ The current explicit file type names are:
  @item{@tt{json}}
  @item{@tt{jsx}}
  @item{@tt{md}}
+ @item{@tt{plist}}
  @item{@tt{powershell}}
  @item{@tt{python}}
  @item{@tt{rhombus}}
@@ -498,6 +506,60 @@ Example JSON preview input:
 }
 }
 
+@subsection{Property Lists}
+
+For property lists, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for XML property-list files in @tt{.plist} inputs}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Plist previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example property-list preview input:
+
+@verbatim[#:indent 2]{
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Name</key>
+    <string>peek</string>
+  </dict>
+</plist>
+}
+
+@subsection{Plist}
+
+For Plist, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for XML property-list files in @tt{.plist} inputs}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Plist previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Plist preview input:
+
+@verbatim[#:indent 2]{
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Name</key>
+    <string>peek</string>
+  </dict>
+</plist>
+}
+
 @subsection{WAT}
 
 For WAT, @exec{peek} currently supports:
@@ -511,9 +573,8 @@ For WAT, @exec{peek} currently supports:
 
 The first WAT pass is intentionally color-only. It does not add
 indentation normalization, formatting, or spec-link behavior. Standalone WAT
-preview is also the first file type to use the streaming render path in
-@exec{peek}; other current file types still use the existing buffered preview
-path.
+preview is one of the streaming render paths in @exec{peek}; all current file
+types now use the port-oriented streaming path.
 
 Example WAT preview input:
 
@@ -601,7 +662,7 @@ The command-line entry point lives in
 Unsupported file types currently fall back to plain text.
 
 The current implementation focuses on CSS, HTML, JavaScript, Markdown,
-Racket, Scribble, WAT, and a small generic preview pipeline. All supported
-lexers now use the port-oriented streaming path. Future file types may add
-their own previewers without forcing all file types into the same rendering
-model.
+Plist, Racket, Scribble, WAT, and a small generic preview pipeline. All
+supported lexers now use the port-oriented streaming path. Future file types
+may add their own previewers without forcing all file types into the same
+rendering model.

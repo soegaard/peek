@@ -61,6 +61,7 @@
          "objc.rkt"
          "makefile.rkt"
          "markdown.rkt"
+         "plist.rkt"
          "python.rkt"
          "racket.rkt"
          "rhombus.rkt"
@@ -74,7 +75,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv html js json jsx makefile md objc powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+  '(bash c cpp css csv html js json jsx makefile md objc plist powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -119,6 +120,7 @@
        [(regexp-match? #px"(?i:\\.(?:json|webmanifest))$" path-string)
         'json]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
+       [(regexp-match? #px"(?i:\\.plist)$" path-string) 'plist]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.(?:py|pyi|pyw))$" path-string) 'python]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
@@ -174,6 +176,8 @@
      (render-javascript-preview source)]
     [(eq? file-type 'json)
      (render-json-preview source)]
+    [(eq? file-type 'plist)
+     (render-plist-preview source)]
     [(eq? file-type 'jsx)
      (render-javascript-preview source
                                 #:jsx? #t)]
@@ -225,6 +229,7 @@
               (eq? file-type 'makefile)
               (eq? file-type 'objc)
               (eq? file-type 'csv)
+              (eq? file-type 'plist)
               (eq? file-type 'powershell)
               (eq? file-type 'swift)
               (eq? file-type 'zsh))
@@ -235,6 +240,7 @@
        [(makefile)   (render-makefile-preview-port in out)]
        [(objc)       (render-objc-preview-port in out)]
        [(csv)        (render-csv-preview-port in out)]
+       [(plist)      (render-plist-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
        [(swift)      (render-swift-preview-port in out)]
@@ -245,6 +251,7 @@
          (eq? file-type 'makefile)
          (eq? file-type 'objc)
          (eq? file-type 'csv)
+         (eq? file-type 'plist)
          (eq? file-type 'powershell)
          (eq? file-type 'swift)
          (eq? file-type 'zsh))
@@ -267,6 +274,7 @@
     [(and (or (eq? file-type 'html)
               (eq? file-type 'js)
               (eq? file-type 'json)
+              (eq? file-type 'plist)
               (eq? file-type 'python)
               (eq? file-type 'jsx)
               (eq? file-type 'swift)
@@ -277,6 +285,7 @@
        [(html)  (render-html-preview-port in out)]
        [(js)    (render-javascript-preview-port in out)]
        [(json)  (render-json-preview-port in out)]
+       [(plist) (render-plist-preview-port in out)]
        [(python) (render-python-preview-port in out)]
        [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
        [(swift) (render-swift-preview-port in out)]
@@ -285,6 +294,7 @@
     [(or (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'json)
+         (eq? file-type 'plist)
          (eq? file-type 'python)
          (eq? file-type 'jsx)
          (eq? file-type 'swift)
@@ -329,6 +339,7 @@
          (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'json)
+         (eq? file-type 'plist)
          (eq? file-type 'python)
          (eq? file-type 'jsx)
          (eq? file-type 'swift)

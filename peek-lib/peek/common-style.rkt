@@ -22,6 +22,7 @@
 ;; makefile-like-style   -- Style Makefile-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
+;; plist-like-style      -- Style plist-like embedded tokens.
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
@@ -64,6 +65,8 @@
  javascript-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
  json-like-style
+ ;; plist-like-style      Style plist-like embedded tokens.
+ plist-like-style
  ;; delimited-like-style Style CSV/TSV-like embedded tokens.
  delimited-like-style
  ;; yaml-like-style Style YAML-like embedded tokens.
@@ -338,6 +341,44 @@
          (memq 'json-colon tags)
          (eq? category 'delimiter)
          (eq? category 'operator))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; plist-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for plist-like XML roles.
+(define (plist-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'plist-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'plist-comment tags))
+     ansi-comment]
+    [(or (memq 'plist-processing-instruction tags)
+         (memq 'plist-doctype tags)
+         (memq 'plist-tag-name tags)
+         (memq 'plist-closing-tag-name tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'plist-attribute-name tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'plist-attribute-value tags)
+         (memq 'plist-key-text tags)
+         (memq 'plist-string-text tags)
+         (memq 'plist-data-text tags)
+         (memq 'plist-date-text tags)
+         (memq 'plist-integer-text tags)
+         (memq 'plist-real-text tags)
+         (memq 'plist-text tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (eq? category 'operator)
+         (eq? category 'delimiter))
      ansi-delimiter]
     [else
      ""]))

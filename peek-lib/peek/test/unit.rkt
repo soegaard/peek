@@ -12,6 +12,7 @@
          "../json.rkt"
          "../main.rkt"
          "../markdown.rkt"
+         "../plist.rkt"
          "../python.rkt"
          "../cpp.rkt"
          "../objc.rkt"
@@ -41,6 +42,8 @@
   "fixtures/demo.csv")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
+(define-runtime-path demo-plist-path
+  "fixtures/demo.plist")
 (define-runtime-path demo-yaml-path
   "fixtures/demo.yaml")
 (define-runtime-path demo-yml-path
@@ -76,8 +79,22 @@
 (define (strip-ansi text)
   (regexp-replace* ansi-pattern text ""))
 
+(define plist-sample
+  (string-append
+   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
+   "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+   "<plist version=\"1.0\">\n"
+   "  <dict>\n"
+   "    <key>Name</key>\n"
+   "    <string>peek</string>\n"
+   "    <key>Enabled</key>\n"
+   "    <true/>\n"
+   "  </dict>\n"
+   "</plist>\n"))
+
 (check-equal? supported-file-types
-              '(bash c cpp css csv html js json jsx makefile md objc powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+              '(bash c cpp css csv html js json jsx makefile md objc plist powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -108,6 +125,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
+(check-true
+ (regexp-match? #px"peek"
+                (render-plist-preview plist-sample)))
 (check-true
  (regexp-match? #px"London"
                 (render-csv-preview "name,age,city\nAda,37,London\n")))
@@ -217,6 +237,24 @@
  (strip-ansi (preview-file demo-json-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-json-path))
+(check-equal?
+ (strip-ansi (preview-file demo-plist-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-plist-path))
+(check-equal?
+ (strip-ansi (preview-string plist-sample
+                             #f
+                             (make-preview-options #:type 'plist
+                                                   #:color-mode 'always)))
+ plist-sample)
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string plist-sample)
+                 "demo.plist"
+                 (make-preview-options #:color-mode 'always)
+                 out)
+   (strip-ansi (get-output-string out)))
+ plist-sample)
 (check-equal?
  (strip-ansi (preview-file demo-yaml-path
                            (make-preview-options #:color-mode 'always)))

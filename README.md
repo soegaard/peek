@@ -31,6 +31,7 @@ peek path/to/file.sh
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
 peek path/to/file.swift
@@ -53,6 +54,7 @@ cat path/to/file.mk | peek --type makefile
 cat path/to/file.csv | peek --type csv
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.json | peek --type json
+cat path/to/file.plist | peek --type plist
 cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
 cat path/to/file.swift | peek --type swift
@@ -104,6 +106,7 @@ Current supported file types are:
 - `json`
 - `jsx`
 - `md`
+- `plist`
 - `powershell`
 - `python`
 - `rhombus`
@@ -126,16 +129,17 @@ previewer and preserve source text and line breaks without layout rewriting.
 CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
 rewriting. JSON uses the `json` previewer and preserves source text and line
-breaks without layout rewriting. Python uses the `python` previewer and
-preserves source text and line breaks without layout rewriting. Rhombus uses
-the `rhombus` previewer and preserves source text and line breaks without
-layout rewriting. Shell files use the `bash`, `zsh`, and `powershell`
-previewers and preserve source text and line breaks without layout rewriting.
-Swift uses the `swift` previewer and preserves source text and line breaks
-without layout rewriting. YAML uses the `yaml` previewer and preserves source
-text and line breaks without layout rewriting. Racket-family files use the
-`racket` previewer and preserve source text and line breaks without layout
-rewriting.
+breaks without layout rewriting. Plist uses the `plist` previewer and
+preserves source text and line breaks without layout rewriting. Python uses
+the `python` previewer and preserves source text and line breaks without
+layout rewriting. Rhombus uses the `rhombus` previewer and preserves source
+text and line breaks without layout rewriting. Shell files use the `bash`,
+`zsh`, and `powershell` previewers and preserve source text and line breaks
+without layout rewriting. Swift uses the `swift` previewer and preserves
+source text and line breaks without layout rewriting. YAML uses the `yaml`
+previewer and preserves source text and line breaks without layout rewriting.
+Racket-family files use the `racket` previewer and preserve source text and
+line breaks without layout rewriting.
 
 ## Documentation
 

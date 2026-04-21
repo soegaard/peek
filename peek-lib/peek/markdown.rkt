@@ -28,6 +28,7 @@
          racket/string
          "common-style.rkt"
          "cpp.rkt"
+         "plist.rkt"
          "swift.rkt")
 
 (struct markdown-token (category text tags start end) #:transparent)
@@ -86,6 +87,8 @@
      (css-like-style category tags)]
     [(memq 'embedded-cpp tags)
      (cpp-like-style category tags)]
+    [(memq 'embedded-plist tags)
+     (plist-like-style category tags)]
     [(memq 'embedded-makefile tags)
      (makefile-like-style category tags)]
     [(memq 'embedded-objc tags)

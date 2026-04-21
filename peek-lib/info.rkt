@@ -6,9 +6,7 @@
 
 (define deps       '("base"
                      "parser-tools-lib"
-                     "lexers-lib"))
-
-
-(define build-deps '("rackunit-lib"))
+                     "lexers-lib"
+                     "rackunit-lib"))
 
 (define license 'MIT)

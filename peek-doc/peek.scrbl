@@ -13,6 +13,8 @@
                      lexers/makefile
                      lexers/markdown
                      lexers/plist
+                     lexers/tex
+                     lexers/latex
                      lexers/python
                      lexers/racket
                      lexers/rhombus
@@ -42,9 +44,9 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, C, Objective-C, C++, CSV, HTML, JavaScript, JSON, Makefile,
-Markdown, Plist, PowerShell, Python, Rhombus, Racket, Scribble, Swift, TSV,
-WAT, YAML, and Zsh.
+CSS, Bash, C, Objective-C, C++, CSV, HTML, JavaScript, JSON, LaTeX, Makefile,
+Markdown, Plist, PowerShell, Python, Rhombus, Racket, Scribble, Swift, TeX,
+TSV, WAT, YAML, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -146,6 +148,9 @@ peek path/to/file.csv
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.tex
+peek path/to/file.cls
+peek path/to/file.sty
 peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
@@ -170,6 +175,9 @@ cat path/to/file.csv | peek --type csv
 cat path/to/file.html | peek --type html
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json
+cat path/to/file.tex | peek --type tex
+cat path/to/file.cls | peek --type latex
+cat path/to/file.sty | peek --type latex
 cat path/to/file.plist | peek --type plist
 cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
@@ -197,8 +205,8 @@ peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
 }
 
-HTML, JavaScript, JSON, Plist, Python, JSX, Markdown, Rhombus, Racket,
-Scribble, TSV, YAML, and WAT examples:
+HTML, JavaScript, JSON, LaTeX, Plist, Python, JSX, Markdown, Rhombus, Racket,
+Scribble, TeX, TSV, YAML, and WAT examples:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.html
@@ -206,6 +214,9 @@ peek path/to/file.c
 peek path/to/file.csv
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.tex
+peek path/to/file.cls
+peek path/to/file.sty
 peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
@@ -239,9 +250,9 @@ peek path/to/script.ps1
  @item{@DFlag{--type} @italic{type}
     selects the input type explicitly. This is mainly useful for standard
        input. Supported values are @tt{bash}, @tt{c}, @tt{cpp}, @tt{css},
-       @tt{html}, @tt{js}, @tt{json}, @tt{jsx}, @tt{md}, @tt{plist},
-       @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{scrbl},
-       @tt{swift}, @tt{wat}, @tt{yaml}, and @tt{zsh}.}
+       @tt{html}, @tt{js}, @tt{json}, @tt{jsx}, @tt{latex}, @tt{md},
+       @tt{plist}, @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt},
+       @tt{scrbl}, @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, and @tt{zsh}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -315,6 +326,7 @@ The current explicit file type names are:
  @item{@tt{js}}
  @item{@tt{json}}
  @item{@tt{jsx}}
+ @item{@tt{latex}}
  @item{@tt{md}}
  @item{@tt{plist}}
  @item{@tt{powershell}}
@@ -323,6 +335,7 @@ The current explicit file type names are:
  @item{@tt{rkt}}
  @item{@tt{scrbl}}
  @item{@tt{swift}}
+ @item{@tt{tex}}
  @item{@tt{wat}}
  @item{@tt{zsh}}
 ]
@@ -560,6 +573,51 @@ Example Plist preview input:
 </plist>
 }
 
+@subsection{TeX}
+
+For TeX, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.tex} source}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The TeX previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example TeX preview input:
+
+@verbatim[#:indent 2]{
+\section{Demo}
+
+Text with \% and $x+y$.
+}
+
+@subsection{LaTeX}
+
+For LaTeX, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for common LaTeX source files such as @tt{.cls},
+       @tt{.sty}, @tt{.latex}, and @tt{.ltx}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The LaTeX previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example LaTeX preview input:
+
+@verbatim[#:indent 2]{
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesClass{demo}
+\LoadClass{article}
+}
+
 @subsection{WAT}
 
 For WAT, @exec{peek} currently supports:
@@ -662,7 +720,8 @@ The command-line entry point lives in
 Unsupported file types currently fall back to plain text.
 
 The current implementation focuses on CSS, HTML, JavaScript, Markdown,
-Plist, Racket, Scribble, WAT, and a small generic preview pipeline. All
-supported lexers now use the port-oriented streaming path. Future file types
-may add their own previewers without forcing all file types into the same
-rendering model.
+Plist, Racket, Scribble, TeX, LaTeX, WAT, and a small generic preview
+pipeline. Most supported lexers use the port-oriented streaming path.
+CSS remains the special buffered renderer because it can add swatches and
+alignment. Future file types may add their own previewers without forcing all
+file types into the same rendering model.

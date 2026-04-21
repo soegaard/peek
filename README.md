@@ -31,6 +31,9 @@ peek path/to/file.sh
 peek path/to/file.html
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.tex
+peek path/to/file.cls
+peek path/to/file.sty
 peek path/to/file.plist
 peek path/to/file.yaml
 peek path/to/file.py
@@ -54,6 +57,9 @@ cat path/to/file.mk | peek --type makefile
 cat path/to/file.csv | peek --type csv
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.json | peek --type json
+cat path/to/file.tex | peek --type tex
+cat path/to/file.cls | peek --type latex
+cat path/to/file.sty | peek --type latex
 cat path/to/file.plist | peek --type plist
 cat path/to/file.yaml | peek --type yaml
 cat path/to/file.py | peek --type python
@@ -105,6 +111,7 @@ Current supported file types are:
 - `js`
 - `json`
 - `jsx`
+- `latex`
 - `md`
 - `plist`
 - `powershell`
@@ -113,6 +120,7 @@ Current supported file types are:
 - `rkt`
 - `scrbl`
 - `swift`
+- `tex`
 - `csv`
 - `tsv`
 - `wat`
@@ -138,6 +146,9 @@ text and line breaks without layout rewriting. Shell files use the `bash`,
 without layout rewriting. Swift uses the `swift` previewer and preserves
 source text and line breaks without layout rewriting. YAML uses the `yaml`
 previewer and preserves source text and line breaks without layout rewriting.
+TeX uses the `tex` previewer and preserves source text and line breaks
+without layout rewriting. LaTeX uses the `latex` previewer and preserves
+source text and line breaks without layout rewriting.
 Racket-family files use the `racket` previewer and preserve source text and
 line breaks without layout rewriting.
 

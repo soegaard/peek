@@ -61,6 +61,8 @@
          "objc.rkt"
          "makefile.rkt"
          "markdown.rkt"
+         "tex.rkt"
+         "latex.rkt"
          "plist.rkt"
          "python.rkt"
          "racket.rkt"
@@ -75,7 +77,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv html js json jsx makefile md objc plist powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+  '(bash c cpp css csv html js json jsx latex makefile md objc plist powershell python rhombus rkt scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -120,10 +122,12 @@
        [(regexp-match? #px"(?i:\\.(?:json|webmanifest))$" path-string)
         'json]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
+       [(regexp-match? #px"(?i:\\.(?:cls|sty|latex|ltx))$" path-string) 'latex]
        [(regexp-match? #px"(?i:\\.plist)$" path-string) 'plist]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.(?:py|pyi|pyw))$" path-string) 'python]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
+       [(regexp-match? #px"(?i:\\.tex)$" path-string) 'tex]
        [(regexp-match? #px"(?i:\\.swift)$" path-string) 'swift]
        [(regexp-match? #px"(?i:\\.(?:ya?ml))$" path-string) 'yaml]
        [(regexp-match? #px"(?i:\\.scrbl)$" path-string) 'scrbl]
@@ -183,6 +187,8 @@
                                 #:jsx? #t)]
     [(eq? file-type 'md)
      (render-markdown-preview source)]
+    [(eq? file-type 'latex)
+     (render-latex-preview source)]
     [(eq? file-type 'powershell)
      (render-shell-preview source #:shell 'powershell)]
     [(eq? file-type 'python)
@@ -197,6 +203,8 @@
      (render-tsv-preview source)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
+    [(eq? file-type 'tex)
+     (render-tex-preview source)]
     [(eq? file-type 'scrbl)
      (render-scribble-preview source)]
     [(eq? file-type 'zsh)
@@ -231,6 +239,7 @@
               (eq? file-type 'csv)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
+              (eq? file-type 'tex)
               (eq? file-type 'swift)
               (eq? file-type 'zsh))
           (color-enabled? out options))
@@ -241,8 +250,10 @@
        [(objc)       (render-objc-preview-port in out)]
        [(csv)        (render-csv-preview-port in out)]
        [(plist)      (render-plist-preview-port in out)]
+       [(latex)      (render-latex-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
+       [(tex)        (render-tex-preview-port in out)]
        [(swift)      (render-swift-preview-port in out)]
        [(zsh)        (render-shell-preview-port in out #:shell 'zsh)])]
     [(or (eq? file-type 'bash)
@@ -253,6 +264,7 @@
          (eq? file-type 'csv)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
+         (eq? file-type 'tex)
          (eq? file-type 'swift)
          (eq? file-type 'zsh))
      (copy-port in out)]
@@ -277,6 +289,7 @@
               (eq? file-type 'plist)
               (eq? file-type 'python)
               (eq? file-type 'jsx)
+              (eq? file-type 'latex)
               (eq? file-type 'swift)
               (eq? file-type 'md)
               (eq? file-type 'scrbl))
@@ -288,6 +301,7 @@
        [(plist) (render-plist-preview-port in out)]
        [(python) (render-python-preview-port in out)]
        [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
+       [(latex) (render-latex-preview-port in out)]
        [(swift) (render-swift-preview-port in out)]
        [(md)    (render-markdown-preview-port in out)]
        [(scrbl) (render-scribble-preview-port in out)])]
@@ -297,6 +311,7 @@
          (eq? file-type 'plist)
          (eq? file-type 'python)
          (eq? file-type 'jsx)
+         (eq? file-type 'latex)
          (eq? file-type 'swift)
          (eq? file-type 'md)
          (eq? file-type 'scrbl))
@@ -340,8 +355,11 @@
          (eq? file-type 'js)
          (eq? file-type 'json)
          (eq? file-type 'plist)
+         (eq? file-type 'latex)
+         (eq? file-type 'tex)
          (eq? file-type 'python)
          (eq? file-type 'jsx)
+         (eq? file-type 'tex)
          (eq? file-type 'swift)
          (eq? file-type 'md)
          (eq? file-type 'yaml)

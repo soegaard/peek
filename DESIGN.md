@@ -37,11 +37,11 @@ The generic layer now has two rendering shapes:
   previewer returns a rendered string
 - port-oriented previewing, where a previewer writes directly to an output port
 
-Most current file types still use the buffered path. WAT is the first file type
-to use the port-oriented path for standalone previews, because `.wat` inputs are
-expected to be very large in practice. This keeps the generic architecture
-forward-compatible without forcing every file type through a streaming refactor
-at once.
+Most current file types now use the port-oriented path. CSS remains the main
+buffered/special-case renderer because it may insert swatches and alignment.
+WAT keeps the streaming focus for very large standalone inputs. This keeps the
+generic architecture forward-compatible without forcing every file type through
+a single rendering model.
 
 ## Lessons From `scribble-tools`
 
@@ -96,6 +96,8 @@ File-type-specific notes belong in separate files, such as:
 - [`Makefile.md`](/Users/soegaard/Dropbox/GitHub/peek/Makefile.md)
 - [`Plist.md`](/Users/soegaard/Dropbox/GitHub/peek/Plist.md)
 - [`Python.md`](/Users/soegaard/Dropbox/GitHub/peek/Python.md)
+- [`TeX.md`](/Users/soegaard/Dropbox/GitHub/peek/TeX.md)
+- [`LaTeX.md`](/Users/soegaard/Dropbox/GitHub/peek/LaTeX.md)
 - [`Markdown.md`](/Users/soegaard/Dropbox/GitHub/peek/Markdown.md)
 - [`Racket.md`](/Users/soegaard/Dropbox/GitHub/peek/Racket.md)
 - [`Rhombus.md`](/Users/soegaard/Dropbox/GitHub/peek/Rhombus.md)

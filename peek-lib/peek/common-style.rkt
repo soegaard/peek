@@ -23,6 +23,7 @@
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
 ;; plist-like-style      -- Style plist-like embedded tokens.
+;; tex-like-style        -- Style TeX/LaTeX embedded tokens.
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
@@ -67,6 +68,8 @@
  json-like-style
  ;; plist-like-style      Style plist-like embedded tokens.
  plist-like-style
+ ;; tex-like-style        Style TeX/LaTeX embedded tokens.
+ tex-like-style
  ;; delimited-like-style Style CSV/TSV-like embedded tokens.
  delimited-like-style
  ;; yaml-like-style Style YAML-like embedded tokens.
@@ -380,6 +383,32 @@
     [(or (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]
+    [else
+     ""]))
+
+;; tex-like-style : (listof symbol?) -> string?
+;;   Choose an ANSI style for TeX and LaTeX roles.
+(define (tex-like-style tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'tex-error tags)
+         (memq 'latex-error tags))
+     ansi-malformed]
+    [(or (memq 'tex-comment tags)
+         (memq 'comment tags))
+     ansi-comment]
+    [(or (memq 'tex-control-word tags)
+         (memq 'latex-command tags)
+         (memq 'latex-environment-command tags))
+     ansi-keyword]
+    [(or (memq 'tex-control-symbol tags)
+         (memq 'tex-math-shift tags)
+         (memq 'tex-group-delimiter tags)
+         (memq 'tex-optional-delimiter tags)
+         (memq 'tex-special-character tags))
+     ansi-delimiter]
+    [(memq 'tex-parameter tags)
+     ansi-identifier]
     [else
      ""]))
 

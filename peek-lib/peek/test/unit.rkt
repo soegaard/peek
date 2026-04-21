@@ -17,6 +17,8 @@
          "../cpp.rkt"
          "../objc.rkt"
          "../makefile.rkt"
+         "../latex.rkt"
+         "../tex.rkt"
          "../swift.rkt"
          "../preview.rkt"
          "../yaml.rkt"
@@ -38,6 +40,12 @@
   "fixtures/demo.m")
 (define-runtime-path demo-makefile-path
   "fixtures/demo.mk")
+(define-runtime-path demo-latex-path
+  "fixtures/demo.cls")
+(define-runtime-path demo-tex-path
+  "fixtures/demo.tex")
+(define-runtime-path demo-sty-path
+  "fixtures/demo.sty")
 (define-runtime-path demo-csv-path
   "fixtures/demo.csv")
 (define-runtime-path demo-json-path
@@ -94,7 +102,7 @@
    "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv html js json jsx makefile md objc plist powershell python rhombus rkt scrbl swift tsv wat yaml zsh))
+              '(bash c cpp css csv html js json jsx latex makefile md objc plist powershell python rhombus rkt scrbl swift tex tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -122,6 +130,24 @@
 (check-true
  (regexp-match? #px"include"
                 (render-makefile-preview "CC := gcc\nall: main.o\n\t$(CC) -o app main.o\ninclude local.mk\n")))
+(check-equal?
+ (strip-ansi (render-tex-preview "\\section{Hi}\nText\n"))
+ "\\section{Hi}\nText\n")
+(check-equal?
+ (strip-ansi (render-latex-preview "\\begin{itemize}\n\\item One\n\\end{itemize}\n"))
+ "\\begin{itemize}\n\\item One\n\\end{itemize}\n")
+(check-equal?
+ (strip-ansi (preview-string "\\section{Hi}\n"
+                              #f
+                              (make-preview-options #:type 'tex
+                                                    #:color-mode 'always)))
+ "\\section{Hi}\n")
+(check-equal?
+ (strip-ansi (preview-string "\\begin{itemize}\n\\item One\n\\end{itemize}\n"
+                              #f
+                              (make-preview-options #:type 'latex
+                                                    #:color-mode 'always)))
+ "\\begin{itemize}\n\\item One\n\\end{itemize}\n")
 (check-true
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
@@ -153,6 +179,12 @@
 (check-equal?
  (strip-ansi (render-markdown-preview "```swift\nimport Foundation\nlet value = 42\n```\n"))
  "```swift\nimport Foundation\nlet value = 42\n```\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "```tex\n\\section{Hi}\n```\n"))
+ "```tex\n\\section{Hi}\n```\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "```latex\n\\begin{itemize}\n```\n"))
+ "```latex\n\\begin{itemize}\n```\n")
 (check-equal?
  (strip-ansi (render-markdown-preview "```cpp\n#include <vector>\n```\n"))
  "```cpp\n#include <vector>\n```\n")
@@ -204,6 +236,19 @@
                  out)
    (strip-ansi (get-output-string out)))
  "<!doctype html><main id=\"app\">Hi</main>\n")
+
+(check-equal?
+ (strip-ansi (preview-file demo-tex-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-tex-path))
+(check-equal?
+ (strip-ansi (preview-file demo-latex-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-latex-path))
+(check-equal?
+ (strip-ansi (preview-file demo-sty-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-sty-path))
 
 (check-equal?
  (strip-ansi (preview-file demo-c-path

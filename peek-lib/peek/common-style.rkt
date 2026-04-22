@@ -279,6 +279,8 @@
      ansi-keyword]
     [(or (memq 'makefile-variable tags)
          (memq 'makefile-rule-target tags)
+         (memq 'makefile-paren-variable-reference tags)
+         (memq 'makefile-brace-variable-reference tags)
          (memq 'makefile-variable-reference tags)
          (eq? category 'identifier))
      ansi-identifier]
@@ -293,9 +295,16 @@
          (memq 'shell-command-substitution tags)
          (memq 'shell-option tags)
          (memq 'shell-numeric-literal tags)
+         (memq 'shell-pipeline-operator tags)
+         (memq 'shell-logical-operator tags)
+         (memq 'shell-redirection-operator tags)
+         (memq 'shell-heredoc-operator tags)
          (memq 'shell-punctuation tags))
      (shell-like-style category tags)]
     [(or (memq 'makefile-assignment-operator tags)
+         (memq 'makefile-rule-delimiter tags)
+         (memq 'makefile-recipe-separator tags)
+         (memq 'makefile-order-only-delimiter tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]
@@ -717,7 +726,11 @@
          (memq 'shell-numeric-literal tags)
          (eq? category 'literal))
      ansi-literal]
-    [(or (memq 'shell-punctuation tags)
+    [(or (memq 'shell-pipeline-operator tags)
+         (memq 'shell-logical-operator tags)
+         (memq 'shell-redirection-operator tags)
+         (memq 'shell-heredoc-operator tags)
+         (memq 'shell-punctuation tags)
          (eq? category 'delimiter))
      ansi-delimiter]
     [else

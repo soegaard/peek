@@ -147,12 +147,21 @@
   (string-append
    "APP = scribble-tools\n"
    ".PHONY: docs test\n"
-   "docs:\n"
+   "docs: | generated\n"
+   "generated:\n"
    "\traco scribble +m --html --dest html scribblings/scribble-tools.scrbl\n"
    "\n"
    "test:\n"
    "\t$(CC) -o app main.o util.o\n"
    "\ttest -n \"$HOME\" && raco test private/lang-code.rkt\n"))
+
+(define shell-operator-sample
+  (string-append
+   "#!/usr/bin/env bash\n"
+   "printf '%s\\n' \"$HOME\" | sed 's/x/y/' && echo done > out.txt\n"
+   "cat <<'EOF'\n"
+   "line\n"
+   "EOF\n"))
 
 (check-true
  (regexp-match? #px"include"
@@ -169,6 +178,25 @@
 (check-true
  (regexp-match? #px"\u001b\\[[0-9;]*m\\$\\(CC\\)\u001b\\[0m"
                 (render-makefile-preview makefile-shell-sample)))
+(check-true
+ (string-contains? (render-makefile-preview makefile-shell-sample)
+                   (string-append ansi-delimiter "|" ansi-reset)))
+(check-equal?
+ (strip-ansi (render-shell-preview shell-operator-sample
+                                   #:shell 'bash))
+ shell-operator-sample)
+(check-true
+ (string-contains? (render-shell-preview shell-operator-sample
+                                         #:shell 'bash)
+                   (string-append ansi-delimiter "|" ansi-reset)))
+(check-true
+ (string-contains? (render-shell-preview shell-operator-sample
+                                         #:shell 'bash)
+                   (string-append ansi-delimiter "&&" ansi-reset)))
+(check-true
+ (string-contains? (render-shell-preview shell-operator-sample
+                                         #:shell 'bash)
+                   (string-append ansi-delimiter "<<" ansi-reset)))
 (check-equal?
  (strip-ansi (render-tex-preview "\\section{Hi}\nText\n"))
  "\\section{Hi}\nText\n")

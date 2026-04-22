@@ -456,6 +456,7 @@
          (memq 'plist-date-text tags)
          (memq 'plist-integer-text tags)
          (memq 'plist-real-text tags)
+         (memq 'plist-entity tags)
          (memq 'plist-text tags)
          (eq? category 'literal))
      ansi-literal]

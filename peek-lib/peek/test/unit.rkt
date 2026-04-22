@@ -109,13 +109,13 @@
    "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
    "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
    "<plist version=\"1.0\">\n"
-   "  <dict>\n"
-   "    <key>Name</key>\n"
-   "    <string>peek</string>\n"
-   "    <key>Enabled</key>\n"
-   "    <true/>\n"
-   "  </dict>\n"
-   "</plist>\n"))
+    "  <dict>\n"
+    "    <key>Name</key>\n"
+    "    <string>peek</string>\n"
+    "    <key>Enabled</key>\n"
+    "    <string>&amp;</string>\n"
+    "  </dict>\n"
+    "</plist>\n"))
 
 (check-equal? supported-file-types
               '(bash c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
@@ -266,6 +266,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-plist-preview plist-sample)))
+(check-true
+ (string-contains? (render-plist-preview plist-sample)
+                   (string-append ansi-literal "&amp;" ansi-reset)))
 (define java-sample
   (string-append
    "package demo;\n"

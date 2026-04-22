@@ -93,6 +93,7 @@ File-type-specific notes belong in separate files, such as:
 - [`HTML.md`](/Users/soegaard/Dropbox/GitHub/peek/HTML.md)
 - [`JS.md`](/Users/soegaard/Dropbox/GitHub/peek/JS.md)
 - [`JSON.md`](/Users/soegaard/Dropbox/GitHub/peek/JSON.md)
+- [`Go.md`](/Users/soegaard/Dropbox/GitHub/peek/Go.md)
 - [`Haskell.md`](/Users/soegaard/Dropbox/GitHub/peek/Haskell.md)
 - [`Makefile.md`](/Users/soegaard/Dropbox/GitHub/peek/Makefile.md)
 - [`Plist.md`](/Users/soegaard/Dropbox/GitHub/peek/Plist.md)

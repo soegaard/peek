@@ -31,6 +31,7 @@
 ;; swift-like-style      -- Style Swift-like embedded tokens.
 ;; rust-like-style       -- Style Rust-like embedded tokens.
 ;; shell-like-style      -- Style shell-like embedded tokens.
+;; go-like-style         -- Style Go-like embedded tokens.
 ;; rhombus-like-style    -- Style Rhombus-like embedded tokens.
 ;; haskell-like-style    -- Style Haskell-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
@@ -87,6 +88,8 @@
  rust-like-style
  ;; shell-like-style Style shell-like embedded tokens.
  shell-like-style
+ ;; go-like-style Style Go-like embedded tokens.
+ go-like-style
  ;; rhombus-like-style Style Rhombus-like embedded tokens.
  rhombus-like-style
  ;; haskell-like-style Style Haskell-like embedded tokens.
@@ -670,6 +673,42 @@
          (eq? category 'literal))
      ansi-literal]
     [(or (memq 'shell-punctuation tags)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; go-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Go-like roles.
+(define (go-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'go-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'go-comment tags)
+         (memq 'go-line-comment tags)
+         (memq 'go-general-comment tags))
+     ansi-comment]
+    [(or (memq 'go-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'go-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'go-string-literal tags)
+         (memq 'go-raw-string-literal tags)
+         (memq 'go-rune-literal tags)
+         (memq 'go-numeric-literal tags)
+         (memq 'go-imaginary-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'go-operator tags)
+         (memq 'go-delimiter tags)
+         (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]
     [else

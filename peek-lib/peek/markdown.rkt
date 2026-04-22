@@ -31,6 +31,7 @@
          "plist.rkt"
          "tex.rkt"
          "latex.rkt"
+         "go.rkt"
          "haskell.rkt"
          "swift.rkt")
 
@@ -90,6 +91,8 @@
      (css-like-style category tags)]
     [(memq 'embedded-cpp tags)
      (cpp-like-style category tags)]
+    [(memq 'embedded-go tags)
+     (go-like-style category tags)]
     [(memq 'embedded-plist tags)
      (plist-like-style category tags)]
     [(memq 'embedded-tex tags)

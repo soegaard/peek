@@ -55,6 +55,7 @@
          "c.rkt"
          "cpp.rkt"
          "delimited.rkt"
+         "go.rkt"
          "html.rkt"
          "js.rkt"
          "json.rkt"
@@ -80,7 +81,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(bash c cpp css csv go haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -107,7 +108,12 @@
     [else
      (define path-string
        (path->string (simple-form-path maybe-path)))
+     (define file-name
+       (path->string (file-name-from-path (simple-form-path maybe-path))))
      (cond
+       [(or (regexp-match? #px"(?i:\\.go)$" path-string)
+            (member file-name '("go.mod" "go.work")))
+        'go]
        [(regexp-match? #px"(?i:\\.(?:hs|lhs)(?:-boot)?)$" path-string) 'haskell]
        [(regexp-match? #px"(?i:\\.css)$" path-string) 'css]
        [(regexp-match? #px"(?i:\\.(?:c|h))$" path-string) 'c]
@@ -178,6 +184,8 @@
      (render-objc-preview source)]
     [(eq? file-type 'csv)
      (render-csv-preview source)]
+    [(eq? file-type 'go)
+     (render-go-preview source)]
     [(eq? file-type 'haskell)
      (render-haskell-preview source)]
     [(eq? file-type 'bash)
@@ -249,6 +257,7 @@
               (eq? file-type 'makefile)
               (eq? file-type 'objc)
               (eq? file-type 'csv)
+              (eq? file-type 'go)
               (eq? file-type 'haskell)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
@@ -264,6 +273,7 @@
        [(makefile)   (render-makefile-preview-port in out)]
        [(objc)       (render-objc-preview-port in out)]
        [(csv)        (render-csv-preview-port in out)]
+       [(go)         (render-go-preview-port in out)]
        [(haskell)    (render-haskell-preview-port in out)]
        [(plist)      (render-plist-preview-port in out)]
        [(latex)      (render-latex-preview-port in out)]
@@ -280,6 +290,7 @@
          (eq? file-type 'makefile)
          (eq? file-type 'objc)
          (eq? file-type 'csv)
+         (eq? file-type 'go)
          (eq? file-type 'haskell)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
@@ -367,6 +378,7 @@
          (eq? file-type 'objc)
          (eq? file-type 'makefile)
          (eq? file-type 'csv)
+         (eq? file-type 'go)
          (eq? file-type 'haskell)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)

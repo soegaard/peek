@@ -8,6 +8,7 @@
          "../c.rkt"
          "../css.rkt"
          "../delimited.rkt"
+         "../go.rkt"
          "../html.rkt"
          "../js.rkt"
          "../json.rkt"
@@ -52,6 +53,8 @@
   "fixtures/demo.sty")
 (define-runtime-path demo-csv-path
   "fixtures/demo.csv")
+(define-runtime-path demo-go-path
+  "fixtures/demo.go")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
 (define-runtime-path demo-haskell-path
@@ -112,7 +115,7 @@
    "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(bash c cpp css csv go haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -185,6 +188,9 @@
  (regexp-match? #px"peek"
                 (render-json-preview "{\"name\": \"peek\", \"ok\": true, \"n\": 2}\n")))
 (check-equal?
+ (strip-ansi (render-go-preview "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n"))
+ "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n")
+(check-equal?
  (strip-ansi (render-haskell-preview "{-# LANGUAGE OverloadedStrings #-}\nmodule Demo where\nmain = putStrLn \"hello\"\n"))
  "{-# LANGUAGE OverloadedStrings #-}\nmodule Demo where\nmain = putStrLn \"hello\"\n")
 (check-true
@@ -208,6 +214,12 @@
 (check-true
  (regexp-match? #px"greet"
                 (render-swift-preview "import Foundation\nfunc greet() { print(\"hi\") }\n")))
+(check-equal?
+ (strip-ansi (preview-string "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n"
+                             #f
+                             (make-preview-options #:type 'go
+                                                   #:color-mode 'always)))
+ "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n")
 (check-equal?
  (strip-ansi (preview-string "{-# LANGUAGE OverloadedStrings #-}\nmodule Demo where\nmain = putStrLn \"hello\"\n"
                              #f
@@ -237,12 +249,19 @@
  (strip-ansi (render-markdown-preview "```cpp\n#include <vector>\n```\n"))
  "```cpp\n#include <vector>\n```\n")
 (check-equal?
+ (strip-ansi (render-markdown-preview "```go\npackage main\nfunc main() {}\n```\n"))
+ "```go\npackage main\nfunc main() {}\n```\n")
+(check-equal?
  (strip-ansi (render-markdown-preview "```haskell\nmain = putStrLn \"hello\"\n```\n"))
  "```haskell\nmain = putStrLn \"hello\"\n```\n")
 (check-equal?
  (strip-ansi (preview-file demo-haskell-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-haskell-path))
+(check-equal?
+ (strip-ansi (preview-file demo-go-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-go-path))
 (check-true
  (regexp-match? #px"export"
                 (render-shell-preview "#!/usr/bin/env bash\nexport PATH\n"

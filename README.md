@@ -29,6 +29,7 @@ peek path/to/file.mk
 peek path/to/file.csv
 peek path/to/file.sh
 peek path/to/file.html
+peek path/to/file.go
 peek path/to/file.hs
 peek path/to/file.js
 peek path/to/file.json
@@ -58,6 +59,7 @@ cat path/to/file.cpp | peek --type cpp
 cat path/to/file.m | peek --type objc
 cat path/to/file.mk | peek --type makefile
 cat path/to/file.csv | peek --type csv
+cat path/to/file.go | peek --type go
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.hs | peek --type haskell
 cat path/to/file.json | peek --type json
@@ -112,6 +114,7 @@ Current supported file types are:
 - `bash`
 - `makefile`
 - `html`
+- `go`
 - `haskell`
 - `js`
 - `json`
@@ -146,10 +149,11 @@ the `rust` previewer and preserves source text and line breaks without layout
 rewriting. CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
 rewriting. JSON uses the `json` previewer and preserves source text and line
-breaks without layout rewriting. Haskell uses the `haskell` previewer and
-preserves source text and line breaks without layout rewriting. Plist uses the
-`plist` previewer and preserves source text and line breaks without layout
-rewriting. Pascal uses
+breaks without layout rewriting. Go uses the `go` previewer and preserves
+source text and line breaks without layout rewriting. Haskell uses the
+`haskell` previewer and preserves source text and line breaks without layout
+rewriting. Plist uses the `plist` previewer and preserves source text and
+line breaks without layout rewriting. Pascal uses
 the `pascal` previewer and preserves source text and line breaks without
 layout rewriting. Python uses the `python` previewer and preserves source text
 and line breaks without layout rewriting. Rhombus uses the `rhombus`

@@ -8,6 +8,7 @@
                      lexers/objc
                      lexers/csv
                      lexers/html
+                     lexers/go
                      lexers/haskell
                      lexers/javascript
                      lexers/json
@@ -48,7 +49,7 @@ There is file-type-aware rendering for the supported file types.
 The supported file types are:
 
 CSS, Bash, C, Objective-C, C++, CSV, HTML, JavaScript, JSON, LaTeX, Makefile,
-Haskell, Markdown, Pascal, Plist, PowerShell, Python, Rhombus, Racket, Rust,
+Go, Haskell, Markdown, Pascal, Plist, PowerShell, Python, Rhombus, Racket, Rust,
 Scribble, Swift, TeX, TSV, WAT, YAML, and Zsh.
 
 
@@ -76,6 +77,10 @@ The CSV previewer uses @tt{lexers/csv} and supports @tt{.csv} files as
 
 The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
 color model for embedded @tt{<style>} and @tt{<script>} content.
+
+The Go previewer uses @tt{lexers/go} and supports @tt{.go} files, plus Go
+module files such as @tt{go.mod} and @tt{go.work}, as @tt{go} preview
+targets.
 
 The Haskell previewer uses @tt{lexers/haskell} and supports @tt{.hs},
 @tt{.lhs}, @tt{.hs-boot}, and @tt{.lhs-boot} files as @tt{haskell} preview
@@ -161,6 +166,7 @@ peek GNUmakefile
 peek path/to/file.mk
 peek path/to/file.csv
 peek path/to/file.html
+peek path/to/file.go
 peek path/to/file.hs
 peek path/to/file.js
 peek path/to/file.json
@@ -191,6 +197,7 @@ cat path/to/file.m | peek --type objc
 cat path/to/file.mk | peek --type makefile
 cat path/to/file.csv | peek --type csv
 cat path/to/file.html | peek --type html
+cat path/to/file.go | peek --type go
 cat path/to/file.hs | peek --type haskell
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json

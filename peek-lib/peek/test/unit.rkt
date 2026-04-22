@@ -344,6 +344,9 @@
  (regexp-match? #px"answer"
                 (render-javascript-preview "const answer = 42;\nobj.run(answer);\n")))
 (check-true
+ (regexp-match? #px"\u001b\\["
+                (render-javascript-preview "const message = `hello, ${name}!`;\n")))
+(check-true
  (regexp-match? #px"Button"
                 (render-javascript-preview "const el = <Button kind=\"primary\">Hello {name}</Button>;\n"
                                            #:jsx? #t)))

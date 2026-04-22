@@ -343,6 +343,7 @@
      ansi-literal]
     [(or (memq 'jsx-interpolation-boundary tags)
          (memq 'jsx-fragment-boundary tags)
+         (memq 'template-interpolation-boundary tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]

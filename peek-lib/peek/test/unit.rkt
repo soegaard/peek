@@ -402,6 +402,9 @@
                 (render-shell-preview "#!/usr/bin/env bash\nexport PATH\n"
                                       #:shell 'bash)))
 (check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-markdown-preview "```racket\n#lang racket/base\n```\n")))
+(check-true
  (regexp-match? #px"#lang"
                 (render-racket-preview "#lang racket/base\n(define x 1)\n")))
 (check-true

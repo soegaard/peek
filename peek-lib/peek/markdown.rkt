@@ -168,7 +168,7 @@
          (eq? category 'delimiter))
      ansi-delimiter]
     [(memq 'markdown-code-info-string tags)
-     ansi-identifier]
+     ansi-keyword]
     [(or (memq 'markdown-code-span tags)
          (memq 'markdown-code-block tags)
          (memq 'markdown-link-text tags)

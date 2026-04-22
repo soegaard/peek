@@ -136,7 +136,8 @@
 (define (css-like-style category tags)
   (cond
     [(or (member 'selector-token tags)
-         (member 'at-rule-name tags))
+         (member 'at-rule-name tags)
+         (member 'function-name tags))
      ansi-keyword]
     [(or (member 'property-name tags)
          (member 'custom-property-name tags))
@@ -1011,6 +1012,12 @@
 (module+ test
   (require rackunit)
 
+  (check-equal? (css-like-style 'identifier
+                                '(function-name))
+                ansi-keyword)
+  (check-equal? (css-like-style 'identifier
+                                '(custom-property-name))
+                ansi-identifier)
   (check-equal? (racket-like-style 'identifier
                                    '(racket-no-color))
                 "")

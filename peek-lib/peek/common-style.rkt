@@ -292,6 +292,7 @@
          (memq 'shell-word tags)
          (memq 'shell-assignment tags)
          (memq 'shell-string-literal tags)
+         (memq 'shell-ansi-string-literal tags)
          (memq 'shell-command-substitution tags)
          (memq 'shell-option tags)
          (memq 'shell-numeric-literal tags)

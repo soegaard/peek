@@ -158,6 +158,7 @@
 (define shell-operator-sample
   (string-append
    "#!/usr/bin/env bash\n"
+   "printf $'line\\n' | cat\n"
    "printf '%s\\n' \"$HOME\" | sed 's/x/y/' && echo done > out.txt\n"
    "cat <<'EOF'\n"
    "line\n"
@@ -204,6 +205,10 @@
  (string-contains? (render-shell-preview shell-operator-sample
                                          #:shell 'bash)
                    (string-append ansi-delimiter "|" ansi-reset)))
+(check-true
+ (string-contains? (render-shell-preview shell-operator-sample
+                                         #:shell 'bash)
+                   (string-append ansi-literal "$'line\\n'" ansi-reset)))
 (check-true
  (string-contains? (render-shell-preview shell-operator-sample
                                          #:shell 'bash)

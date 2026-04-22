@@ -17,7 +17,7 @@
 ;; Corpus snapshot root.
 (define corpus-root
   (or (getenv "PEEK_JAVA_CORPUS")
-      "/tmp/lexers-java-corpus"))
+      "/tmp/peek-java-corpus-large"))
 
 ;; Maximum seconds to spend on one file.
 (define per-file-timeout-seconds

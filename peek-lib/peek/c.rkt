@@ -77,11 +77,14 @@
     (regexp-replace* #px"\u001b\\[[0-9;]*m" text ""))
 
   (define sample
-    "#include <stdio.h>\nint main(void) { return 0; }\n")
+    "#define SUM(a, b) ((a) + \\\n+ (b))\n#include <stdio.h>\nint main(void) { return SUM(1, 2); }\n")
 
   (check-equal?
    (strip-ansi (render-c-preview sample))
    sample)
+
+  (check-true
+   (regexp-match? #px"\u001b\\[" (render-c-preview sample)))
 
   (check-equal?
    (let ([out (open-output-string)])

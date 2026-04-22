@@ -183,7 +183,8 @@
     [(or (memq 'c-identifier tags)
          (eq? category 'identifier))
      ansi-identifier]
-    [(or (memq 'c-delimiter tags)
+    [(or (memq 'c-line-splice tags)
+         (memq 'c-delimiter tags)
          (eq? category 'delimiter)
          (eq? category 'operator))
      ansi-delimiter]

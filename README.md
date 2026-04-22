@@ -30,6 +30,7 @@ peek path/to/file.csv
 peek path/to/file.sh
 peek path/to/file.html
 peek path/to/file.go
+peek path/to/file.java
 peek path/to/file.hs
 peek path/to/file.js
 peek path/to/file.json
@@ -60,6 +61,7 @@ cat path/to/file.m | peek --type objc
 cat path/to/file.mk | peek --type makefile
 cat path/to/file.csv | peek --type csv
 cat path/to/file.go | peek --type go
+cat path/to/file.java | peek --type java
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.hs | peek --type haskell
 cat path/to/file.json | peek --type json
@@ -115,6 +117,7 @@ Current supported file types are:
 - `makefile`
 - `html`
 - `go`
+- `java`
 - `haskell`
 - `js`
 - `json`
@@ -150,7 +153,9 @@ rewriting. CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
 rewriting. JSON uses the `json` previewer and preserves source text and line
 breaks without layout rewriting. Go uses the `go` previewer and preserves
-source text and line breaks without layout rewriting. Haskell uses the
+source text and line breaks without layout rewriting. Java uses the `java`
+previewer and preserves source text and line breaks without layout rewriting.
+Haskell uses the
 `haskell` previewer and preserves source text and line breaks without layout
 rewriting. Plist uses the `plist` previewer and preserves source text and
 line breaks without layout rewriting. Pascal uses

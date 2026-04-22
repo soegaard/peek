@@ -10,6 +10,7 @@
          "../delimited.rkt"
          "../go.rkt"
          "../html.rkt"
+         "../java.rkt"
          "../js.rkt"
          "../json.rkt"
          "../haskell.rkt"
@@ -55,6 +56,8 @@
   "fixtures/demo.csv")
 (define-runtime-path demo-go-path
   "fixtures/demo.go")
+(define-runtime-path demo-java-path
+  "fixtures/demo.java")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
 (define-runtime-path demo-haskell-path
@@ -115,7 +118,7 @@
    "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv go haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(bash c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css
@@ -196,6 +199,42 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-plist-preview plist-sample)))
+(define java-sample
+  (string-append
+   "package demo;\n"
+   "\n"
+   "import java.util.List;\n"
+   "\n"
+   "/** docs */\n"
+   "@Deprecated\n"
+   "public class Example {\n"
+   "  public static void main(String[] args) {\n"
+   "    boolean ok = true;\n"
+   "    Object nothing = null;\n"
+   "    String text = \"\"\"\n"
+   "hello\n"
+   "\"\"\";\n"
+   "    char c = 'x';\n"
+   "    int n = 42;\n"
+   "  }\n"
+   "}\n"))
+
+(check-equal?
+ (strip-ansi (render-java-preview java-sample))
+ java-sample)
+(check-true
+ (regexp-match? #px"\u001b\\["
+                (render-java-preview java-sample)))
+(check-equal?
+ (strip-ansi (preview-string java-sample
+                             #f
+                             (make-preview-options #:type 'java
+                                                   #:color-mode 'always)))
+ java-sample)
+(check-equal?
+ (strip-ansi (preview-file demo-java-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-java-path))
 (check-true
  (regexp-match? #px"Demo"
                 (render-pascal-preview "program Demo;\nbegin\nend.\n")))
@@ -251,6 +290,9 @@
 (check-equal?
  (strip-ansi (render-markdown-preview "```go\npackage main\nfunc main() {}\n```\n"))
  "```go\npackage main\nfunc main() {}\n```\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "```java\nclass Demo {}\n```\n"))
+ "```java\nclass Demo {}\n```\n")
 (check-equal?
  (strip-ansi (render-markdown-preview "```haskell\nmain = putStrLn \"hello\"\n```\n"))
  "```haskell\nmain = putStrLn \"hello\"\n```\n")

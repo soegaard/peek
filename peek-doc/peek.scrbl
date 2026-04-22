@@ -10,6 +10,7 @@
                      lexers/html
                      lexers/go
                      lexers/haskell
+                     lexers/java
                      lexers/javascript
                      lexers/json
                      lexers/makefile
@@ -48,7 +49,7 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, C, Objective-C, C++, CSV, HTML, JavaScript, JSON, LaTeX, Makefile,
+CSS, Bash, C, Objective-C, C++, CSV, HTML, Java, JavaScript, JSON, LaTeX, Makefile,
 Go, Haskell, Markdown, Pascal, Plist, PowerShell, Python, Rhombus, Racket, Rust,
 Scribble, Swift, TeX, TSV, WAT, YAML, and Zsh.
 
@@ -84,6 +85,11 @@ targets.
 
 The Haskell previewer uses @tt{lexers/haskell} and supports @tt{.hs},
 @tt{.lhs}, @tt{.hs-boot}, and @tt{.lhs-boot} files as @tt{haskell} preview
+targets.
+
+The Java previewer uses @tt{lexers/java} and supports @tt{.java} source
+files, including common package and module info files such as
+@tt{package-info.java} and @tt{module-info.java}, as @tt{java} preview
 targets.
 
 The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
@@ -167,6 +173,7 @@ peek path/to/file.mk
 peek path/to/file.csv
 peek path/to/file.html
 peek path/to/file.go
+peek path/to/file.java
 peek path/to/file.hs
 peek path/to/file.js
 peek path/to/file.json
@@ -198,6 +205,7 @@ cat path/to/file.mk | peek --type makefile
 cat path/to/file.csv | peek --type csv
 cat path/to/file.html | peek --type html
 cat path/to/file.go | peek --type go
+cat path/to/file.java | peek --type java
 cat path/to/file.hs | peek --type haskell
 cat path/to/file.md | peek --type md
 cat path/to/file.json | peek --type json
@@ -773,7 +781,7 @@ The command-line entry point lives in
 
 Unsupported file types currently fall back to plain text.
 
-The current implementation focuses on CSS, HTML, JavaScript, Markdown,
+The current implementation focuses on CSS, HTML, Java, JavaScript, Markdown,
 Plist, Racket, Scribble, TeX, LaTeX, WAT, and a small generic preview
 pipeline. Most supported lexers use the port-oriented streaming path.
 CSS remains the special buffered renderer because it can add swatches and

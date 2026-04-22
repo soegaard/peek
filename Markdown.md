@@ -29,6 +29,7 @@ The Markdown lexer can delegate recognized embedded regions to other lexers.
 
 - embedded HTML uses the HTML style mapping
 - embedded CSS uses the CSS style mapping
+- embedded Java uses the Java style mapping
 - embedded JavaScript uses the JavaScript style mapping
 - embedded C++ uses the C++ style mapping
 - embedded Go uses the Go style mapping

@@ -57,6 +57,7 @@
          "delimited.rkt"
          "go.rkt"
          "html.rkt"
+         "java.rkt"
          "js.rkt"
          "json.rkt"
          "haskell.rkt"
@@ -81,7 +82,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv go haskell html js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(bash c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -127,6 +128,7 @@
        [(regexp-match? #px"(?i:\\.m)$" path-string) 'objc]
        [(regexp-match? #px"(?i:\\.csv)$" path-string) 'csv]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
+       [(regexp-match? #px"(?i:\\.java)$" path-string) 'java]
        [(regexp-match? #px"(?i:\\.(?:sh|bash))$" path-string) 'bash]
        [(regexp-match? #px"(?i:\\.jsx)$" path-string) 'jsx]
        [(regexp-match? #px"(?i:\\.(?:json|webmanifest))$" path-string)
@@ -192,6 +194,8 @@
      (render-shell-preview source #:shell 'bash)]
     [(eq? file-type 'html)
      (render-html-preview source)]
+    [(eq? file-type 'java)
+     (render-java-preview source)]
     [(eq? file-type 'js)
      (render-javascript-preview source)]
     [(eq? file-type 'json)
@@ -259,6 +263,7 @@
               (eq? file-type 'csv)
               (eq? file-type 'go)
               (eq? file-type 'haskell)
+              (eq? file-type 'java)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
               (eq? file-type 'pascal)
@@ -275,6 +280,7 @@
        [(csv)        (render-csv-preview-port in out)]
        [(go)         (render-go-preview-port in out)]
        [(haskell)    (render-haskell-preview-port in out)]
+       [(java)       (render-java-preview-port in out)]
        [(plist)      (render-plist-preview-port in out)]
        [(latex)      (render-latex-preview-port in out)]
        [(bash)       (render-shell-preview-port in out #:shell 'bash)]
@@ -292,6 +298,7 @@
          (eq? file-type 'csv)
          (eq? file-type 'go)
          (eq? file-type 'haskell)
+         (eq? file-type 'java)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
          (eq? file-type 'pascal)
@@ -316,6 +323,7 @@
     [(eq? file-type 'rhombus)
      (copy-port in out)]
     [(and (or (eq? file-type 'html)
+              (eq? file-type 'java)
               (eq? file-type 'js)
               (eq? file-type 'json)
               (eq? file-type 'plist)
@@ -328,6 +336,7 @@
           (color-enabled? out options))
      (case file-type
        [(html)  (render-html-preview-port in out)]
+       [(java)  (render-java-preview-port in out)]
        [(js)    (render-javascript-preview-port in out)]
        [(json)  (render-json-preview-port in out)]
        [(plist) (render-plist-preview-port in out)]
@@ -380,12 +389,14 @@
          (eq? file-type 'csv)
          (eq? file-type 'go)
          (eq? file-type 'haskell)
+         (eq? file-type 'java)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)
          (eq? file-type 'rhombus)
          (eq? file-type 'zsh)
          (eq? file-type 'rkt)
          (eq? file-type 'html)
+         (eq? file-type 'java)
          (eq? file-type 'js)
          (eq? file-type 'json)
          (eq? file-type 'plist)

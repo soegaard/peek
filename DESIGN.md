@@ -91,6 +91,7 @@ File-type-specific notes belong in separate files, such as:
 - [`ObjC.md`](/Users/soegaard/Dropbox/GitHub/peek/ObjC.md)
 - [`Delimited.md`](/Users/soegaard/Dropbox/GitHub/peek/Delimited.md)
 - [`HTML.md`](/Users/soegaard/Dropbox/GitHub/peek/HTML.md)
+- [`Java.md`](/Users/soegaard/Dropbox/GitHub/peek/Java.md)
 - [`JS.md`](/Users/soegaard/Dropbox/GitHub/peek/JS.md)
 - [`JSON.md`](/Users/soegaard/Dropbox/GitHub/peek/JSON.md)
 - [`Go.md`](/Users/soegaard/Dropbox/GitHub/peek/Go.md)

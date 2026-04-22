@@ -21,6 +21,7 @@
 ;; objc-like-style       -- Style Objective-C-like embedded tokens.
 ;; makefile-like-style   -- Style Makefile-like embedded tokens.
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
+;; java-like-style       -- Style Java-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
 ;; plist-like-style      -- Style plist-like embedded tokens.
 ;; tex-like-style        -- Style TeX/LaTeX embedded tokens.
@@ -68,6 +69,8 @@
  makefile-like-style
  ;; javascript-like-style Style JavaScript-like embedded tokens.
  javascript-like-style
+ ;; java-like-style Style Java-like embedded tokens.
+ java-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
  json-like-style
  ;; plist-like-style      Style plist-like embedded tokens.
@@ -336,6 +339,48 @@
      ansi-literal]
     [(eq? category 'identifier)
      ansi-identifier]
+    [else
+     ""]))
+
+;; java-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Java-like roles.
+(define (java-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'java-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'java-comment tags)
+         (memq 'java-line-comment tags)
+         (memq 'java-block-comment tags)
+         (memq 'java-doc-comment tags))
+     ansi-comment]
+    [(or (memq 'java-keyword tags)
+         (memq 'java-annotation-name tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'java-string-literal tags)
+         (memq 'java-text-block tags)
+         (memq 'java-char-literal tags)
+         (memq 'java-numeric-literal tags)
+         (memq 'java-boolean-literal tags)
+         (memq 'java-true-literal tags)
+         (memq 'java-false-literal tags)
+         (memq 'java-null-literal tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'java-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'java-annotation-marker tags)
+         (memq 'java-delimiter tags)
+         (memq 'java-operator tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
     [else
      ""]))
 

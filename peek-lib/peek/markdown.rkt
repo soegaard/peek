@@ -28,6 +28,7 @@
          racket/string
          "common-style.rkt"
          "cpp.rkt"
+         "java.rkt"
          "plist.rkt"
          "tex.rkt"
          "latex.rkt"
@@ -91,6 +92,8 @@
      (css-like-style category tags)]
     [(memq 'embedded-cpp tags)
      (cpp-like-style category tags)]
+    [(memq 'embedded-java tags)
+     (java-like-style category tags)]
     [(memq 'embedded-go tags)
      (go-like-style category tags)]
     [(memq 'embedded-plist tags)

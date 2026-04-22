@@ -930,6 +930,8 @@
          (memq 'racket-continue tags)
          (eq? category 'delimiter))
      ansi-delimiter]
+    [(memq 'racket-no-color tags)
+     ""]
     [(or (memq 'racket-symbol tags)
          (memq 'racket-datum tags)
          (eq? category 'identifier))
@@ -1005,3 +1007,13 @@
      ansi-identifier]
     [else
      ""]))
+
+(module+ test
+  (require rackunit)
+
+  (check-equal? (racket-like-style 'identifier
+                                   '(racket-no-color))
+                "")
+  (check-equal? (racket-like-style 'identifier
+                                   '(racket-symbol))
+                ansi-identifier))

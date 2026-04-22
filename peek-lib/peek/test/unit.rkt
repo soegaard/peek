@@ -342,6 +342,21 @@
 (check-true
  (regexp-match? #px"Title"
                 (render-markdown-preview "# Title\n\nText\n")))
+(define markdown-embedded-samples
+  (list
+   (string-append "```c\n#include <stdio.h>\n```\n")
+   (string-append "```json\n{\"name\": \"peek\"}\n```\n")
+   (string-append "```pascal\nprogram Demo;\nbegin\nend.\n```\n")
+   (string-append "```python\ndef answer(name):\n    return name\n```\n")
+   (string-append "```rust\nfn greet() {}\n```\n")
+   (string-append "```shell\nprintf '%s\\n' \"$HOME\"\n```\n")
+   (string-append "```yaml\nname: peek\n```\n")
+   (string-append "```csv\nname,age\nAda,37\n```\n")
+   (string-append "```tsv\nname\tage\nAda\t37\n```\n")))
+(for ([sample (in-list markdown-embedded-samples)])
+  (check-equal?
+   (strip-ansi (render-markdown-preview sample))
+   sample))
 (check-equal?
  (strip-ansi (render-markdown-preview "```swift\nimport Foundation\nlet value = 42\n```\n"))
  "```swift\nimport Foundation\nlet value = 42\n```\n")

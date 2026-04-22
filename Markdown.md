@@ -29,14 +29,22 @@ The Markdown lexer can delegate recognized embedded regions to other lexers.
 
 - embedded HTML uses the HTML style mapping
 - embedded CSS uses the CSS style mapping
+- embedded C uses the C style mapping
 - embedded Java uses the Java style mapping
 - embedded JavaScript uses the JavaScript style mapping
 - embedded C++ uses the C++ style mapping
 - embedded Go uses the Go style mapping
+- embedded JSON uses the JSON style mapping
+- embedded Pascal uses the Pascal style mapping
 - embedded Haskell uses the Haskell style mapping
 - embedded Racket uses the Racket style mapping
+- embedded Python uses the Python style mapping
+- embedded Rust uses the Rust style mapping
+- embedded shell uses the shell style mapping
 - embedded Swift uses the Swift style mapping
 - embedded Scribble uses the Scribble style mapping
+- embedded YAML uses the YAML style mapping
+- embedded CSV and TSV use the delimited-text style mapping
 
 `peek` should not parse fenced code info strings or raw HTML itself. Delegation
 is driven entirely by the embedded-language tags exposed by `lexers/markdown`.

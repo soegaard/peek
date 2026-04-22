@@ -524,6 +524,10 @@ The first Markdown pass is intentionally color-only. It does not attempt to
 render Markdown as formatted documentation, and it does not rewrite table or
 list layout.
 
+Markdown code fences can now delegate to more embedded file types, including
+C, JSON, Pascal, Python, Rust, shell, YAML, and CSV/TSV, when `lexers`
+exposes the corresponding embedded tags.
+
 Example Markdown preview input:
 
 @verbatim[#:indent 2]{

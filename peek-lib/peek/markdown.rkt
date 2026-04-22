@@ -27,13 +27,20 @@
          racket/port
          racket/string
          "common-style.rkt"
+         "c.rkt"
          "cpp.rkt"
+         "delimited.rkt"
+         "json.rkt"
          "java.rkt"
+         "pascal.rkt"
          "plist.rkt"
+         "python.rkt"
          "tex.rkt"
          "latex.rkt"
          "go.rkt"
          "haskell.rkt"
+         "rust.rkt"
+         "shell.rkt"
          "swift.rkt")
 
 (struct markdown-token (category text tags start end) #:transparent)
@@ -90,14 +97,26 @@
   (cond
     [(memq 'embedded-css tags)
      (css-like-style category tags)]
+    [(memq 'embedded-c tags)
+     (c-like-style category tags)]
     [(memq 'embedded-cpp tags)
      (cpp-like-style category tags)]
     [(memq 'embedded-java tags)
      (java-like-style category tags)]
     [(memq 'embedded-go tags)
      (go-like-style category tags)]
+    [(memq 'embedded-json tags)
+     (json-like-style category tags)]
+    [(memq 'embedded-pascal tags)
+     (pascal-like-style category tags)]
     [(memq 'embedded-plist tags)
      (plist-like-style category tags)]
+    [(memq 'embedded-python tags)
+     (python-like-style category tags)]
+    [(memq 'embedded-rust tags)
+     (rust-like-style category tags)]
+    [(memq 'embedded-shell tags)
+     (shell-like-style category tags)]
     [(memq 'embedded-tex tags)
      (tex-like-style tags)]
     [(memq 'embedded-latex tags)
@@ -120,6 +139,12 @@
      (swift-like-style category tags)]
     [(memq 'embedded-haskell tags)
      (haskell-like-style category tags)]
+    [(memq 'embedded-yaml tags)
+     (yaml-like-style category tags)]
+    [(memq 'embedded-csv tags)
+     (delimited-like-style category tags)]
+    [(memq 'embedded-tsv tags)
+     (delimited-like-style category tags)]
     [(or (memq 'malformed-token tags)
          (eq? category 'unknown))
      ansi-malformed]

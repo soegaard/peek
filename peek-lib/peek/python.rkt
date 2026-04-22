@@ -77,11 +77,19 @@
     (regexp-replace* #px"\u001b\\[[0-9;]*m" text ""))
 
   (define sample
-    "def answer(name):\n    return f\"hello, {name}\"\n")
+    (string-append
+     "def answer(name):\n"
+     "    data = b\"hello\"\n"
+     "    raw = r\"c:\\\\tmp\"\n"
+     "    templ = t\"hello\"\n"
+     "    return f\"hello, {name} \" + data.decode() + raw + templ\n"))
 
   (check-equal?
    (strip-ansi (render-python-preview sample))
    sample)
+
+  (check-true
+   (regexp-match? #px"\u001b\\[" (render-python-preview sample)))
 
   (check-equal?
    (let ([out (open-output-string)])

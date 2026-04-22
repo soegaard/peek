@@ -600,6 +600,10 @@
          (eq? category 'keyword))
      ansi-keyword]
     [(or (memq 'python-string-literal tags)
+         (memq 'python-bytes-literal tags)
+         (memq 'python-f-string-literal tags)
+         (memq 'python-t-string-literal tags)
+         (memq 'python-raw-string-literal tags)
          (memq 'python-numeric-literal tags)
          (eq? category 'literal))
      ansi-literal]

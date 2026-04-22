@@ -742,6 +742,8 @@
          (memq 'shell-builtin tags)
          (eq? category 'keyword))
      ansi-keyword]
+    [(memq 'shell-option tags)
+     ansi-keyword]
     [(or (memq 'shell-variable tags)
          (memq 'shell-word tags)
          (memq 'shell-assignment tags)
@@ -749,7 +751,6 @@
      ansi-identifier]
     [(or (memq 'shell-string-literal tags)
          (memq 'shell-command-substitution tags)
-         (memq 'shell-option tags)
          (memq 'shell-numeric-literal tags)
          (eq? category 'literal))
      ansi-literal]

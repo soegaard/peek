@@ -353,6 +353,13 @@
 (check-true
  (regexp-match? #px"Title"
                 (render-markdown-preview "# Title\n\nText\n")))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-markdown-preview "```racket\n#lang racket/base\n```\n")))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-shell-preview "grep --ignore-case pattern file\n"
+                                      #:shell 'bash)))
 (define markdown-embedded-samples
   (list
    (string-append "```c\n#include <stdio.h>\n```\n")

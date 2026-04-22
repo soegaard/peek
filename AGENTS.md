@@ -82,6 +82,8 @@ Build the manual with:
 
   - `raco scribble +m --htmls --dest html/ peek-doc/peek.scrbl`
 
+When writing Scribble prose, use `@"@"` to quote a single `@`.
+
 
 
 

@@ -37,6 +37,8 @@
 @author[@author+email["Jens Axel Søgaard" "jensaxel@soegaard.net"]]
 @defmodule[(lib "peek/main.rkt")]
 
+@section{Guide}
+
 The tool @exec{peek} is a terminal utility for previewing files in the terminal.
 
 This package is not intended for use by other Racket programs.
@@ -142,23 +144,6 @@ command syntax plus embedded Racket escapes in @tt{.scrbl} files.
 The WAT previewer uses @tt{lexers/wat} and provides first-pass syntax coloring for
 WebAssembly text-format files in @tt{.wat}. 
 
-
-@section{Screenshots}
-
-A few small previews, rendered by @exec{peek}:
-
-@(define-runtime-path img-css    "screenshots/example-css.png")
-@(define-runtime-path img-html   "screenshots/example-html.png")
-@(define-runtime-path img-racket "screenshots/example-racket.png")
-@(define-runtime-path img-wat    "screenshots/example-wat.png")
-
-@(image #:scale 0.5 img-css)
-
-@(image #:scale 0.5 img-html)
-
-@(image #:scale 0.5 img-racket)
-
-@(image #:scale 0.5 img-wat)
 
 @section{Command Line}
 
@@ -355,7 +340,7 @@ peek -p path\to\file.css
 If @envvar{PAGER} is not set and @tt{less} is not installed, pager mode will
 fail with an error instead of silently falling back to plain output.
 
-@section{Supported File Types}
+@section{Reference}
 
 The current explicit file type names are:
 
@@ -382,7 +367,9 @@ The current explicit file type names are:
  @item{@tt{zsh}}
 ]
 
-@subsection{CSS}
+@subsection{Web Languages}
+
+@subsubsection{CSS}
 
 For CSS, @exec{peek} supports:
 
@@ -416,7 +403,7 @@ Example CSS preview input:
 }
 }
 
-@subsection{HTML}
+@subsubsection{HTML}
 
 For HTML, @exec{peek} currently supports:
 
@@ -443,29 +430,262 @@ Example HTML preview input:
 </main>
 }
 
-@subsection{Shell}
+@subsubsection{JavaScript And JSX}
 
-For Shell, @exec{peek} currently supports:
+For JavaScript, @exec{peek} currently supports:
 
 @itemlist[
- @item{syntax coloring for Bash, Zsh, and PowerShell source}
+ @item{syntax coloring for JavaScript files such as @tt{.js}, @tt{.mjs}, and
+       @tt{.cjs}}
+ @item{syntax coloring for JSX in @tt{.jsx} files}
+ @item{derived-tag-driven rendering built on @tt{lexers/javascript}}
+]
+
+The first JavaScript pass focuses on syntax coloring only. It does not yet add
+preview widgets or framework-specific heuristics.
+
+Example JSX preview input:
+
+@jsblock[#:jsx? #t]{
+const view = <Button kind="primary">Hello {name}</Button>;
+}
+
+@subsection{Programming Languages}
+
+@subsubsection{C}
+
+For C, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.c} and @tt{.h} files}
  @item{best-effort previewing on malformed input}
  @item{source-preserving, color-only terminal output}
 ]
 
-The shell previewers are intentionally color-only. They do not add layout
-rewriting or alignment, and they preserve source text and line breaks after
+The C previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
 ANSI stripping.
 
-Example shell preview input:
+Example C preview input:
 
-@shellblock[#:shell 'bash]{
-#!/usr/bin/env bash
-export PATH
-echo "$PATH"
+@verbatim[#:indent 2]{
+#include <stdio.h>
+int main(void) { return 0; }
 }
 
-@subsection{Rust}
+@subsubsection{C++}
+
+For C++, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for common C++ source and header extensions such as
+       @tt{.cpp}, @tt{.cc}, @tt{.cxx}, @tt{.cp}, @tt{.c++}, @tt{.cppm},
+       @tt{.ixx}, @tt{.hpp}, @tt{.hh}, @tt{.hxx}, @tt{.h++}, @tt{.ipp}, and
+       @tt{.tpp}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The C++ previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example C++ preview input:
+
+@verbatim[#:indent 2]{
+#include <vector>
+std::vector<int> xs = {1, 2, 3};
+}
+
+@subsubsection{Objective-C}
+
+For Objective-C, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.m} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Objective-C previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Objective-C preview input:
+
+@verbatim|{
+#import <Foundation/Foundation.h>
+@interface Foo : NSObject
+@end
+}|
+
+@subsubsection{Go}
+
+For Go, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.go} files and module files such as
+       @tt{go.mod} and @tt{go.work}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Go previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Go preview input:
+
+@verbatim[#:indent 2]{
+package main
+
+func add(x int, y int) int { return x + y }
+}
+
+@subsubsection{Haskell}
+
+For Haskell, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.hs}, @tt{.lhs}, @tt{.hs-boot}, and
+       @tt{.lhs-boot} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Haskell previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Haskell preview input:
+
+@verbatim[#:indent 2]{
+{-# LANGUAGE OverloadedStrings #-}
+module Demo where
+main = putStrLn "hello"
+}
+
+@subsubsection{Java}
+
+For Java, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.java} source files, including
+       @tt{package-info.java} and @tt{module-info.java}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Java previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Java preview input:
+
+@verbatim|{
+package demo;
+
+@Deprecated
+public class Example {
+  public static void main(String[] args) {
+    boolean ok = true;
+    Object nothing = null;
+  }
+}
+}|
+
+@subsubsection{Pascal}
+
+For Pascal, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for common Pascal source files such as @tt{.pas},
+       @tt{.pp}, @tt{.dpr}, @tt{.lpr}, and @tt{.inc}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Pascal previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Pascal preview input:
+
+@verbatim[#:indent 2]{
+program Demo;
+begin
+end.
+}
+
+@subsubsection{Python}
+
+For Python, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.py}, @tt{.pyi}, and @tt{.pyw} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Python previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Python preview input:
+
+@verbatim[#:indent 2]{
+def answer(name):
+    return name
+}
+
+@subsubsection{Racket}
+
+For Racket, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.rkt} files}
+ @item{derived-tag-driven rendering built on @tt{lexers/racket}}
+ @item{best-effort previewing in coloring mode}
+]
+
+The first Racket pass is intentionally color-only. It does not yet add
+structure-aware formatting or separate support for nearby file types such as
+@tt{.rktl}.
+
+Example Racket preview input:
+
+@racketblock{
+#lang racket/base
+
+; Greeting helper.
+#;(+ 1 2)
+(define (greet #:name [name "you"])
+  (string-append "hi " name))
+}
+
+@subsubsection{Rhombus}
+
+For Rhombus, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for Rhombus source in @tt{.rhm} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Rhombus previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example Rhombus preview input:
+
+@shellblock[#:shell 'bash]{
+#lang rhombus
+fun greet(name):
+  println("hello, $(name)")
+}
+
+@subsubsection{Rust}
 
 For Rust, @exec{peek} currently supports:
 
@@ -488,29 +708,30 @@ fn greet(name: &str) -> String {
 }
 }
 
-@subsection{Rhombus}
+@subsubsection{Swift}
 
-For Rhombus, @exec{peek} currently supports:
+For Swift, @exec{peek} currently supports:
 
 @itemlist[
- @item{syntax coloring for Rhombus source in @tt{.rhm} files}
+ @item{syntax coloring for @tt{.swift} files}
  @item{best-effort previewing on malformed input}
  @item{source-preserving, color-only terminal output}
 ]
 
-The Rhombus previewer is intentionally color-only. It does not add layout
+The Swift previewer is intentionally color-only. It does not add layout
 rewriting or alignment, and it preserves source text and line breaks after
 ANSI stripping.
 
-Example Rhombus preview input:
+Example Swift preview input:
 
-@shellblock[#:shell 'bash]{
-#lang rhombus
-fun greet(name):
-  println("hello, $(name)")
+@verbatim[#:indent 2]{
+import Foundation
+let answer = 42
 }
 
-@subsection{Markdown}
+@subsection{Document Languages}
+
+@subsubsection{Markdown}
 
 For Markdown, @exec{peek} currently supports:
 
@@ -543,27 +764,153 @@ Text with `code`, a [link](https://example.com), and:
 ```
 }
 
-@subsection{JavaScript And JSX}
+@subsubsection{Scribble}
 
-For JavaScript, @exec{peek} currently supports:
+For Scribble, @exec{peek} currently supports:
 
 @itemlist[
- @item{syntax coloring for JavaScript files such as @tt{.js}, @tt{.mjs}, and
-       @tt{.cjs}}
- @item{syntax coloring for JSX in @tt{.jsx} files}
- @item{derived-tag-driven rendering built on @tt{lexers/javascript}}
+ @item{syntax coloring for @tt{.scrbl} files}
+ @item{derived-tag-driven rendering built on @tt{lexers/scribble}}
+ @item{plain text left unstyled while command syntax is colored}
+ @item{Racket-like coloring for tokens inside Scribble Racket escapes}
 ]
 
-The first JavaScript pass focuses on syntax coloring only. It does not yet add
-preview widgets or framework-specific heuristics.
+The first Scribble pass is intentionally color-only. It does not try to render
+Scribble as a document view; it stays a syntax-oriented terminal preview.
 
-Example JSX preview input:
+When you need a literal at-sign in Scribble prose, write @"@".
 
-@jsblock[#:jsx? #t]{
-const view = <Button kind="primary">Hello {name}</Button>;
+Example Scribble preview input:
+
+@scribbleblock[
+  "#lang scribble/manual\n"
+  "\n"
+  "@title{peek Scribble Demo}\n"
+  "\n"
+  "This is plain text.\n"
+  "\n"
+  "Inline Racket: @racket[(define x 1)]\n"]
+
+@subsubsection{TeX}
+
+For TeX, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.tex} source}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The TeX previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping. Its coloring now pays attention to math shifts, accent and
+spacing commands, parameters, and delimiters instead of flattening them all
+into one generic command class.
+
+Example TeX preview input:
+
+@verbatim[#:indent 2]{
+\section{Demo}
+
+Text with \% and $x+y$.
 }
 
-@subsection{JSON}
+@subsubsection{LaTeX}
+
+For LaTeX, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for common LaTeX source files such as @tt{.cls},
+       @tt{.sty}, @tt{.latex}, and @tt{.ltx}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The LaTeX previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping. Its coloring keeps environment names, `@tt{\verb}` spans,
+and line-break commands visible as distinct structure.
+
+Example LaTeX preview input:
+
+@verbatim[#:indent 2]{
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesClass{demo}
+\LoadClass{article}
+}
+
+@subsection{Tooling and Config}
+
+@subsubsection{Makefile}
+
+For Makefiles, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for ordinary @tt{Makefile}, @tt{GNUmakefile}, and
+       @tt{.mk} inputs}
+ @item{shell-aware recipe bodies with Makefile-specific variable references
+       preserved}
+ @item{best-effort previewing on malformed input}
+]
+
+The Makefile previewer is intentionally color-only except for its shell-aware
+recipe handling. It preserves Makefile variable references and line breaks
+without layout rewriting.
+
+Example Makefile preview input:
+
+@verbatim[#:indent 2]{
+all: build test
+build:
+\traco test map.rkt
+}
+
+@subsubsection{Shell}
+
+For Shell, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for Bash, Zsh, and PowerShell source}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The shell previewers are intentionally color-only. They do not add layout
+rewriting or alignment, and they preserve source text and line breaks after
+ANSI stripping.
+
+Example shell preview input:
+
+@shellblock[#:shell 'bash]{
+#!/usr/bin/env bash
+export PATH
+echo "$PATH"
+}
+
+@subsection{Data Formats}
+
+@subsubsection{CSV}
+
+For CSV, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.csv} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The CSV previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
+
+Example CSV preview input:
+
+@verbatim[#:indent 2]{
+name,age,city
+Ada,37,London
+}
+
+@subsubsection{JSON}
 
 For JSON, @exec{peek} currently supports:
 
@@ -588,34 +935,7 @@ Example JSON preview input:
 }
 }
 
-@subsection{Property Lists}
-
-For property lists, @exec{peek} currently supports:
-
-@itemlist[
- @item{syntax coloring for XML property-list files in @tt{.plist} inputs}
- @item{best-effort previewing on malformed input}
- @item{source-preserving, color-only terminal output}
-]
-
-The Plist previewer is intentionally color-only. It does not add layout
-rewriting or alignment, and it preserves source text and line breaks after
-ANSI stripping.
-
-Example property-list preview input:
-
-@verbatim[#:indent 2]{
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-  <dict>
-    <key>Name</key>
-    <string>peek</string>
-  </dict>
-</plist>
-}
-
-@subsection{Plist}
+@subsubsection{Plist}
 
 For Plist, @exec{peek} currently supports:
 
@@ -642,55 +962,28 @@ Example Plist preview input:
 </plist>
 }
 
-@subsection{TeX}
+@subsubsection{TSV}
 
-For TeX, @exec{peek} currently supports:
+For TSV, @exec{peek} currently supports:
 
 @itemlist[
- @item{syntax coloring for @tt{.tex} source}
+ @item{syntax coloring for @tt{.tsv} files}
  @item{best-effort previewing on malformed input}
  @item{source-preserving, color-only terminal output}
 ]
 
-The TeX previewer is intentionally color-only. It does not add layout
+The TSV previewer is intentionally color-only. It does not add layout
 rewriting or alignment, and it preserves source text and line breaks after
-ANSI stripping. Its coloring now pays attention to math shifts, accent and
-spacing commands, parameters, and delimiters instead of flattening them all
-into one generic command class.
+ANSI stripping.
 
-Example TeX preview input:
+Example TSV preview input:
 
 @verbatim[#:indent 2]{
-\section{Demo}
-
-Text with \% and $x+y$.
+name\tage
+Ada\t37
 }
 
-@subsection{LaTeX}
-
-For LaTeX, @exec{peek} currently supports:
-
-@itemlist[
- @item{syntax coloring for common LaTeX source files such as @tt{.cls},
-       @tt{.sty}, @tt{.latex}, and @tt{.ltx}}
- @item{best-effort previewing on malformed input}
- @item{source-preserving, color-only terminal output}
-]
-
-The LaTeX previewer is intentionally color-only. It does not add layout
-rewriting or alignment, and it preserves source text and line breaks after
-ANSI stripping. Its coloring keeps environment names, `@tt{\verb}` spans,
-and line-break commands visible as distinct structure.
-
-Example LaTeX preview input:
-
-@verbatim[#:indent 2]{
-\NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{demo}
-\LoadClass{article}
-}
-
-@subsection{WAT}
+@subsubsection{WAT}
 
 For WAT, @exec{peek} currently supports:
 
@@ -715,55 +1008,25 @@ Example WAT preview input:
   (export "answer" (func $answer)))
 }
 
-@subsection{Racket}
+@subsubsection{YAML}
 
-For Racket, @exec{peek} currently supports:
+For YAML, @exec{peek} currently supports:
 
 @itemlist[
- @item{syntax coloring for @tt{.rkt} files}
- @item{derived-tag-driven rendering built on @tt{lexers/racket}}
- @item{best-effort previewing in coloring mode}
+ @item{syntax coloring for @tt{.yaml} and @tt{.yml} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
 ]
 
-The first Racket pass is intentionally color-only. It does not yet add
-structure-aware formatting or separate support for nearby file types such as
-@tt{.rktl}.
+The YAML previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
 
-Example Racket preview input:
+Example YAML preview input:
 
-@racketblock{
-#lang racket/base
-
-; Greeting helper.
-#;(+ 1 2)
-(define (greet #:name [name "you"])
-  (string-append "hi " name))
+@verbatim[#:indent 2]{
+name: peek
 }
-
-@subsection{Scribble}
-
-For Scribble, @exec{peek} currently supports:
-
-@itemlist[
- @item{syntax coloring for @tt{.scrbl} files}
- @item{derived-tag-driven rendering built on @tt{lexers/scribble}}
- @item{plain text left unstyled while command syntax is colored}
- @item{Racket-like coloring for tokens inside Scribble Racket escapes}
-]
-
-The first Scribble pass is intentionally color-only. It does not try to render
-Scribble as a document view; it stays a syntax-oriented terminal preview.
-
-Example Scribble preview input:
-
-@scribbleblock[
-  "#lang scribble/manual\n"
-  "\n"
-  "@title{peek Scribble Demo}\n"
-  "\n"
-  "This is plain text.\n"
-  "\n"
-  "Inline Racket: @racket[(define x 1)]\n"]
 
 @section{Library}
 
@@ -792,8 +1055,27 @@ The command-line entry point lives in
 Unsupported file types currently fall back to plain text.
 
 The current implementation focuses on CSS, HTML, Java, JavaScript, Markdown,
-Plist, Racket, Scribble, TeX, LaTeX, WAT, and a small generic preview
-pipeline. Most supported lexers use the port-oriented streaming path.
+Racket, Scribble, TeX, LaTeX, WAT, Shell, Makefile, and the data-format
+previewers. Most supported lexers use the port-oriented streaming path.
 CSS remains the special buffered renderer because it can add swatches and
 alignment. Future file types may add their own previewers without forcing all
 file types into the same rendering model.
+
+@section{Extended Examples}
+
+@subsection{Screenshots}
+
+A few small previews, rendered by @exec{peek}:
+
+@(define-runtime-path img-css    "screenshots/example-css.png")
+@(define-runtime-path img-html   "screenshots/example-html.png")
+@(define-runtime-path img-racket "screenshots/example-racket.png")
+@(define-runtime-path img-wat    "screenshots/example-wat.png")
+
+@(image #:scale 0.5 img-css)
+
+@(image #:scale 0.5 img-html)
+
+@(image #:scale 0.5 img-racket)
+
+@(image #:scale 0.5 img-wat)

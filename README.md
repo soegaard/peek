@@ -177,7 +177,7 @@ line-break commands readable.
 Racket-family files use the `racket` previewer and preserve source text and
 line breaks without layout rewriting. A bundled standard-vocabulary map helps
 exact forms and builtins stand out from local identifiers, while a small
-heuristic keeps form-like names readable.
+heuristic keeps form-like and binding-form-like names readable.
 
 ## Documentation
 

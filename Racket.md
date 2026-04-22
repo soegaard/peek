@@ -64,6 +64,7 @@ The bundled vocabulary map lets `peek` distinguish:
 - exact standard forms, such as `define` and `for/fold`
 - standard builtins, such as `hash-update` and `string-length`
 - form-like names, such as `define-flow` and `for/custom`
+- binding-form-like names, such as `let-flow` and `let/custom`
 
 ## Scope Boundaries
 

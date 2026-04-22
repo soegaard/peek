@@ -368,6 +368,7 @@
    "  (for/fold ([ht (hash)]) ([word (in-list words)])\n"
    "    (hash-update ht (string-length word) add1 0)))\n"
    "(define-flow x 1)\n"
+   "(let-flow x 1)\n"
    "(for/custom ([x xs]) x)\n"))
 
 (check-equal?
@@ -393,28 +394,28 @@
                                      racket-vocabulary-sample)))
 (check-equal?
  (strip-ansi (render-scribble-preview
-              "@racket[define hash-update string-length define-flow for/custom]\n"))
- "@racket[define hash-update string-length define-flow for/custom]\n")
+              "@racket[define hash-update string-length define-flow let-flow for/custom]\n"))
+ "@racket[define hash-update string-length define-flow let-flow for/custom]\n")
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-keyword))
                 (render-scribble-preview
-                 "@racket[define hash-update string-length define-flow for/custom]\n")))
+                 "@racket[define hash-update string-length define-flow let-flow for/custom]\n")))
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-builtin))
                 (render-scribble-preview
-                 "@racket[define hash-update string-length define-flow for/custom]\n")))
+                 "@racket[define hash-update string-length define-flow let-flow for/custom]\n")))
 (check-equal?
  (strip-ansi (render-port->string render-scribble-preview-port
-                                  "@racket[define hash-update string-length define-flow for/custom]\n"))
- "@racket[define hash-update string-length define-flow for/custom]\n")
+                                  "@racket[define hash-update string-length define-flow let-flow for/custom]\n"))
+ "@racket[define hash-update string-length define-flow let-flow for/custom]\n")
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-keyword))
                 (render-port->string render-scribble-preview-port
-                                     "@racket[define hash-update string-length define-flow for/custom]\n")))
+                                     "@racket[define hash-update string-length define-flow let-flow for/custom]\n")))
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-builtin))
                 (render-port->string render-scribble-preview-port
-                                     "@racket[define hash-update string-length define-flow for/custom]\n")))
+                                     "@racket[define hash-update string-length define-flow let-flow for/custom]\n")))
 (define markdown-racket-vocabulary-sample
   (string-append
    "```racket\n"
@@ -422,6 +423,7 @@
    "  (for/fold ([ht (hash)]) ([word (in-list words)])\n"
    "    (hash-update ht (string-length word) add1 0)))\n"
    "(define-flow x 1)\n"
+   "(let/custom ([x xs]) x)\n"
    "(for/custom ([x xs]) x)\n"
    "```\n"))
 

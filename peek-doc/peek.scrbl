@@ -133,7 +133,8 @@ plus delegated embedded languages in @tt{.md} files.
 The Racket previewer uses @tt{lexers/racket} and provides syntax coloring
 for @tt{.rkt}, @tt{.ss}, @tt{.scm}, and @tt{.rktd} files. A bundled
 standard-vocabulary map helps exact forms and builtins stand out from local
-identifiers, and a small heuristic keeps form-like names readable.
+identifiers, and a small heuristic keeps form-like and binding-form-like
+names readable.
 
 The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
 command syntax plus embedded Racket escapes in @tt{.scrbl} files.

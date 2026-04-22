@@ -478,16 +478,32 @@
      ansi-comment]
     [(or (memq 'tex-control-word tags)
          (memq 'latex-command tags)
-         (memq 'latex-environment-command tags))
+         (memq 'latex-environment-command tags)
+         (memq 'tex-accent-command tags)
+         (memq 'tex-spacing-command tags)
+         (memq 'tex-paragraph-command tags)
+         (memq 'latex-line-break-command tags))
      ansi-keyword]
+    [(or (memq 'latex-environment-name tags)
+         (memq 'tex-parameter-reference tags)
+         (memq 'tex-parameter-escape tags))
+     ansi-identifier]
+    [(or (memq 'latex-verbatim-literal tags))
+     ansi-literal]
     [(or (memq 'tex-control-symbol tags)
          (memq 'tex-math-shift tags)
+         (memq 'tex-display-math-shift tags)
+         (memq 'tex-inline-math-shift tags)
          (memq 'tex-group-delimiter tags)
          (memq 'tex-optional-delimiter tags)
-         (memq 'tex-special-character tags))
+         (memq 'tex-special-character tags)
+         (memq 'tex-alignment-tab tags)
+         (memq 'tex-subscript-mark tags)
+         (memq 'tex-superscript-mark tags)
+         (memq 'tex-unbreakable-space tags)
+         (memq 'tex-control-space tags)
+         (memq 'tex-parameter-marker tags))
      ansi-delimiter]
-    [(memq 'tex-parameter tags)
-     ansi-identifier]
     [else
      ""]))
 

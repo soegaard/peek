@@ -169,8 +169,11 @@ previewer and preserves source text and line breaks without layout rewriting.
 YAML uses the `yaml` previewer and preserves source text and line breaks
 without layout rewriting.
 TeX uses the `tex` previewer and preserves source text and line breaks
-without layout rewriting. LaTeX uses the `latex` previewer and preserves
-source text and line breaks without layout rewriting.
+without layout rewriting, while giving math shifts, accent commands, spacing
+commands, parameters, and delimiters their own terminal structure. LaTeX
+uses the `latex` previewer and preserves source text and line breaks without
+layout rewriting, while also keeping environment names, `\verb` spans, and
+line-break commands readable.
 Racket-family files use the `racket` previewer and preserve source text and
 line breaks without layout rewriting.
 

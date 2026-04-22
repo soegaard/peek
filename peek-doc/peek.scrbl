@@ -647,7 +647,9 @@ For TeX, @exec{peek} currently supports:
 
 The TeX previewer is intentionally color-only. It does not add layout
 rewriting or alignment, and it preserves source text and line breaks after
-ANSI stripping.
+ANSI stripping. Its coloring now pays attention to math shifts, accent and
+spacing commands, parameters, and delimiters instead of flattening them all
+into one generic command class.
 
 Example TeX preview input:
 
@@ -670,7 +672,8 @@ For LaTeX, @exec{peek} currently supports:
 
 The LaTeX previewer is intentionally color-only. It does not add layout
 rewriting or alignment, and it preserves source text and line breaks after
-ANSI stripping.
+ANSI stripping. Its coloring keeps environment names, `@tt{\verb}` spans,
+and line-break commands visible as distinct structure.
 
 Example LaTeX preview input:
 

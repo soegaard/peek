@@ -163,6 +163,21 @@
    "line\n"
    "EOF\n"))
 
+(define tex-structure-sample
+  (string-append
+   "$$x$$ \\(y\\) \\[z\\]\n"
+   "\\'e \\; \\par\n"
+   "#1 ## #\n"
+   "{x}[y]\n"))
+
+(define latex-structure-sample
+  (string-append
+   "\\begin{itemize}\n"
+   "\\item One\n"
+   "\\verb|x+y|\n"
+   "\\end{itemize}\n"
+   "A\\\\\n"))
+
 (check-true
  (regexp-match? #px"include"
                 (render-makefile-preview "CC := gcc\nall: main.o\n\t$(CC) -o app main.o\ninclude local.mk\n")))
@@ -203,6 +218,30 @@
 (check-equal?
  (strip-ansi (render-latex-preview "\\begin{itemize}\n\\item One\n\\end{itemize}\n"))
  "\\begin{itemize}\n\\item One\n\\end{itemize}\n")
+(check-equal?
+ (strip-ansi (render-tex-preview tex-structure-sample))
+ tex-structure-sample)
+(check-true
+ (string-contains? (render-tex-preview tex-structure-sample)
+                   (string-append ansi-delimiter "$$" ansi-reset)))
+(check-true
+ (string-contains? (render-tex-preview tex-structure-sample)
+                   (string-append ansi-keyword "\\'" ansi-reset)))
+(check-true
+ (string-contains? (render-tex-preview tex-structure-sample)
+                   (string-append ansi-keyword "\\par" ansi-reset)))
+(check-equal?
+ (strip-ansi (render-latex-preview latex-structure-sample))
+ latex-structure-sample)
+(check-true
+ (string-contains? (render-latex-preview latex-structure-sample)
+                   (string-append ansi-identifier "itemize" ansi-reset)))
+(check-true
+ (string-contains? (render-latex-preview latex-structure-sample)
+                   (string-append ansi-literal "|x+y|" ansi-reset)))
+(check-true
+ (string-contains? (render-latex-preview latex-structure-sample)
+                   (string-append ansi-keyword "\\\\" ansi-reset)))
 (check-equal?
  (strip-ansi (preview-string "\\section{Hi}\n"
                               #f

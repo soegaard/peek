@@ -77,11 +77,14 @@
     (regexp-replace* #px"\u001b\\[[0-9;]*m" text ""))
 
   (define sample
-    "// greet\n@available(iOS 13.0, *)\nfunc greet(name: String) -> String {\n  let count = 2\n  let message = \"hello, \\(name)\"\n  return message\n}\n")
+    "// greet\n@available(iOS 13.0, *)\nfunc greet(name: String) -> String {\n  let count = 2\n  let message = \"hello, \\(name)\"\n  let raw = #\"hello, #(name)\"#\n  return message + raw\n}\n")
 
   (check-equal?
    (strip-ansi (render-swift-preview sample))
    sample)
+
+  (check-true
+   (regexp-match? #px"\u001b\\[" (render-swift-preview sample)))
 
   (check-equal?
    (let ([out (open-output-string)])

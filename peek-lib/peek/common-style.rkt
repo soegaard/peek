@@ -665,6 +665,7 @@
          (eq? category 'keyword))
      ansi-keyword]
     [(or (memq 'swift-string-literal tags)
+         (memq 'swift-raw-string-literal tags)
          (memq 'swift-numeric-literal tags)
          (eq? category 'literal))
      ansi-literal]

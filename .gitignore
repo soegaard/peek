@@ -1,6 +1,7 @@
 .DS_Store
 compiled/
 /doc/
+peek-doc/doc/
 tmp/
 html/
 *~

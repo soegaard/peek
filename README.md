@@ -175,7 +175,9 @@ uses the `latex` previewer and preserves source text and line breaks without
 layout rewriting, while also keeping environment names, `\verb` spans, and
 line-break commands readable.
 Racket-family files use the `racket` previewer and preserve source text and
-line breaks without layout rewriting.
+line breaks without layout rewriting. A bundled standard-vocabulary map helps
+exact forms and builtins stand out from local identifiers, while a small
+heuristic keeps form-like names readable.
 
 ## Documentation
 

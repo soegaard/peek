@@ -24,7 +24,9 @@
          parser-tools/lex
          racket/list
          racket/port
-         racket/string)
+         racket/string
+         (only-in "common-style.rkt" ansi-builtin)
+         "private/racket-standard-map.rkt")
 
 (struct scribble-token (category text tags start end) #:transparent)
 
@@ -53,6 +55,20 @@
   (list (position-offset (scribble-derived-token-start token))
         (position-offset (scribble-derived-token-end token))
         (scribble-derived-token-text token)))
+
+;; derived-token-category : scribble-derived-token? -> symbol?
+;;   Extract the coarse category from one derived Scribble token.
+(define (derived-token-category token)
+  (vector-ref (struct->vector token) 1))
+
+;; scribble-racket-extra-tags : (listof symbol?) string? -> (listof symbol?)
+;;   Attach consumer-side Racket vocabulary tags to Scribble escapes.
+(define (scribble-racket-extra-tags tags text)
+  (cond
+    [(memq 'scribble-racket-escape tags)
+     (racket-standard-token-tags text)]
+    [else
+     '()]))
 
 ;; annotate-scribble-tokens : string? -> (listof scribble-token?)
 ;;   Combine projected Scribble categories with derived tags.
@@ -84,7 +100,10 @@
       (hash-ref derived-tags-by-key
                 (scribble-token-key base)
                 '()))
-    (struct-copy scribble-token base [tags tags])))
+    (struct-copy scribble-token base
+                 [tags (append tags
+                               (scribble-racket-extra-tags tags
+                                                           text))])))
 
 ;; scribble-like-style : (or/c symbol? #f) (listof symbol?) -> string?
 ;;   Choose the ANSI style for one Scribble token/category pair.
@@ -147,6 +166,13 @@
     [(or (memq 'scribble-parenthesis tags)
          (eq? category 'delimiter))
      ansi-delimiter]
+    [(memq 'racket-no-color tags)
+     ""]
+    [(or (memq 'racket-standard-form tags)
+         (memq 'racket-form-like tags))
+     ansi-keyword]
+    [(memq 'racket-standard-builtin tags)
+     ansi-builtin]
     [(or (memq 'scribble-symbol tags)
          (memq 'scribble-other tags)
          (eq? category 'identifier))
@@ -179,8 +205,10 @@
     (define token
       (lexer in))
     (unless (eq? token 'eof)
-      (display (colorize-text (scribble-like-style #f
-                                                   (scribble-derived-token-tags token))
+      (display (colorize-text (scribble-like-style (derived-token-category token)
+                                                   (append (scribble-derived-token-tags token)
+                                                           (scribble-racket-extra-tags (scribble-derived-token-tags token)
+                                                                                       (scribble-derived-token-text token))))
                               (scribble-derived-token-text token))
                out)
       (loop))))

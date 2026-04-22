@@ -10,6 +10,7 @@
 ;; ansi-reset      -- Reset ANSI styling.
 ;; ansi-comment    -- Comment color.
 ;; ansi-keyword    -- Keyword color.
+;; ansi-builtin    -- Builtin-name color.
 ;; ansi-identifier -- Identifier color.
 ;; ansi-literal    -- Literal color.
 ;; ansi-delimiter  -- Delimiter color.
@@ -47,6 +48,8 @@
  ansi-comment
  ;; ansi-keyword    Keyword color.
  ansi-keyword
+ ;; ansi-builtin    Builtin-name color.
+ ansi-builtin
  ;; ansi-identifier Identifier color.
  ansi-identifier
  ;; ansi-literal    Literal color.
@@ -115,6 +118,7 @@
 (define ansi-reset      (ansi 0))
 (define ansi-comment    (ansi 38 2 106 153 85))
 (define ansi-keyword    (ansi 38 2 86 156 214))
+(define ansi-builtin    (ansi 38 2 198 120 221))
 (define ansi-identifier (ansi 38 2 156 220 254))
 (define ansi-literal    (ansi 38 2 206 145 120))
 (define ansi-delimiter  (ansi 38 2 212 212 212))
@@ -919,7 +923,9 @@
     [(or (memq 'racket-usual-special-form tags)
          (memq 'racket-definition-form tags)
          (memq 'racket-binding-form tags)
-         (memq 'racket-conditional-form tags))
+         (memq 'racket-conditional-form tags)
+         (memq 'racket-standard-form tags)
+         (memq 'racket-form-like tags))
      ansi-keyword]
     [(or (memq 'racket-string tags)
          (memq 'racket-constant tags)
@@ -934,6 +940,8 @@
      ansi-delimiter]
     [(memq 'racket-no-color tags)
      ""]
+    [(memq 'racket-standard-builtin tags)
+     ansi-builtin]
     [(or (memq 'racket-symbol tags)
          (memq 'racket-datum tags)
          (eq? category 'identifier))
@@ -1022,6 +1030,15 @@
   (check-equal? (racket-like-style 'identifier
                                    '(racket-no-color))
                 "")
+  (check-equal? (racket-like-style 'identifier
+                                   '(racket-standard-form))
+                ansi-keyword)
+  (check-equal? (racket-like-style 'identifier
+                                   '(racket-form-like))
+                ansi-keyword)
+  (check-equal? (racket-like-style 'identifier
+                                   '(racket-standard-builtin))
+                ansi-builtin)
   (check-equal? (racket-like-style 'identifier
                                    '(racket-symbol))
                 ansi-identifier))

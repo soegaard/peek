@@ -23,6 +23,7 @@
          lexers/token
          parser-tools/lex
          "common-style.rkt"
+         "private/racket-standard-map.rkt"
          racket/list
          racket/string)
 
@@ -59,6 +60,11 @@
 (define (derived-token-category token)
   (vector-ref (struct->vector token) 1))
 
+;; racket-extra-tags : string? -> (listof symbol?)
+;;   Attach consumer-side Racket vocabulary tags to one token text.
+(define (racket-extra-tags text)
+  (racket-standard-token-tags text))
+
 ;; annotate-racket-tokens : string? -> (listof racket-token?)
 ;;   Combine projected Racket categories with derived tags.
 (define (annotate-racket-tokens source)
@@ -85,11 +91,13 @@
                     '()
                     start
                     end))
+    (define extra-tags
+      (racket-extra-tags text))
     (define tags
       (hash-ref derived-tags-by-key
                 (racket-token-key base)
                 '()))
-    (struct-copy racket-token base [tags tags])))
+    (struct-copy racket-token base [tags (append tags extra-tags)])))
 
 ;; colorize-text : string? string? -> string?
 ;;   Apply ANSI styling while preserving coloring across newlines.
@@ -121,7 +129,9 @@
     [(or (memq 'racket-usual-special-form tags)
          (memq 'racket-definition-form tags)
          (memq 'racket-binding-form tags)
-         (memq 'racket-conditional-form tags))
+         (memq 'racket-conditional-form tags)
+         (memq 'racket-standard-form tags)
+         (memq 'racket-form-like tags))
      ansi-keyword]
     [(or (memq 'racket-string tags)
          (memq 'racket-constant tags)
@@ -134,6 +144,10 @@
          (memq 'racket-continue tags)
          (eq? category 'delimiter))
      ansi-delimiter]
+    [(memq 'racket-no-color tags)
+     ""]
+    [(memq 'racket-standard-builtin tags)
+     ansi-builtin]
     [(or (memq 'racket-symbol tags)
          (memq 'racket-datum tags)
          (eq? category 'identifier))
@@ -145,7 +159,8 @@
 ;;   Choose the ANSI style for one derived Racket token.
 (define (derived-token-style token)
   (racket-like-style (derived-token-category token)
-                     (racket-derived-token-tags token)))
+                     (append (racket-derived-token-tags token)
+                             (racket-extra-tags (racket-derived-token-text token)))))
 
 ;; render-racket-preview : string? -> string?
 ;;   Render Racket for terminal preview.

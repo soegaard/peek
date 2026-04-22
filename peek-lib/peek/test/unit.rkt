@@ -356,6 +356,96 @@
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-keyword))
                 (render-markdown-preview "```racket\n#lang racket/base\n```\n")))
+
+(define (render-port->string render-proc source)
+  (define out (open-output-string))
+  (render-proc (open-input-string source) out)
+  (get-output-string out))
+
+(define racket-vocabulary-sample
+  (string-append
+   "(define (group-by-length words)\n"
+   "  (for/fold ([ht (hash)]) ([word (in-list words)])\n"
+   "    (hash-update ht (string-length word) add1 0)))\n"
+   "(define-flow x 1)\n"
+   "(for/custom ([x xs]) x)\n"))
+
+(check-equal?
+ (strip-ansi (render-racket-preview racket-vocabulary-sample))
+ racket-vocabulary-sample)
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-racket-preview racket-vocabulary-sample)))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-builtin))
+                (render-racket-preview racket-vocabulary-sample)))
+(check-equal?
+ (strip-ansi (render-port->string render-racket-preview-port
+                                  racket-vocabulary-sample))
+ racket-vocabulary-sample)
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-port->string render-racket-preview-port
+                                     racket-vocabulary-sample)))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-builtin))
+                (render-port->string render-racket-preview-port
+                                     racket-vocabulary-sample)))
+(check-equal?
+ (strip-ansi (render-scribble-preview
+              "@racket[define hash-update string-length define-flow for/custom]\n"))
+ "@racket[define hash-update string-length define-flow for/custom]\n")
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-scribble-preview
+                 "@racket[define hash-update string-length define-flow for/custom]\n")))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-builtin))
+                (render-scribble-preview
+                 "@racket[define hash-update string-length define-flow for/custom]\n")))
+(check-equal?
+ (strip-ansi (render-port->string render-scribble-preview-port
+                                  "@racket[define hash-update string-length define-flow for/custom]\n"))
+ "@racket[define hash-update string-length define-flow for/custom]\n")
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-port->string render-scribble-preview-port
+                                     "@racket[define hash-update string-length define-flow for/custom]\n")))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-builtin))
+                (render-port->string render-scribble-preview-port
+                                     "@racket[define hash-update string-length define-flow for/custom]\n")))
+(define markdown-racket-vocabulary-sample
+  (string-append
+   "```racket\n"
+   "(define (group-by-length words)\n"
+   "  (for/fold ([ht (hash)]) ([word (in-list words)])\n"
+   "    (hash-update ht (string-length word) add1 0)))\n"
+   "(define-flow x 1)\n"
+   "(for/custom ([x xs]) x)\n"
+   "```\n"))
+
+(check-equal?
+ (strip-ansi (render-markdown-preview markdown-racket-vocabulary-sample))
+ markdown-racket-vocabulary-sample)
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-markdown-preview markdown-racket-vocabulary-sample)))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-builtin))
+                (render-markdown-preview markdown-racket-vocabulary-sample)))
+(check-equal?
+ (strip-ansi (render-port->string render-markdown-preview-port
+                                  markdown-racket-vocabulary-sample))
+ markdown-racket-vocabulary-sample)
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-keyword))
+                (render-port->string render-markdown-preview-port
+                                     markdown-racket-vocabulary-sample)))
+(check-true
+ (regexp-match? (regexp (regexp-quote ansi-builtin))
+                (render-port->string render-markdown-preview-port
+                                     markdown-racket-vocabulary-sample)))
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-keyword))
                 (render-shell-preview "grep --ignore-case pattern file\n"

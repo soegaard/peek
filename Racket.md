@@ -21,6 +21,10 @@ The intended rendering rule is:
 This keeps the renderer simple while allowing future improvements in
 `lexers/racket` to improve `peek` automatically.
 
+`peek` also bundles a small standard-vocabulary map for the Racket language
+namespace so that exact standard forms and builtins can stand out from local
+identifiers in a preview.
+
 ## First-Pass Role Mapping
 
 The initial Racket renderer should use a small terminal-oriented role mapping.
@@ -54,6 +58,12 @@ lines, symbols, and identifiers within the existing generic color model.
 
 The form tags are heuristic. They are useful for previewing common built-in
 forms such as `define`, `if`, and `let`, but they are not binding-aware.
+
+The bundled vocabulary map lets `peek` distinguish:
+
+- exact standard forms, such as `define` and `for/fold`
+- standard builtins, such as `hash-update` and `string-length`
+- form-like names, such as `define-flow` and `for/custom`
 
 ## Scope Boundaries
 

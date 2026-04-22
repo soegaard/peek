@@ -27,6 +27,7 @@
          racket/port
          racket/string
          "common-style.rkt"
+         "private/racket-standard-map.rkt"
          "c.rkt"
          "cpp.rkt"
          "delimited.rkt"
@@ -59,6 +60,20 @@
         (position-offset (markdown-derived-token-end token))
         (markdown-derived-token-text token)))
 
+;; derived-token-category : markdown-derived-token? -> symbol?
+;;   Extract the coarse category from one derived Markdown token.
+(define (derived-token-category token)
+  (vector-ref (struct->vector token) 1))
+
+;; markdown-racket-extra-tags : (listof symbol?) string? -> (listof symbol?)
+;;   Attach consumer-side Racket vocabulary tags to embedded Racket code.
+(define (markdown-racket-extra-tags tags text)
+  (cond
+    [(memq 'embedded-racket tags)
+     (racket-standard-token-tags text)]
+    [else
+     '()]))
+
 ;; annotate-markdown-tokens : string? -> (listof markdown-token?)
 ;;   Combine projected Markdown categories with derived tags.
 (define (annotate-markdown-tokens source)
@@ -89,7 +104,10 @@
       (hash-ref derived-tags-by-key
                 (markdown-token-key base)
                 '()))
-    (struct-copy markdown-token base [tags tags])))
+    (struct-copy markdown-token base
+                 [tags (append tags
+                               (markdown-racket-extra-tags tags
+                                                           text))])))
 
 ;; markdown-like-style : symbol? (listof symbol?) -> string?
 ;;   Choose the ANSI style for one Markdown token/category pair.
@@ -209,9 +227,13 @@
     (define token
       (lexer in))
     (unless (eq? token 'eof)
+      (define tags
+        (append (markdown-derived-token-tags token)
+                (markdown-racket-extra-tags (markdown-derived-token-tags token)
+                                            (markdown-derived-token-text token))))
       (display (colorize-text (markdown-like-style
-                               'unknown
-                               (markdown-derived-token-tags token))
+                               (derived-token-category token)
+                               tags)
                               (markdown-derived-token-text token))
                out)
       (loop))))

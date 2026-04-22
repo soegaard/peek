@@ -113,7 +113,7 @@
     (regexp-replace* #px"\u001b\\[[0-9;]*m" text ""))
 
   (define tex-sample
-    "\\section{Hi}\nText with \\% and $x+y$.\n% comment\n")
+    "\\section{Hi}\nText with \\% and $x+y$ and \\/.\n% comment\n")
   (define latex-sample
     "\\begin{itemize}\n\\item One\n\\end{itemize}\n")
 
@@ -122,6 +122,8 @@
   (check-equal? (strip-ansi (render-latex-preview latex-sample))
                 latex-sample)
   (check-true (regexp-match? #px"section"
+                             (render-tex-preview tex-sample)))
+  (check-true (regexp-match? #px"\u001b\\["
                              (render-tex-preview tex-sample)))
   (check-true (regexp-match? #px"begin"
                              (render-latex-preview latex-sample)))

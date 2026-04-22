@@ -485,6 +485,7 @@
          (memq 'tex-accent-command tags)
          (memq 'tex-spacing-command tags)
          (memq 'tex-paragraph-command tags)
+         (memq 'tex-italic-correction tags)
          (memq 'latex-line-break-command tags))
      ansi-keyword]
     [(or (memq 'latex-environment-name tags)

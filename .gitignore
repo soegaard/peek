@@ -3,7 +3,7 @@ compiled/
 /doc/
 peek-doc/doc/
 tmp/
-html/
+/html/
 *~
 *.bak
 \#*

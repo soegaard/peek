@@ -48,10 +48,10 @@ cleanup_window() {
   if [[ -n "$window_id" ]]; then
     osascript -e "tell application \"Terminal\"
   try
-    close (first window whose id is $window_id)
+    close (first window whose id is $window_id) saving no
   end try
   if $terminal_was_running is 0 then
-    quit
+    quit saving no
   end if
 end tell" >/dev/null 2>&1 || true
   fi

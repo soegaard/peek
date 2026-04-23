@@ -27,6 +27,48 @@
   (eprintf "peek: ~a\n" message)
   (exit 1))
 
+;; hex-digit->value : char? -> (or/c exact-nonnegative-integer? #f)
+;;   Convert a hexadecimal digit to its numeric value.
+(define (hex-digit->value ch)
+  (cond
+    [(char<=? #\0 ch #\9) (- (char->integer ch) (char->integer #\0))]
+    [(char<=? #\a ch #\f) (+ 10 (- (char->integer ch) (char->integer #\a)))]
+    [(char<=? #\A ch #\F) (+ 10 (- (char->integer ch) (char->integer #\A)))]
+    [else #f]))
+
+;; search-byte-spec->bytes : string? -> bytes?
+;;   Parse a hex byte specification into raw bytes.
+(define (search-byte-spec->bytes spec)
+  (define cleaned
+    (regexp-replace* #px"[\\s,_:-]+" (string-trim spec) ""))
+  (cond
+    [(zero? (string-length cleaned))
+     (usage-error "expected at least one byte after --search-bytes")]
+    [(odd? (string-length cleaned))
+     (usage-error (format "expected an even number of hex digits after --search-bytes: ~a"
+                          spec))]
+    [else
+     (define out
+       (open-output-bytes))
+     (for ([i (in-range 0 (string-length cleaned) 2)])
+       (define hi
+         (hex-digit->value (string-ref cleaned i)))
+       (define lo
+         (hex-digit->value (string-ref cleaned (add1 i))))
+       (unless (and hi lo)
+         (usage-error (format "expected hex bytes after --search-bytes: ~a" spec)))
+     (write-byte (+ (* 16 hi) lo) out))
+     (get-output-bytes out)]))
+
+;; search-text-spec->bytes : string? -> bytes?
+;;   Encode a UTF-8 text search string as raw bytes.
+(define (search-text-spec->bytes spec)
+  (cond
+    [(zero? (string-length spec))
+     (usage-error "expected at least one character after --search-text")]
+    [else
+     (string->bytes/utf-8 spec)]))
+
 ;; pager-command : -> (listof path-string?)
 ;;   Resolve the configured pager command.
 (define (pager-command)
@@ -88,6 +130,9 @@
   (define align? #f)
   (define swatches? #t)
   (define color-mode 'always)
+  (define binary-mode 'hex)
+  (define search-byte-specs '())
+  (define search-text-specs '())
   (define pager? #f)
   (define list-file-types? #f)
   (define type #f)
@@ -117,6 +162,16 @@
                         [(always auto never) (string->symbol value)]
                         [else
                          (usage-error (format "unknown color mode: ~a" value))]))]
+   [("--bits")
+    "Render binary input as bits instead of hex."
+    (set! binary-mode 'bits)]
+   #:multi
+   [("--search-bytes") spec
+    "Highlight raw bytes; repeat to add another hex byte sequence."
+    (set! search-byte-specs (cons spec search-byte-specs))]
+   [("--search-text") spec
+    "Highlight UTF-8 text; repeat to add another search string."
+    (set! search-text-specs (cons spec search-text-specs))]
    #:args args
    (cond
      [(null? args)
@@ -136,7 +191,12 @@
        (make-preview-options #:type      type
                              #:align?    align?
                              #:swatches? swatches?
-                             #:color-mode color-mode))
+                             #:color-mode color-mode
+                             #:binary-mode binary-mode
+                             #:search-bytes (append (map search-byte-spec->bytes
+                                                         (reverse search-byte-specs))
+                                                    (map search-text-spec->bytes
+                                                         (reverse search-text-specs)))))
      (define (write-preview out)
        (cond
          [file-path
@@ -153,3 +213,11 @@
 
 (module+ main
   (main))
+
+(module+ test
+  (require rackunit)
+
+  (check-equal? (search-text-spec->bytes "peek")
+                (string->bytes/utf-8 "peek"))
+  (check-equal? (search-text-spec->bytes "π")
+                (string->bytes/utf-8 "π")))

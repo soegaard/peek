@@ -20,6 +20,7 @@ Preview a file directly:
 
 ```sh
 peek path/to/file.css
+peek path/to/file.bin
 peek path/to/file.c
 peek path/to/file.cpp
 peek path/to/file.m
@@ -55,6 +56,10 @@ Preview from standard input by choosing a file type explicitly:
 
 ```sh
 cat path/to/file.md | peek --type md
+cat path/to/file.bin | peek --type binary
+cat path/to/file.bin | peek --type binary --bits
+cat path/to/file.bin | peek --type binary --search-bytes 4243 --search-bytes C4
+cat path/to/file.bin | peek --type binary --search-text peek
 cat path/to/file.c | peek --type c
 cat path/to/file.cpp | peek --type cpp
 cat path/to/file.m | peek --type objc
@@ -110,6 +115,7 @@ opens Terminal, runs `peek`, and captures the window as a PNG.
 Current supported file types are:
 
 - `css`
+- `binary`
 - `c`
 - `cpp`
 - `objc`
@@ -178,6 +184,14 @@ Racket-family files use the `racket` previewer and preserve source text and
 line breaks without layout rewriting. A bundled standard-vocabulary map helps
 exact forms and builtins stand out from local identifiers, while a small
 heuristic keeps form-like and binding-form-like names readable.
+Binary files use the `binary` previewer and show offsets, color-coded bytes,
+and an ASCII gutter. Add `--bits` to show each byte as eight bits instead of
+hex digits, `--search-bytes` to color raw byte sequences white, and
+`--search-text` to color UTF-8 text sequences white. Pass each byte pattern as
+one hex string, and pass each text pattern as a normal UTF-8 string. Repeat
+either flag to highlight multiple sequences. When an unknown file looks
+binary, `peek` falls back to that view instead of trying to treat the input
+as plain text.
 
 ## Documentation
 

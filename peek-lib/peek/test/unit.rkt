@@ -1,9 +1,11 @@
 #lang racket/base
 
 (require rackunit
+         racket/bytes
          racket/file
          racket/runtime-path
          racket/string
+         "../binary.rkt"
          "../common-style.rkt"
          "../c.rkt"
          "../css.rkt"
@@ -103,6 +105,24 @@
 (define (strip-ansi text)
   (regexp-replace* ansi-pattern text ""))
 
+(define binary-sample
+  (bytes 0 1 2 3 16 32 65 66 67 255))
+
+(define (call-with-temp-binary-file bytes proc)
+  (define path
+    (make-temporary-file "peek-binary~a"))
+  (call-with-output-file path
+    (lambda (out)
+      (write-bytes bytes out))
+    #:exists 'truncate/replace
+    #:mode 'binary)
+  (dynamic-wind
+    void
+    (lambda () (proc path))
+    (lambda ()
+      (when (file-exists? path)
+        (delete-file path)))))
+
 (define plist-sample
   (string-append
    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -118,7 +138,67 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+
+(check-true (regexp-match? #px"00000000"
+                           (render-binary-preview binary-sample)))
+(check-true (regexp-match? #px"01000001"
+                           (strip-ansi (render-binary-preview binary-sample
+                                                            #:bits? #t))))
+(check-true (regexp-match? #px"41 42 .*43"
+                           (strip-ansi (render-binary-preview binary-sample))))
+(check-equal? (strip-ansi (render-binary-preview (string->bytes/utf-8 "abc")
+                                                 #:bits? #t
+                                                 #:color? #f))
+              "00000000  01100001 01100010 01100011                             |abc   |\n")
+(check-equal? (strip-ansi (preview-string "abc"
+                                         #f
+                                         (make-preview-options #:type 'binary
+                                                               #:binary-mode 'hex
+                                                               #:color-mode 'never)))
+              "00000000  61 62 63                                          |abc             |\n")
+(check-true (regexp-match? #px"00000000  00000000 00000001"
+                           (strip-ansi (call-with-temp-binary-file
+                                        binary-sample
+                                        (lambda (path)
+                                          (preview-file path
+                                                        (make-preview-options #:binary-mode 'bits
+                                                                              #:color-mode 'always)))))))
+(check-true (regexp-match? #px"255;255;255"
+                           (render-binary-preview binary-sample
+                                                  #:search-bytes (list (bytes 65 66 67)
+                                                                       (bytes 196)))))
+(check-true (regexp-match? #px"255;255;255"
+                           (render-binary-preview (string->bytes/utf-8 "look π!")
+                                                  #:search-bytes (list (string->bytes/utf-8 "π")))))
+(check-true (regexp-match? #px"00000000"
+                           (let ([out (open-output-string)])
+                             (preview-port (open-input-bytes binary-sample)
+                                           #f
+                                           (make-preview-options #:type 'binary
+                                                                 #:binary-mode 'hex
+                                                                 #:color-mode 'always)
+                                           out)
+                             (get-output-string out))))
+(check-equal? (let ([out (open-output-string)])
+                (preview-port (open-input-bytes (string->bytes/utf-8 "hello\n"))
+                              #f
+                              (make-preview-options #:color-mode 'always)
+                              out)
+                (get-output-string out))
+              "hello\n")
+(check-true (regexp-match? #px"00000000"
+                           (call-with-temp-binary-file
+                            binary-sample
+                            (lambda (path)
+                              (preview-file path
+                                            (make-preview-options #:color-mode 'always))))))
+(check-equal? (call-with-temp-binary-file
+               (string->bytes/utf-8 "hello\n")
+               (lambda (path)
+                 (preview-file path
+                               (make-preview-options #:color-mode 'always))))
+              "hello\n")
 
 (check-equal? (preview-string "color: #fff;" #f
                               (make-preview-options #:type 'css

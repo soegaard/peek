@@ -51,9 +51,9 @@ There is file-type-aware rendering for the supported file types.
 
 The supported file types are:
 
-CSS, Bash, C, Objective-C, C++, CSV, HTML, Java, JavaScript, JSON, LaTeX, Makefile,
-Go, Haskell, Markdown, Pascal, Plist, PowerShell, Python, Rhombus, Racket, Rust,
-Scribble, Swift, TeX, TSV, WAT, YAML, and Zsh.
+Binary, CSS, Bash, C, Objective-C, C++, CSV, HTML, Java, JavaScript, JSON,
+LaTeX, Makefile, Go, Haskell, Markdown, Pascal, Plist, PowerShell, Python,
+Rhombus, Racket, Rust, Scribble, Swift, TeX, TSV, WAT, YAML, and Zsh.
 
 
 The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
@@ -74,6 +74,11 @@ The Makefile previewer uses @tt{lexers/makefile} and supports ordinary
 @tt{Makefile}, @tt{GNUmakefile}, and @tt{.mk} inputs as @tt{makefile}
 preview targets. Recipe bodies now preserve Makefile-specific expansions such
 as @tt{$(CC)} while using shell-aware roles for the command text itself.
+
+The binary previewer shows raw bytes as a hex view with offsets, color-coded
+bytes, and an ASCII gutter. It can be selected explicitly with
+@tt{binary}, and unknown inputs that look binary fall back to that view
+instead of trying to behave like plain text.
 
 The CSV previewer uses @tt{lexers/csv} and supports @tt{.csv} files as
 @tt{csv} preview targets.
@@ -152,6 +157,7 @@ After installing the @exec{peek} package, the launcher is available as
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
+peek path/to/file.bin
 peek path/to/file.c
 peek path/to/file.cpp
 peek path/to/file.m
@@ -186,6 +192,7 @@ When reading from standard input, use @DFlag{--type} to select the file type:
 
 @shellblock[#:shell 'bash]{
 cat path/to/file.css | peek --type css
+cat path/to/file.bin | peek --type binary
 cat path/to/file.c | peek --type c
 cat path/to/file.cpp | peek --type cpp
 cat path/to/file.m | peek --type objc
@@ -345,6 +352,7 @@ fail with an error instead of silently falling back to plain output.
 The current explicit file type names are:
 
 @itemlist[
+ @item{@tt{binary}}
  @item{@tt{bash}}
  @item{@tt{c}}
  @item{@tt{cpp}}
@@ -887,6 +895,37 @@ export PATH
 echo "$PATH"
 }
 
+@subsection{Binary Files}
+
+For Binary, @exec{peek} currently supports:
+
+@itemlist[
+ @item{hex-style previewing for arbitrary binary data}
+ @item{explicit @tt{binary} mode for stdin and files}
+ @item{@tt{--bits} to show each byte as bits instead of hex digits}
+ @item{@tt{--search-bytes} to highlight raw byte sequences in white}
+ @item{@tt{--search-text} to highlight UTF-8 text sequences in white}
+ @item{automatic fallback to binary when unknown input looks non-textual}
+]
+
+The binary previewer is intentionally hex-oriented by default. It shows
+offsets, color groups for bytes, and an ASCII gutter, and @tt{--bits} swaps
+the byte cells to 8-bit binary strings. @tt{--search-bytes} highlights the
+matched bytes in white, and each pattern can be expressed as one hex string
+such as @tt{4243}; repeat the flag to add more patterns. @tt{--search-text}
+highlights UTF-8 text sequences in white, and each pattern is a normal text
+string; repeat the flag to add more patterns. The previewer does not try to
+interpret the bytes as structured text.
+
+Example binary preview input:
+
+@verbatim[#:indent 2]{
+peek --type binary path/to/file.bin
+peek --type binary --bits path/to/file.bin
+peek --type binary --search-bytes 4243 --search-bytes C4 path/to/file.bin
+peek --type binary --search-text peek path/to/file.bin
+}
+
 @subsection{Data Formats}
 
 @subsubsection{CSV}
@@ -1061,21 +1100,75 @@ CSS remains the special buffered renderer because it can add swatches and
 alignment. Future file types may add their own previewers without forcing all
 file types into the same rendering model.
 
-@section{Extended Examples}
+@section{Screenshots}
 
-@subsection{Screenshots}
+@subsection{Gallery}
 
-A few small previews, rendered by @exec{peek}:
+Representative previews, rendered by @exec{peek}:
 
-@(define-runtime-path img-css    "screenshots/example-css.png")
-@(define-runtime-path img-html   "screenshots/example-html.png")
-@(define-runtime-path img-racket "screenshots/example-racket.png")
-@(define-runtime-path img-wat    "screenshots/example-wat.png")
+@(define-runtime-path img-bash      "screenshots/example-bash.png")
+@(define-runtime-path img-c         "screenshots/example-c.png")
+@(define-runtime-path img-cpp       "screenshots/example-cpp.png")
+@(define-runtime-path img-css       "screenshots/example-css.png")
+@(define-runtime-path img-csv       "screenshots/example-csv.png")
+@(define-runtime-path img-go        "screenshots/example-go.png")
+@(define-runtime-path img-haskell   "screenshots/example-hs.png")
+@(define-runtime-path img-html      "screenshots/example-html.png")
+@(define-runtime-path img-java      "screenshots/example-java.png")
+@(define-runtime-path img-js        "screenshots/example-js.png")
+@(define-runtime-path img-jsx       "screenshots/example-jsx.png")
+@(define-runtime-path img-json      "screenshots/example-json.png")
+@(define-runtime-path img-latex     "screenshots/example-cls.png")
+@(define-runtime-path img-markdown  "screenshots/example-md.png")
+@(define-runtime-path img-makefile  "screenshots/Makefile.png")
+@(define-runtime-path img-objc      "screenshots/example-m.png")
+@(define-runtime-path img-pascal    "screenshots/example-pas.png")
+@(define-runtime-path img-plist     "screenshots/example-plist.png")
+@(define-runtime-path img-powershell "screenshots/example-ps1.png")
+@(define-runtime-path img-python    "screenshots/example-py.png")
+@(define-runtime-path img-racket    "screenshots/example-racket.png")
+@(define-runtime-path img-rhombus   "screenshots/example-rhm.png")
+@(define-runtime-path img-rust      "screenshots/example-rs.png")
+@(define-runtime-path img-scribble  "screenshots/example-scrbl.png")
+@(define-runtime-path img-shell     "screenshots/example-sh.png")
+@(define-runtime-path img-swift     "screenshots/example-swift.png")
+@(define-runtime-path img-tex       "screenshots/example-tex.png")
+@(define-runtime-path img-tsv       "screenshots/example-tsv.png")
+@(define-runtime-path img-wat       "screenshots/example-wat.png")
+@(define-runtime-path img-yaml      "screenshots/example-yaml.png")
+@(define-runtime-path img-zsh       "screenshots/example-zsh.png")
 
-@(image #:scale 0.5 img-css)
-
-@(image #:scale 0.5 img-html)
-
-@(image #:scale 0.5 img-racket)
-
-@(image #:scale 0.5 img-wat)
+@tabular[
+ #:sep @hspace[2]
+ (list
+  (list @bold{Bash}        @(image #:scale 0.3 img-bash))
+  (list @bold{C}           @(image #:scale 0.3 img-c))
+  (list @bold{C++}         @(image #:scale 0.3 img-cpp))
+  (list @bold{CSS}         @(image #:scale 0.3 img-css))
+  (list @bold{CSV}         @(image #:scale 0.3 img-csv))
+  (list @bold{Go}          @(image #:scale 0.3 img-go))
+  (list @bold{Haskell}     @(image #:scale 0.3 img-haskell))
+  (list @bold{HTML}        @(image #:scale 0.3 img-html))
+  (list @bold{Java}        @(image #:scale 0.3 img-java))
+  (list @bold{JavaScript}  @(image #:scale 0.3 img-js))
+  (list @bold{JSX}         @(image #:scale 0.3 img-jsx))
+  (list @bold{JSON}        @(image #:scale 0.3 img-json))
+  (list @bold{LaTeX}       @(image #:scale 0.3 img-latex))
+  (list @bold{Markdown}    @(image #:scale 0.3 img-markdown))
+  (list @bold{Makefile}    @(image #:scale 0.3 img-makefile))
+  (list @bold{Objective-C} @(image #:scale 0.3 img-objc))
+  (list @bold{Pascal}      @(image #:scale 0.3 img-pascal))
+  (list @bold{Plist}       @(image #:scale 0.3 img-plist))
+  (list @bold{PowerShell}  @(image #:scale 0.3 img-powershell))
+  (list @bold{Python}      @(image #:scale 0.3 img-python))
+  (list @bold{Racket}      @(image #:scale 0.3 img-racket))
+  (list @bold{Rhombus}     @(image #:scale 0.3 img-rhombus))
+  (list @bold{Rust}        @(image #:scale 0.3 img-rust))
+  (list @bold{Scribble}    @(image #:scale 0.3 img-scribble))
+  (list @bold{Shell}       @(image #:scale 0.3 img-shell))
+  (list @bold{Swift}       @(image #:scale 0.3 img-swift))
+  (list @bold{TeX}         @(image #:scale 0.3 img-tex))
+  (list @bold{TSV}         @(image #:scale 0.3 img-tsv))
+  (list @bold{WAT}         @(image #:scale 0.3 img-wat))
+  (list @bold{YAML}        @(image #:scale 0.3 img-yaml))
+  (list @bold{Zsh}         @(image #:scale 0.3 img-zsh)))]

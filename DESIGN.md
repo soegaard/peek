@@ -43,6 +43,18 @@ WAT keeps the streaming focus for very large standalone inputs. This keeps the
 generic architecture forward-compatible without forcing every file type through
 a single rendering model.
 
+Binary input is a special fallback case rather than a text-language preview.
+The generic layer may classify an unknown input as likely binary and route it
+to a hex-oriented renderer that shows offsets, bytes, and an ASCII gutter
+instead of attempting text rendering.
+The binary previewer also has a bit-oriented mode, selected with `--bits`,
+that keeps the same layout but renders each byte as an 8-bit binary string
+instead of hexadecimal digits.
+It can also highlight a raw byte sequence in white via `--search-bytes`,
+which is useful when scanning for a known marker or magic number. It can also
+highlight UTF-8 text sequences in white via `--search-text`. Repeat either
+flag to highlight multiple sequences.
+
 ## Lessons From `scribble-tools`
 
 The JavaScript colorer in `scribble-tools` is a useful reference point for
@@ -99,6 +111,7 @@ File-type-specific notes belong in separate files, such as:
 - [`Makefile.md`](/Users/soegaard/Dropbox/GitHub/peek/Makefile.md)
 - [`Plist.md`](/Users/soegaard/Dropbox/GitHub/peek/Plist.md)
 - [`Pascal.md`](/Users/soegaard/Dropbox/GitHub/peek/Pascal.md)
+- [`Binary.md`](/Users/soegaard/Dropbox/GitHub/peek/Binary.md)
 - [`Python.md`](/Users/soegaard/Dropbox/GitHub/peek/Python.md)
 - [`TeX.md`](/Users/soegaard/Dropbox/GitHub/peek/TeX.md)
 - [`LaTeX.md`](/Users/soegaard/Dropbox/GitHub/peek/LaTeX.md)

@@ -48,7 +48,13 @@ cleanup_window() {
   if [[ -n "$window_id" ]]; then
     osascript -e "tell application \"Terminal\"
   try
-    close (first window whose id is $window_id) saving no
+    set targetWindow to first window whose id is $window_id
+    do script \"exit\" in selected tab of targetWindow
+    repeat with i from 1 to 40
+      if busy of selected tab of targetWindow is false then exit repeat
+      delay 0.1
+    end repeat
+    close targetWindow saving no
   end try
   if $terminal_was_running is 0 then
     quit saving no
@@ -65,24 +71,7 @@ tell application "Terminal"
   set peekCommand to "racket -l peek/main " & quoted form of (system attribute "INPUT_PATH")
   set previewCommand to "cd " & quoted form of (system attribute "REPO_ROOT") & " && printf '\\033[H\\033[2J\\033[3J' && sh -c " & quoted form of (peekCommand & " ; sleep 2 ; exec sleep 5")
   set previewTab to do script ""
-  set previewWindow to missing value
-  repeat with i from 1 to 100
-    try
-      set previewWindow to window of previewTab
-      if previewWindow is not missing value then exit repeat
-    end try
-    delay 0.1
-  end repeat
-  if previewWindow is missing value then
-    repeat with i from 1 to 50
-      try
-        set previewWindow to front window
-        if previewWindow is not missing value then exit repeat
-      end try
-      delay 0.1
-    end repeat
-  end if
-  if previewWindow is missing value then error "could not find preview window"
+  set previewWindow to window of previewTab
   set bounds of previewWindow to {120, 120, 640, 480}
   do script previewCommand in previewTab
   return id of previewWindow

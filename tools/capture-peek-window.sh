@@ -64,7 +64,7 @@ tell application "Terminal"
   activate
   set peekCommand to "racket -l peek/main " & quoted form of (system attribute "INPUT_PATH")
   set previewCommand to "cd " & quoted form of (system attribute "REPO_ROOT") & " && printf '\\033[H\\033[2J\\033[3J' && sh -c " & quoted form of (peekCommand & " ; sleep 2 ; exec sleep 5")
-  set previewTab to do script previewCommand
+  set previewTab to do script ""
   set previewWindow to missing value
   repeat with i from 1 to 100
     try
@@ -84,6 +84,7 @@ tell application "Terminal"
   end if
   if previewWindow is missing value then error "could not find preview window"
   set bounds of previewWindow to {120, 120, 640, 480}
+  do script previewCommand in previewTab
   return id of previewWindow
 end tell
 APPLESCRIPT

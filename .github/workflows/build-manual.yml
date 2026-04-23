@@ -51,7 +51,9 @@ jobs:
           raco pkg install --auto --link "$GITHUB_WORKSPACE/peek-doc"
 
       - name: Render peek manual
-        run: raco scribble +m --htmls --dest html/ --redirect-main https://soegaard.github.io/peek/ peek-doc/peek.scrbl
+        run: |
+          raco scribble +m --html --dest html/ --redirect-main https://soegaard.github.io/peek/ peek-doc/peek.scrbl
+          cp html/peek.html html/index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -59,7 +61,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: html/peek/
+          path: html/
 
   deploy:
     environment:

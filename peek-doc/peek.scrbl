@@ -37,6 +37,10 @@
 @author[@author+email["Jens Axel Søgaard" "jensaxel@soegaard.net"]]
 @defmodule[(lib "peek/main.rkt")]
 
+@(define-runtime-path css-preview-shot  "screenshots/example-css.png")
+@(define-runtime-path html-preview-shot "screenshots/example-html.png")
+@(define-runtime-path js-preview-shot   "screenshots/example-js.png")
+
 @section{Guide}
 
 The tool @exec{peek} is a terminal utility for previewing files in the terminal.
@@ -351,29 +355,10 @@ fail with an error instead of silently falling back to plain output.
 
 The current explicit file type names are:
 
-@itemlist[
- @item{@tt{binary}}
- @item{@tt{bash}}
- @item{@tt{c}}
- @item{@tt{cpp}}
- @item{@tt{css}}
- @item{@tt{html}}
- @item{@tt{js}}
- @item{@tt{json}}
- @item{@tt{jsx}}
- @item{@tt{latex}}
- @item{@tt{md}}
- @item{@tt{plist}}
- @item{@tt{powershell}}
- @item{@tt{python}}
- @item{@tt{rhombus}}
- @item{@tt{rkt}}
- @item{@tt{scrbl}}
- @item{@tt{swift}}
- @item{@tt{tex}}
- @item{@tt{wat}}
- @item{@tt{zsh}}
-]
+@tt{binary}, @tt{bash}, @tt{c}, @tt{cpp}, @tt{css}, @tt{html}, @tt{js},
+@tt{json}, @tt{jsx}, @tt{latex}, @tt{md}, @tt{plist}, @tt{powershell},
+@tt{python}, @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{swift}, @tt{tex},
+@tt{wat}, and @tt{zsh}.
 
 @subsection{Web Languages}
 
@@ -404,12 +389,16 @@ rendered width, not only from source-text width.
 
 Example CSS preview input:
 
-@cssblock[#:color-swatch? #t]{
+@verbatim[#:indent 2]{
 .card {
   color: #2f7ea0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.20);
 }
 }
+
+Rendered CSS preview:
+
+@(image #:scale 0.3 css-preview-shot)
 
 @subsubsection{HTML}
 
@@ -429,7 +418,7 @@ alignment inside embedded @tt{<style>} regions.
 
 Example HTML preview input:
 
-@htmlblock{
+@verbatim{
 <!doctype html>
 <main id="app">
   <style>.hero { color: #2f7ea0; }</style>
@@ -452,11 +441,14 @@ For JavaScript, @exec{peek} currently supports:
 The first JavaScript pass focuses on syntax coloring only. It does not yet add
 preview widgets or framework-specific heuristics.
 
-Example JSX preview input:
+Example JavaScript preview input:
 
-@jsblock[#:jsx? #t]{
+@verbatim{
 const view = <Button kind="primary">Hello {name}</Button>;
 }
+
+The HTML and JavaScript sections focus on showing the example input only;
+their rendered outputs are covered by the screenshot gallery instead.
 
 @subsection{Programming Languages}
 

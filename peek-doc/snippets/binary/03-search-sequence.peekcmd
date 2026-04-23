@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+peek() {
+  racket -l peek/main -- "$@"
+}
+
+cd /Users/soegaard/Dropbox/GitHub/peek/peek-doc/snippets/binary
+peek --search-bytes 4243 --search-bytes c0 all-bytes.bin

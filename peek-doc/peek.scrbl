@@ -1,7 +1,9 @@
 #lang scribble/manual
 
 @(require scribble-tools
+          scribble/core
           racket/file
+          racket/path
           racket/runtime-path
           (for-label lexers/css
                      lexers/c
@@ -37,6 +39,9 @@
 @title{peek}
 @author[@author+email["Jens Axel Søgaard" "jensaxel@soegaard.net"]]
 
+@italic{Note:} The @tt{peek} package and this documentation were written
+with Codex.
+
 @(define-runtime-path css-preview-shot  "screenshots/example-css.png")
 @(define-runtime-path html-preview-shot "screenshots/example-html.png")
 @(define-runtime-path js-preview-shot   "screenshots/example-js.png")
@@ -61,6 +66,7 @@
 @(define-runtime-path snippet-makefile  "snippets/makefile/Makefile")
 @(define-runtime-path snippet-shell     "snippets/shell/example.sh")
 @(define-runtime-path snippet-binary    "snippets/binary/example.sh")
+@(define-runtime-path binary-all-bytes  "snippets/binary/all-bytes.bin")
 @(define-runtime-path snippet-csv       "snippets/csv/example.csv")
 @(define-runtime-path snippet-json      "snippets/json/example.json")
 @(define-runtime-path snippet-plist     "snippets/plist/example.plist")
@@ -89,7 +95,10 @@
 @(define-runtime-path snippet-latex-shot     "screenshots/snippet-latex.png")
 @(define-runtime-path snippet-makefile-shot  "screenshots/snippet-makefile.png")
 @(define-runtime-path snippet-shell-shot     "screenshots/snippet-shell.png")
-@(define-runtime-path snippet-binary-shot    "screenshots/snippet-binary.png")
+@(define-runtime-path snippet-binary-shot-1  "screenshots/snippet-binary-auto.png")
+@(define-runtime-path snippet-binary-shot-2  "screenshots/snippet-binary-search-42.png")
+@(define-runtime-path snippet-binary-shot-3  "screenshots/snippet-binary-search-sequence.png")
+@(define-runtime-path snippet-binary-shot-4  "screenshots/snippet-binary-search-text.png")
 @(define-runtime-path snippet-csv-shot       "screenshots/snippet-csv.png")
 @(define-runtime-path snippet-json-shot      "screenshots/snippet-json.png")
 @(define-runtime-path snippet-plist-shot     "screenshots/snippet-plist.png")
@@ -98,122 +107,111 @@
 @(define-runtime-path snippet-yaml-shot      "screenshots/snippet-yaml.png")
 @(define (snippet-text path)
    (file->string path))
-@(define (snippet-block path [indent 2])
-   (verbatim #:indent indent (snippet-text path)))
+@(define (snippet-name path)
+   (path->string (file-name-from-path path)))
+@(define-syntax-rule (input-block block-form path)
+   (block-form #:line-numbers 1
+               #:file (snippet-name path)
+               (snippet-text path)))
+@(define-syntax-rule (input-shell path shell-kind)
+   (shellblock #:shell shell-kind
+               #:line-numbers 1
+               #:file (snippet-name path)
+               (snippet-text path)))
+@(define-syntax-rule (input-scribble path)
+   (scribbleblock #:context #'here
+                  #:line-numbers 1
+                  #:file (snippet-name path)
+                  (snippet-text path)))
+@(define (long-flag name)
+   (make-element 'no-break
+                 (list (tt "-")
+                       (tt "-")
+                       (make-element 'tt (list name)))))
 @(define (preview-shot path)
    (image #:scale 0.3 path))
 
 @section{Guide}
 
-The tool @exec{peek} is a terminal utility for previewing files in the terminal.
+@exec{peek} previews files directly in the terminal, with syntax-aware
+coloring for supported file types and a binary fallback for non-text data.
 
-This package is not intended for use by other Racket programs.
-Installing the package will give you a command line tool @exec{peek} you
-can use instead of @exec{less} in the terminal. The command @exec{peek}
-appears in the same folder, the other Racket launchers do. 
+It is meant as a command-line viewing tool, not as a general-purpose library.
+After installing the package, you get a @exec{peek} launcher alongside the
+other Racket command-line tools.
+
+@subsection{Quick Start}
+
+The fastest way to get a feel for @exec{peek} is to run it on a file you
+already have:
+
+@shellblock[#:shell 'bash]{
+peek path/to/file.css
+peek -p path/to/file.css
+cat path/to/file.json | peek --type json
+}
+
+Use @Flag{-p} or @(long-flag "pager") when you want the preview to open in a
+pager, and use @(long-flag "type") when reading from standard input or when
+you want to force a specific previewer such as @tt{binary}.
+
+@subsection{Supported Types}
+
+Supported file types are grouped in the reference chapter, but the current
+surface includes:
+
+@itemlist[
+ @item{@bold{Web languages:} @seclink["css"]{CSS}, @seclink["html"]{HTML},
+       @seclink["javascript-jsx"]{JavaScript}, and
+       @seclink["javascript-jsx"]{JSX}}
+ @item{@bold{Programming languages:} @seclink["shell"]{Bash},
+       @seclink["c"]{C}, @seclink["objective-c"]{Objective-C},
+       @seclink["cpp"]{C++}, @seclink["go"]{Go},
+       @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
+       @seclink["pascal"]{Pascal}, @seclink["shell"]{PowerShell},
+       @seclink["python"]{Python}, @seclink["rhombus"]{Rhombus},
+       @seclink["racket"]{Racket}, @seclink["rust"]{Rust},
+       @seclink["swift"]{Swift}, and @seclink["shell"]{Zsh}}
+ @item{@bold{Document languages:} @seclink["markdown"]{Markdown},
+       @seclink["scribble"]{Scribble}, @seclink["tex"]{TeX}, and
+       @seclink["latex"]{LaTeX}}
+ @item{@bold{Data and tooling formats:} @seclink["csv"]{CSV},
+       @seclink["json"]{JSON}, @seclink["makefile"]{Makefile},
+       @seclink["plist"]{Plist}, @seclink["tsv"]{TSV}, @seclink["wat"]{WAT},
+       and @seclink["yaml"]{YAML}}
+ @item{@bold{Binary files:} automatic binary detection plus explicit
+       @seclink["binary-files"]{@tt{binary}} mode}
+]
+
+See @secref{Reference} for the detailed behavior, examples, and screenshots
+for each supported type.
+
+@subsection{What Makes Peek Useful}
+
+The previewers aim to stay terminal-first:
+
+@itemlist[
+ @item{show useful syntax structure without rewriting the source into a
+       document view}
+ @item{preserve source text and line breaks in the color-oriented previewers}
+ @item{use file-type-aware lexers where available instead of one generic
+       text highlighter}
+ @item{fall back to a readable binary view for non-text input}
+]
+
+Here is a representative CSS preview:
+
+@(preview-shot css-preview-shot)
 
 
-There is file-type-aware rendering for the supported file types.
+@subsection{Installation}
 
-The supported file types are:
-
-Binary, CSS, Bash, C, Objective-C, C++, CSV, HTML, Java, JavaScript, JSON,
-LaTeX, Makefile, Go, Haskell, Markdown, Pascal, Plist, PowerShell, Python,
-Rhombus, Racket, Rust, Scribble, Swift, TeX, TSV, WAT, YAML, and Zsh.
-
-
-The CSS previewer uses @tt{lexers/css} for lexing and adds terminal-oriented rendering
-features such as syntax coloring, color swatches, and optional alignment.
-
-The C previewer uses @tt{lexers/c} and supports @tt{.c} and @tt{.h} files as
-@tt{c} preview targets.
-
-The Objective-C previewer uses @tt{lexers/objc} and supports @tt{.m} files as
-@tt{objc} preview targets.
-
-The C++ previewer uses @tt{lexers/cpp} and supports common C++ source and
-header extensions such as @tt{.cpp}, @tt{.cc}, @tt{.cxx}, @tt{.cp},
-@tt{.c++}, @tt{.cppm}, @tt{.ixx}, @tt{.hpp}, @tt{.hh}, @tt{.hxx},
-@tt{.h++}, @tt{.ipp}, and @tt{.tpp} files as @tt{cpp} preview targets.
-
-The Makefile previewer uses @tt{lexers/makefile} and supports ordinary
-@tt{Makefile}, @tt{GNUmakefile}, and @tt{.mk} inputs as @tt{makefile}
-preview targets. Recipe bodies now preserve Makefile-specific expansions such
-as @tt{$(CC)} while using shell-aware roles for the command text itself.
-
-The binary previewer shows raw bytes as a hex view with offsets, color-coded
-bytes, and an ASCII gutter. It can be selected explicitly with
-@tt{binary}, and unknown inputs that look binary fall back to that view
-instead of trying to behave like plain text.
-
-The CSV previewer uses @tt{lexers/csv} and supports @tt{.csv} files as
-@tt{csv} preview targets.
-
-The HTML previewer uses @tt{lexers/html} and reuses the CSS and JavaScript
-color model for embedded @tt{<style>} and @tt{<script>} content.
-
-The Go previewer uses @tt{lexers/go} and supports @tt{.go} files, plus Go
-module files such as @tt{go.mod} and @tt{go.work}, as @tt{go} preview
-targets.
-
-The Haskell previewer uses @tt{lexers/haskell} and supports @tt{.hs},
-@tt{.lhs}, @tt{.hs-boot}, and @tt{.lhs-boot} files as @tt{haskell} preview
-targets.
-
-The Java previewer uses @tt{lexers/java} and supports @tt{.java} source
-files, including common package and module info files such as
-@tt{package-info.java} and @tt{module-info.java}, as @tt{java} preview
-targets.
-
-The JavaScript previewer uses @tt{lexers/javascript}, and enables JSX-aware
-classification for @tt{.jsx} files.
-
-The JSON previewer uses @tt{lexers/json} and supports @tt{.json} and
-@tt{.webmanifest} files as @tt{json} preview targets.
-
-The Plist previewer uses @tt{lexers/plist} and supports XML property-list
-files such as @tt{.plist} inputs as @tt{plist} preview targets.
-
-The Python previewer uses @tt{lexers/python} and supports @tt{.py},
-@tt{.pyi}, and @tt{.pyw} files as @tt{python} preview targets.
-
-The Swift previewer uses @tt{lexers/swift} and supports @tt{.swift} files as
-@tt{swift} preview targets.
-
-The Rust previewer uses @tt{lexers/rust} and supports @tt{.rs} files as
-@tt{rust} preview targets.
-
-The Pascal previewer uses @tt{lexers/pascal} and supports common Pascal source
-files such as @tt{.pas}, @tt{.pp}, @tt{.dpr}, @tt{.lpr}, and @tt{.inc} files
-as @tt{pascal} preview targets.
-
-The shell previewers use @tt{lexers/shell} and support @tt{.sh}, @tt{.bash},
-@tt{.zsh}, and @tt{.ps1} files as @tt{bash}, @tt{zsh}, and @tt{powershell}
-preview targets.
-
-The Rhombus previewer uses @tt{lexers/rhombus} and supports @tt{.rhm} files
-as @tt{rhombus} preview targets.
-
-The YAML previewer uses @tt{lexers/yaml} and supports @tt{.yaml} and
-@tt{.yml} files as @tt{yaml} preview targets.
-
-The TSV previewer uses @tt{lexers/tsv} and supports @tt{.tsv} files as
-@tt{tsv} preview targets.
-
-The Markdown previewer uses @tt{lexers/markdown} and colors Markdown structure
-plus delegated embedded languages in @tt{.md} files.
-
-The Racket previewer uses @tt{lexers/racket} and provides syntax coloring
-for @tt{.rkt}, @tt{.ss}, @tt{.scm}, and @tt{.rktd} files. A bundled
-standard-vocabulary map helps exact forms and builtins stand out from local
-identifiers, and a small heuristic keeps form-like and binding-form-like
-names readable.
-
-The Scribble previewer uses @tt{lexers/scribble} and colors Scribble
-command syntax plus embedded Racket escapes in @tt{.scrbl} files.
-
-The WAT previewer uses @tt{lexers/wat} and provides first-pass syntax coloring for
-WebAssembly text-format files in @tt{.wat}. 
+@itemlist[
+ @item{Go to @hyperlink["https://download.racket-lang.org/"]{
+       download.racket-lang.org} to download and install Racket.}
+ @item{Use @shell-code[#:shell 'bash]{raco pkg install peek} to install
+       @exec{peek}.}
+]
 
 
 @section{Command Line}
@@ -221,138 +219,45 @@ WebAssembly text-format files in @tt{.wat}.
 After installing the @exec{peek} package, the launcher is available as
 @exec{peek}.
 
+Typical file-preview usage looks like this:
+
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
-peek path/to/file.bin
-peek path/to/file.c
-peek path/to/file.cpp
-peek path/to/file.m
-peek Makefile
-peek GNUmakefile
-peek path/to/file.mk
-peek path/to/file.csv
-peek path/to/file.html
-peek path/to/file.go
-peek path/to/file.java
-peek path/to/file.hs
-peek path/to/file.js
-peek path/to/file.json
-peek path/to/file.tex
-peek path/to/file.cls
-peek path/to/file.sty
-peek path/to/file.plist
-peek path/to/file.yaml
-peek path/to/file.py
-peek path/to/file.pas
-peek path/to/file.rs
-peek path/to/file.swift
-peek path/to/file.md
-peek path/to/file.rhm
-peek path/to/file.rkt
-peek path/to/file.ss
-peek path/to/file.scrbl
-peek path/to/file.wat
 }
 
-When reading from standard input, use @DFlag{--type} to select the file type:
+When reading from standard input, use @(long-flag "type") to select the
+previewer explicitly:
 
 @shellblock[#:shell 'bash]{
 cat path/to/file.css | peek --type css
-cat path/to/file.bin | peek --type binary
-cat path/to/file.c | peek --type c
-cat path/to/file.cpp | peek --type cpp
-cat path/to/file.m | peek --type objc
-cat path/to/file.mk | peek --type makefile
-cat path/to/file.csv | peek --type csv
-cat path/to/file.html | peek --type html
-cat path/to/file.go | peek --type go
-cat path/to/file.java | peek --type java
-cat path/to/file.hs | peek --type haskell
-cat path/to/file.md | peek --type md
-cat path/to/file.json | peek --type json
-cat path/to/file.tex | peek --type tex
-cat path/to/file.cls | peek --type latex
-cat path/to/file.sty | peek --type latex
-cat path/to/file.plist | peek --type plist
-cat path/to/file.yaml | peek --type yaml
-cat path/to/file.py | peek --type python
-cat path/to/file.pas | peek --type pascal
-cat path/to/file.rs | peek --type rust
-cat path/to/file.swift | peek --type swift
-cat path/to/file.rhm | peek --type rhombus
-cat path/to/file.rkt | peek --type rkt
-cat path/to/file.ss | peek --type rkt
-cat path/to/file.scrbl | peek --type scrbl
-cat path/to/file.wat | peek --type wat
 }
 
-To list the currently supported explicit file type names:
+To inspect the complete set of explicit file type names:
 
 @shellblock[#:shell 'bash]{
 peek --list-file-types
 }
 
-Useful CSS examples:
+Useful command-line combinations:
 
 @shellblock[#:shell 'bash]{
-peek -a path/to/file.css
-peek --no-swatches path/to/file.css
-peek --color never path/to/file.css
-peek --color auto path/to/file.css | less -R
 peek -p path/to/file.css
-}
-
-HTML, JavaScript, JSON, LaTeX, Pascal, Plist, Python, JSX, Markdown, Rhombus,
-Racket, Rust, Scribble, TeX, TSV, YAML, and WAT examples:
-
-@shellblock[#:shell 'bash]{
-peek path/to/file.html
-peek path/to/file.c
-peek path/to/file.csv
-peek path/to/file.js
-peek path/to/file.json
-peek path/to/file.tex
-peek path/to/file.cls
-peek path/to/file.sty
-peek path/to/file.plist
-peek path/to/file.yaml
-peek path/to/file.py
-peek path/to/file.pas
-peek path/to/file.rs
-peek path/to/component.jsx
-peek path/to/file.md
-peek path/to/file.rhm
-peek path/to/file.rkt
-peek path/to/file.ss
-peek path/to/file.scrbl
-peek path/to/file.wat
-}
-
-Rhombus examples:
-
-@shellblock[#:shell 'bash]{
-peek path/to/file.rhm
-}
-
-Shell examples:
-
-@shellblock[#:shell 'bash]{
-peek path/to/script.sh
-peek path/to/script.bash
-peek path/to/script.zsh
-peek path/to/script.ps1
 }
 
 @subsection{Options}
 
+General options:
+
 @itemlist[
 @item{@DFlag{--type} @italic{type}
     selects the input type explicitly. This is mainly useful for standard
-       input. Supported values are @tt{bash}, @tt{c}, @tt{cpp}, @tt{css},
-       @tt{html}, @tt{js}, @tt{json}, @tt{jsx}, @tt{latex}, @tt{md},
-       @tt{pascal}, @tt{plist}, @tt{powershell}, @tt{python}, @tt{rhombus},
-       @tt{rkt}, @tt{rust}, @tt{scrbl}, @tt{swift}, @tt{tex}, @tt{wat},
-       @tt{yaml}, and @tt{zsh}.}
+       input. Supported values include @tt{binary}, @tt{bash}, @tt{c},
+       @tt{cpp}, @tt{css}, @tt{html}, @tt{js}, @tt{json}, @tt{jsx},
+       @tt{latex}, @tt{md}, @tt{pascal}, @tt{plist}, @tt{powershell},
+       @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{rust}, @tt{scrbl},
+       @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, and @tt{zsh}. Use
+       @tt{binary} to force the binary preview mode even when automatic
+       detection would not select it.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -367,6 +272,20 @@ peek path/to/script.ps1
        back to @tt{less -R}.}
  @item{@DFlag{--color} @litchar{always}@litchar{|}@litchar{auto}@litchar{|}@litchar{never}
        controls ANSI color output. The default is @litchar{always}.}
+]
+
+Binary preview options:
+
+@itemlist[
+ @item{@(long-flag "bits")
+       shows each byte as bits instead of hex digits. This option only affects
+       binary previews.}
+ @item{@(long-flag "search-bytes") @italic{hex-pattern}
+       highlights raw byte sequences in white. Repeat the flag to add more
+       patterns. This option only affects binary previews.}
+ @item{@(long-flag "search-text") @italic{text}
+       highlights UTF-8 text sequences in white. Repeat the flag to add more
+       patterns. This option only affects binary previews.}
 ]
 
 @subsection{Color Modes}
@@ -415,16 +334,31 @@ fail with an error instead of silently falling back to plain output.
 
 @section{Reference}
 
-The current explicit file type names are:
+The current reference sections are:
 
-@tt{binary}, @tt{bash}, @tt{c}, @tt{cpp}, @tt{css}, @tt{html}, @tt{js},
-@tt{json}, @tt{jsx}, @tt{latex}, @tt{md}, @tt{plist}, @tt{powershell},
-@tt{python}, @tt{rhombus}, @tt{rkt}, @tt{scrbl}, @tt{swift}, @tt{tex},
-@tt{wat}, and @tt{zsh}.
+@itemlist[
+ @item{@bold{Web languages:} @seclink["css"]{CSS}, @seclink["html"]{HTML},
+       and @seclink["javascript-jsx"]{JavaScript and JSX}}
+ @item{@bold{Programming languages:} @seclink["shell"]{Shell},
+       @seclink["c"]{C}, @seclink["cpp"]{C++},
+       @seclink["objective-c"]{Objective-C}, @seclink["go"]{Go},
+       @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
+       @seclink["pascal"]{Pascal}, @seclink["python"]{Python},
+       @seclink["racket"]{Racket}, @seclink["rhombus"]{Rhombus},
+       @seclink["rust"]{Rust}, and @seclink["swift"]{Swift}}
+ @item{@bold{Document languages:} @seclink["markdown"]{Markdown},
+       @seclink["scribble"]{Scribble}, @seclink["tex"]{TeX}, and
+       @seclink["latex"]{LaTeX}}
+ @item{@bold{Tooling and config:} @seclink["makefile"]{Makefile}}
+ @item{@bold{Data formats:} @seclink["csv"]{CSV}, @seclink["json"]{JSON},
+       @seclink["plist"]{Plist}, @seclink["tsv"]{TSV},
+       @seclink["wat"]{WAT}, and @seclink["yaml"]{YAML}}
+ @item{@bold{Binary files:} @seclink["binary-files"]{Binary Files}}
+]
 
 @subsection{Web Languages}
 
-@subsubsection{CSS}
+@subsubsection[#:tag "css"]{CSS}
 
 For CSS, @exec{peek} supports:
 
@@ -451,13 +385,13 @@ rendered width, not only from source-text width.
 
 Example CSS preview input:
 
-@(snippet-block snippet-css)
+@(input-block cssblock snippet-css)
 
 Rendered CSS preview:
 
 @(preview-shot snippet-css-shot)
 
-@subsubsection{HTML}
+@subsubsection[#:tag "html"]{HTML}
 
 For HTML, @exec{peek} currently supports:
 
@@ -475,13 +409,13 @@ alignment inside embedded @tt{<style>} regions.
 
 Example HTML preview input:
 
-@(verbatim (snippet-text snippet-html))
+@(input-block htmlblock snippet-html)
 
 Rendered HTML preview:
 
 @(preview-shot snippet-html-shot)
 
-@subsubsection{JavaScript And JSX}
+@subsubsection[#:tag "javascript-jsx"]{JavaScript And JSX}
 
 For JavaScript, @exec{peek} currently supports:
 
@@ -497,7 +431,7 @@ preview widgets or framework-specific heuristics.
 
 Example JavaScript preview input:
 
-@(verbatim (snippet-text snippet-jsx))
+@(input-block jsblock snippet-jsx)
 
 Rendered JavaScript / JSX preview:
 
@@ -505,7 +439,7 @@ Rendered JavaScript / JSX preview:
 
 @subsection{Programming Languages}
 
-@subsubsection{C}
+@subsubsection[#:tag "c"]{C}
 
 For C, @exec{peek} currently supports:
 
@@ -521,13 +455,13 @@ ANSI stripping.
 
 Example C preview input:
 
-@(snippet-block snippet-c)
+@(input-block cblock snippet-c)
 
 Rendered C preview:
 
 @(preview-shot snippet-c-shot)
 
-@subsubsection{C++}
+@subsubsection[#:tag "cpp"]{C++}
 
 For C++, @exec{peek} currently supports:
 
@@ -546,13 +480,13 @@ ANSI stripping.
 
 Example C++ preview input:
 
-@(snippet-block snippet-cpp)
+@(input-block cppblock snippet-cpp)
 
 Rendered C++ preview:
 
 @(preview-shot snippet-cpp-shot)
 
-@subsubsection{Objective-C}
+@subsubsection[#:tag "objective-c"]{Objective-C}
 
 For Objective-C, @exec{peek} currently supports:
 
@@ -568,13 +502,13 @@ ANSI stripping.
 
 Example Objective-C preview input:
 
-@(verbatim (snippet-text snippet-objc))
+@(input-block objcblock snippet-objc)
 
 Rendered Objective-C preview:
 
 @(preview-shot snippet-objc-shot)
 
-@subsubsection{Go}
+@subsubsection[#:tag "go"]{Go}
 
 For Go, @exec{peek} currently supports:
 
@@ -591,13 +525,13 @@ ANSI stripping.
 
 Example Go preview input:
 
-@(snippet-block snippet-go)
+@(input-block goblock snippet-go)
 
 Rendered Go preview:
 
 @(preview-shot snippet-go-shot)
 
-@subsubsection{Haskell}
+@subsubsection[#:tag "haskell"]{Haskell}
 
 For Haskell, @exec{peek} currently supports:
 
@@ -614,13 +548,13 @@ ANSI stripping.
 
 Example Haskell preview input:
 
-@(snippet-block snippet-haskell)
+@(input-block haskellblock snippet-haskell)
 
 Rendered Haskell preview:
 
 @(preview-shot snippet-haskell-shot)
 
-@subsubsection{Java}
+@subsubsection[#:tag "java"]{Java}
 
 For Java, @exec{peek} currently supports:
 
@@ -637,13 +571,13 @@ ANSI stripping.
 
 Example Java preview input:
 
-@(verbatim (snippet-text snippet-java))
+@(input-block javablock snippet-java)
 
 Rendered Java preview:
 
 @(preview-shot snippet-java-shot)
 
-@subsubsection{Pascal}
+@subsubsection[#:tag "pascal"]{Pascal}
 
 For Pascal, @exec{peek} currently supports:
 
@@ -660,13 +594,13 @@ ANSI stripping.
 
 Example Pascal preview input:
 
-@(snippet-block snippet-pascal)
+@(input-block pascalblock snippet-pascal)
 
 Rendered Pascal preview:
 
 @(preview-shot snippet-pascal-shot)
 
-@subsubsection{Python}
+@subsubsection[#:tag "python"]{Python}
 
 For Python, @exec{peek} currently supports:
 
@@ -682,13 +616,13 @@ ANSI stripping.
 
 Example Python preview input:
 
-@(snippet-block snippet-python)
+@(input-block pythonblock snippet-python)
 
 Rendered Python preview:
 
 @(preview-shot snippet-python-shot)
 
-@subsubsection{Racket}
+@subsubsection[#:tag "racket"]{Racket}
 
 For Racket, @exec{peek} currently supports:
 
@@ -704,13 +638,13 @@ structure-aware formatting or separate support for nearby file types such as
 
 Example Racket preview input:
 
-@(snippet-block snippet-racket)
+@(input-block racketblock snippet-racket)
 
 Rendered Racket preview:
 
 @(preview-shot snippet-racket-shot)
 
-@subsubsection{Rhombus}
+@subsubsection[#:tag "rhombus"]{Rhombus}
 
 For Rhombus, @exec{peek} currently supports:
 
@@ -726,13 +660,13 @@ ANSI stripping.
 
 Example Rhombus preview input:
 
-@(snippet-block snippet-rhombus)
+@(input-block rhombusblock snippet-rhombus)
 
 Rendered Rhombus preview:
 
 @(preview-shot snippet-rhombus-shot)
 
-@subsubsection{Rust}
+@subsubsection[#:tag "rust"]{Rust}
 
 For Rust, @exec{peek} currently supports:
 
@@ -748,13 +682,13 @@ ANSI stripping.
 
 Example Rust preview input:
 
-@(snippet-block snippet-rust)
+@(input-block rustblock snippet-rust)
 
 Rendered Rust preview:
 
 @(preview-shot snippet-rust-shot)
 
-@subsubsection{Swift}
+@subsubsection[#:tag "swift"]{Swift}
 
 For Swift, @exec{peek} currently supports:
 
@@ -770,7 +704,7 @@ ANSI stripping.
 
 Example Swift preview input:
 
-@(snippet-block snippet-swift)
+@(input-block swiftblock snippet-swift)
 
 Rendered Swift preview:
 
@@ -778,7 +712,7 @@ Rendered Swift preview:
 
 @subsection{Document Languages}
 
-@subsubsection{Markdown}
+@subsubsection[#:tag "markdown"]{Markdown}
 
 For Markdown, @exec{peek} currently supports:
 
@@ -801,13 +735,13 @@ exposes the corresponding embedded tags.
 
 Example Markdown preview input:
 
-@(snippet-block snippet-markdown)
+@(input-block markdownblock snippet-markdown)
 
 Rendered Markdown preview:
 
 @(preview-shot snippet-markdown-shot)
 
-@subsubsection{Scribble}
+@subsubsection[#:tag "scribble"]{Scribble}
 
 For Scribble, @exec{peek} currently supports:
 
@@ -825,13 +759,13 @@ When you need a literal at-sign in Scribble prose, write @"@".
 
 Example Scribble preview input:
 
-@(verbatim (snippet-text snippet-scribble))
+@(input-scribble snippet-scribble)
 
 Rendered Scribble preview:
 
 @(preview-shot snippet-scribble-shot)
 
-@subsubsection{TeX}
+@subsubsection[#:tag "tex"]{TeX}
 
 For TeX, @exec{peek} currently supports:
 
@@ -849,13 +783,13 @@ into one generic command class.
 
 Example TeX preview input:
 
-@(snippet-block snippet-tex)
+@(input-block texblock snippet-tex)
 
 Rendered TeX preview:
 
 @(preview-shot snippet-tex-shot)
 
-@subsubsection{LaTeX}
+@subsubsection[#:tag "latex"]{LaTeX}
 
 For LaTeX, @exec{peek} currently supports:
 
@@ -873,7 +807,7 @@ and line-break commands visible as distinct structure.
 
 Example LaTeX preview input:
 
-@(snippet-block snippet-latex)
+@(input-block latexblock snippet-latex)
 
 Rendered LaTeX preview:
 
@@ -881,7 +815,7 @@ Rendered LaTeX preview:
 
 @subsection{Tooling and Config}
 
-@subsubsection{Makefile}
+@subsubsection[#:tag "makefile"]{Makefile}
 
 For Makefiles, @exec{peek} currently supports:
 
@@ -899,13 +833,13 @@ without layout rewriting.
 
 Example Makefile preview input:
 
-@(snippet-block snippet-makefile)
+@(input-block makefileblock snippet-makefile)
 
 Rendered Makefile preview:
 
 @(preview-shot snippet-makefile-shot)
 
-@subsubsection{Shell}
+@subsubsection[#:tag "shell"]{Shell}
 
 For Shell, @exec{peek} currently supports:
 
@@ -921,45 +855,15 @@ ANSI stripping.
 
 Example shell preview input:
 
-@(verbatim (snippet-text snippet-shell))
+@(input-shell snippet-shell 'bash)
 
 Rendered shell preview:
 
 @(preview-shot snippet-shell-shot)
 
-@subsection{Binary Files}
-
-For Binary, @exec{peek} currently supports:
-
-@itemlist[
- @item{hex-style previewing for arbitrary binary data}
- @item{explicit @tt{binary} mode for stdin and files}
- @item{@tt{--bits} to show each byte as bits instead of hex digits}
- @item{@tt{--search-bytes} to highlight raw byte sequences in white}
- @item{@tt{--search-text} to highlight UTF-8 text sequences in white}
- @item{automatic fallback to binary when unknown input looks non-textual}
-]
-
-The binary previewer is intentionally hex-oriented by default. It shows
-offsets, color groups for bytes, and an ASCII gutter, and @tt{--bits} swaps
-the byte cells to 8-bit binary strings. @tt{--search-bytes} highlights the
-matched bytes in white, and each pattern can be expressed as one hex string
-such as @tt{4243}; repeat the flag to add more patterns. @tt{--search-text}
-highlights UTF-8 text sequences in white, and each pattern is a normal text
-string; repeat the flag to add more patterns. The previewer does not try to
-interpret the bytes as structured text.
-
-Example binary preview input:
-
-@(snippet-block snippet-binary)
-
-Rendered binary preview:
-
-@(preview-shot snippet-binary-shot)
-
 @subsection{Data Formats}
 
-@subsubsection{CSV}
+@subsubsection[#:tag "csv"]{CSV}
 
 For CSV, @exec{peek} currently supports:
 
@@ -975,13 +879,13 @@ ANSI stripping.
 
 Example CSV preview input:
 
-@(snippet-block snippet-csv)
+@(input-block csvblock snippet-csv)
 
 Rendered CSV preview:
 
 @(preview-shot snippet-csv-shot)
 
-@subsubsection{JSON}
+@subsubsection[#:tag "json"]{JSON}
 
 For JSON, @exec{peek} currently supports:
 
@@ -998,13 +902,13 @@ ANSI stripping.
 
 Example JSON preview input:
 
-@(snippet-block snippet-json)
+@(input-block jsonblock snippet-json)
 
 Rendered JSON preview:
 
 @(preview-shot snippet-json-shot)
 
-@subsubsection{Plist}
+@subsubsection[#:tag "plist"]{Plist}
 
 For Plist, @exec{peek} currently supports:
 
@@ -1020,13 +924,13 @@ ANSI stripping.
 
 Example Plist preview input:
 
-@(snippet-block snippet-plist)
+@(input-block plistblock snippet-plist)
 
 Rendered Plist preview:
 
 @(preview-shot snippet-plist-shot)
 
-@subsubsection{TSV}
+@subsubsection[#:tag "tsv"]{TSV}
 
 For TSV, @exec{peek} currently supports:
 
@@ -1042,13 +946,13 @@ ANSI stripping.
 
 Example TSV preview input:
 
-@(snippet-block snippet-tsv)
+@(input-block tsvblock snippet-tsv)
 
 Rendered TSV preview:
 
 @(preview-shot snippet-tsv-shot)
 
-@subsubsection{WAT}
+@subsubsection[#:tag "wat"]{WAT}
 
 For WAT, @exec{peek} currently supports:
 
@@ -1066,13 +970,13 @@ types now use the port-oriented streaming path.
 
 Example WAT preview input:
 
-@(snippet-block snippet-wat)
+@(input-block wasmblock snippet-wat)
 
 Rendered WAT preview:
 
 @(preview-shot snippet-wat-shot)
 
-@subsubsection{YAML}
+@subsubsection[#:tag "yaml"]{YAML}
 
 For YAML, @exec{peek} currently supports:
 
@@ -1088,11 +992,59 @@ ANSI stripping.
 
 Example YAML preview input:
 
-@(snippet-block snippet-yaml)
+@(input-block yamlblock snippet-yaml)
 
 Rendered YAML preview:
 
 @(preview-shot snippet-yaml-shot)
+
+@subsection[#:tag "binary-files"]{Binary Files}
+
+For Binary, @exec{peek} currently supports:
+
+@itemlist[
+ @item{hex-style previewing for arbitrary binary data}
+ @item{explicit @tt{binary} mode for stdin and files}
+ @item{@(long-flag "bits") to show each byte as bits instead of hex digits}
+ @item{@(long-flag "search-bytes") to highlight raw byte sequences in white}
+ @item{@(long-flag "search-text") to highlight UTF-8 text sequences in white}
+ @item{automatic fallback to binary when unknown input looks non-textual}
+]
+
+The binary previewer is intentionally hex-oriented by default. It shows
+offsets, color groups for bytes, and an ASCII gutter, and @(long-flag "bits") swaps
+the byte cells to 8-bit binary strings. @(long-flag "search-bytes") highlights the
+matched bytes in white, and each pattern can be expressed as one hex string
+such as @tt{4243}; repeat the flag to add more patterns. @(long-flag "search-text")
+highlights UTF-8 text sequences in white, and each pattern is a normal text
+string; repeat the flag to add more patterns. The previewer does not try to
+interpret the bytes as structured text.
+
+The file @filepath{all-bytes.bin} used below contains the byte values
+@tt{00} through @tt{FF} in order. @exec{peek} can detect binary files
+automatically, which is why the first command omits an explicit type. When
+needed, you can still force binary rendering with @(long-flag "type")
+@tt{binary}.
+
+Commands used for the binary preview examples:
+
+@(input-shell snippet-binary 'bash)
+
+Result of @exec{peek all-bytes.bin}:
+
+@(preview-shot snippet-binary-shot-1)
+
+Result of @exec{peek --search-bytes 42 all-bytes.bin}:
+
+@(preview-shot snippet-binary-shot-2)
+
+Result of @exec{peek --search-bytes 4243 --search-bytes c0 all-bytes.bin}:
+
+@(preview-shot snippet-binary-shot-3)
+
+Result of @exec{peek --search-text bcd all-bytes.bin}:
+
+@(preview-shot snippet-binary-shot-4)
 
 @section{Library}
 

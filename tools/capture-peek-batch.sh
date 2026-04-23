@@ -31,7 +31,11 @@ while [[ $# -gt 0 ]]; do
   shift 3
 
   printf '\033[H\033[2J\033[3J'
-  racket -l peek/main "$input_path"
+  if [[ "$input_path" == *.peekcmd ]]; then
+    bash "$input_path"
+  else
+    racket -l peek/main "$input_path"
+  fi
   : > "$ready_file"
 
   while [[ ! -e "$go_file" ]]; do

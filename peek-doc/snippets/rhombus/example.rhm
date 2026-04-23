@@ -1,0 +1,7 @@
+#lang rhombus
+// Rhombus preview example.
+fun greet(name):
+  println("hello, $(name)")
+
+def label = "peek"
+greet(label)

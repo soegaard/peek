@@ -1,0 +1,7 @@
+{
+  "_comment": "JSON has no real comments, so this field documents the example.",
+  "name": "peek",
+  "ok": true,
+  "count": 2,
+  "tags": ["docs", "preview"]
+}

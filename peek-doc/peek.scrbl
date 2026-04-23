@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble-tools
+          racket/file
           racket/runtime-path
           (for-label lexers/css
                      lexers/c
@@ -35,11 +36,72 @@
 
 @title{peek}
 @author[@author+email["Jens Axel Søgaard" "jensaxel@soegaard.net"]]
-@defmodule[(lib "peek/main.rkt")]
 
 @(define-runtime-path css-preview-shot  "screenshots/example-css.png")
 @(define-runtime-path html-preview-shot "screenshots/example-html.png")
 @(define-runtime-path js-preview-shot   "screenshots/example-js.png")
+@(define-runtime-path snippet-css       "snippets/css/example.css")
+@(define-runtime-path snippet-html      "snippets/html/example.html")
+@(define-runtime-path snippet-c         "snippets/c/example.c")
+@(define-runtime-path snippet-cpp       "snippets/cpp/example.cpp")
+@(define-runtime-path snippet-objc      "snippets/objc/example.m")
+@(define-runtime-path snippet-go        "snippets/go/example.go")
+@(define-runtime-path snippet-haskell   "snippets/haskell/example.hs")
+@(define-runtime-path snippet-java      "snippets/java/example.java")
+@(define-runtime-path snippet-pascal    "snippets/pascal/example.pas")
+@(define-runtime-path snippet-python    "snippets/python/example.py")
+@(define-runtime-path snippet-racket    "snippets/racket/example.rkt")
+@(define-runtime-path snippet-rhombus   "snippets/rhombus/example.rhm")
+@(define-runtime-path snippet-rust      "snippets/rust/example.rs")
+@(define-runtime-path snippet-swift     "snippets/swift/example.swift")
+@(define-runtime-path snippet-markdown  "snippets/markdown/example.md")
+@(define-runtime-path snippet-scribble  "snippets/scribble/example.scrbl")
+@(define-runtime-path snippet-tex       "snippets/tex/example.tex")
+@(define-runtime-path snippet-latex     "snippets/latex/example.cls")
+@(define-runtime-path snippet-makefile  "snippets/makefile/Makefile")
+@(define-runtime-path snippet-shell     "snippets/shell/example.sh")
+@(define-runtime-path snippet-binary    "snippets/binary/example.sh")
+@(define-runtime-path snippet-csv       "snippets/csv/example.csv")
+@(define-runtime-path snippet-json      "snippets/json/example.json")
+@(define-runtime-path snippet-plist     "snippets/plist/example.plist")
+@(define-runtime-path snippet-tsv       "snippets/tsv/example.tsv")
+@(define-runtime-path snippet-wat       "snippets/wat/example.wat")
+@(define-runtime-path snippet-yaml      "snippets/yaml/example.yaml")
+@(define-runtime-path snippet-jsx       "snippets/javascript/example.jsx")
+@(define-runtime-path snippet-css-shot       "screenshots/snippet-css.png")
+@(define-runtime-path snippet-html-shot      "screenshots/snippet-html.png")
+@(define-runtime-path snippet-jsx-shot       "screenshots/snippet-jsx.png")
+@(define-runtime-path snippet-c-shot         "screenshots/snippet-c.png")
+@(define-runtime-path snippet-cpp-shot       "screenshots/snippet-cpp.png")
+@(define-runtime-path snippet-objc-shot      "screenshots/snippet-objc.png")
+@(define-runtime-path snippet-go-shot        "screenshots/snippet-go.png")
+@(define-runtime-path snippet-haskell-shot   "screenshots/snippet-haskell.png")
+@(define-runtime-path snippet-java-shot      "screenshots/snippet-java.png")
+@(define-runtime-path snippet-pascal-shot    "screenshots/snippet-pascal.png")
+@(define-runtime-path snippet-python-shot    "screenshots/snippet-python.png")
+@(define-runtime-path snippet-racket-shot    "screenshots/snippet-racket.png")
+@(define-runtime-path snippet-rhombus-shot   "screenshots/snippet-rhombus.png")
+@(define-runtime-path snippet-rust-shot      "screenshots/snippet-rust.png")
+@(define-runtime-path snippet-swift-shot     "screenshots/snippet-swift.png")
+@(define-runtime-path snippet-markdown-shot  "screenshots/snippet-markdown.png")
+@(define-runtime-path snippet-scribble-shot  "screenshots/snippet-scribble.png")
+@(define-runtime-path snippet-tex-shot       "screenshots/snippet-tex.png")
+@(define-runtime-path snippet-latex-shot     "screenshots/snippet-latex.png")
+@(define-runtime-path snippet-makefile-shot  "screenshots/snippet-makefile.png")
+@(define-runtime-path snippet-shell-shot     "screenshots/snippet-shell.png")
+@(define-runtime-path snippet-binary-shot    "screenshots/snippet-binary.png")
+@(define-runtime-path snippet-csv-shot       "screenshots/snippet-csv.png")
+@(define-runtime-path snippet-json-shot      "screenshots/snippet-json.png")
+@(define-runtime-path snippet-plist-shot     "screenshots/snippet-plist.png")
+@(define-runtime-path snippet-tsv-shot       "screenshots/snippet-tsv.png")
+@(define-runtime-path snippet-wat-shot       "screenshots/snippet-wat.png")
+@(define-runtime-path snippet-yaml-shot      "screenshots/snippet-yaml.png")
+@(define (snippet-text path)
+   (file->string path))
+@(define (snippet-block path [indent 2])
+   (verbatim #:indent indent (snippet-text path)))
+@(define (preview-shot path)
+   (image #:scale 0.3 path))
 
 @section{Guide}
 
@@ -389,16 +451,11 @@ rendered width, not only from source-text width.
 
 Example CSS preview input:
 
-@verbatim[#:indent 2]{
-.card {
-  color: #2f7ea0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.20);
-}
-}
+@(snippet-block snippet-css)
 
 Rendered CSS preview:
 
-@(image #:scale 0.3 css-preview-shot)
+@(preview-shot snippet-css-shot)
 
 @subsubsection{HTML}
 
@@ -418,14 +475,11 @@ alignment inside embedded @tt{<style>} regions.
 
 Example HTML preview input:
 
-@verbatim{
-<!doctype html>
-<main id="app">
-  <style>.hero { color: #2f7ea0; }</style>
-  <script>const root = document.querySelector("#app");</script>
-  <p>Hello &amp; goodbye.</p>
-</main>
-}
+@(verbatim (snippet-text snippet-html))
+
+Rendered HTML preview:
+
+@(preview-shot snippet-html-shot)
 
 @subsubsection{JavaScript And JSX}
 
@@ -443,12 +497,11 @@ preview widgets or framework-specific heuristics.
 
 Example JavaScript preview input:
 
-@verbatim{
-const view = <Button kind="primary">Hello {name}</Button>;
-}
+@(verbatim (snippet-text snippet-jsx))
 
-The HTML and JavaScript sections focus on showing the example input only;
-their rendered outputs are covered by the screenshot gallery instead.
+Rendered JavaScript / JSX preview:
+
+@(preview-shot snippet-jsx-shot)
 
 @subsection{Programming Languages}
 
@@ -468,10 +521,11 @@ ANSI stripping.
 
 Example C preview input:
 
-@verbatim[#:indent 2]{
-#include <stdio.h>
-int main(void) { return 0; }
-}
+@(snippet-block snippet-c)
+
+Rendered C preview:
+
+@(preview-shot snippet-c-shot)
 
 @subsubsection{C++}
 
@@ -492,10 +546,11 @@ ANSI stripping.
 
 Example C++ preview input:
 
-@verbatim[#:indent 2]{
-#include <vector>
-std::vector<int> xs = {1, 2, 3};
-}
+@(snippet-block snippet-cpp)
+
+Rendered C++ preview:
+
+@(preview-shot snippet-cpp-shot)
 
 @subsubsection{Objective-C}
 
@@ -513,11 +568,11 @@ ANSI stripping.
 
 Example Objective-C preview input:
 
-@verbatim|{
-#import <Foundation/Foundation.h>
-@interface Foo : NSObject
-@end
-}|
+@(verbatim (snippet-text snippet-objc))
+
+Rendered Objective-C preview:
+
+@(preview-shot snippet-objc-shot)
 
 @subsubsection{Go}
 
@@ -536,11 +591,11 @@ ANSI stripping.
 
 Example Go preview input:
 
-@verbatim[#:indent 2]{
-package main
+@(snippet-block snippet-go)
 
-func add(x int, y int) int { return x + y }
-}
+Rendered Go preview:
+
+@(preview-shot snippet-go-shot)
 
 @subsubsection{Haskell}
 
@@ -559,11 +614,11 @@ ANSI stripping.
 
 Example Haskell preview input:
 
-@verbatim[#:indent 2]{
-{-# LANGUAGE OverloadedStrings #-}
-module Demo where
-main = putStrLn "hello"
-}
+@(snippet-block snippet-haskell)
+
+Rendered Haskell preview:
+
+@(preview-shot snippet-haskell-shot)
 
 @subsubsection{Java}
 
@@ -582,17 +637,11 @@ ANSI stripping.
 
 Example Java preview input:
 
-@verbatim|{
-package demo;
+@(verbatim (snippet-text snippet-java))
 
-@Deprecated
-public class Example {
-  public static void main(String[] args) {
-    boolean ok = true;
-    Object nothing = null;
-  }
-}
-}|
+Rendered Java preview:
+
+@(preview-shot snippet-java-shot)
 
 @subsubsection{Pascal}
 
@@ -611,11 +660,11 @@ ANSI stripping.
 
 Example Pascal preview input:
 
-@verbatim[#:indent 2]{
-program Demo;
-begin
-end.
-}
+@(snippet-block snippet-pascal)
+
+Rendered Pascal preview:
+
+@(preview-shot snippet-pascal-shot)
 
 @subsubsection{Python}
 
@@ -633,10 +682,11 @@ ANSI stripping.
 
 Example Python preview input:
 
-@verbatim[#:indent 2]{
-def answer(name):
-    return name
-}
+@(snippet-block snippet-python)
+
+Rendered Python preview:
+
+@(preview-shot snippet-python-shot)
 
 @subsubsection{Racket}
 
@@ -654,14 +704,11 @@ structure-aware formatting or separate support for nearby file types such as
 
 Example Racket preview input:
 
-@racketblock{
-#lang racket/base
+@(snippet-block snippet-racket)
 
-; Greeting helper.
-#;(+ 1 2)
-(define (greet #:name [name "you"])
-  (string-append "hi " name))
-}
+Rendered Racket preview:
+
+@(preview-shot snippet-racket-shot)
 
 @subsubsection{Rhombus}
 
@@ -679,11 +726,11 @@ ANSI stripping.
 
 Example Rhombus preview input:
 
-@shellblock[#:shell 'bash]{
-#lang rhombus
-fun greet(name):
-  println("hello, $(name)")
-}
+@(snippet-block snippet-rhombus)
+
+Rendered Rhombus preview:
+
+@(preview-shot snippet-rhombus-shot)
 
 @subsubsection{Rust}
 
@@ -701,12 +748,11 @@ ANSI stripping.
 
 Example Rust preview input:
 
-@verbatim[#:indent 2]{
-/// Demo
-fn greet(name: &str) -> String {
-    format!("hello, {name}")
-}
-}
+@(snippet-block snippet-rust)
+
+Rendered Rust preview:
+
+@(preview-shot snippet-rust-shot)
 
 @subsubsection{Swift}
 
@@ -724,10 +770,11 @@ ANSI stripping.
 
 Example Swift preview input:
 
-@verbatim[#:indent 2]{
-import Foundation
-let answer = 42
-}
+@(snippet-block snippet-swift)
+
+Rendered Swift preview:
+
+@(preview-shot snippet-swift-shot)
 
 @subsection{Document Languages}
 
@@ -754,15 +801,11 @@ exposes the corresponding embedded tags.
 
 Example Markdown preview input:
 
-@verbatim[#:indent 2]{
-# Demo
+@(snippet-block snippet-markdown)
 
-Text with `code`, a [link](https://example.com), and:
+Rendered Markdown preview:
 
-```rkt
-(define x 1)
-```
-}
+@(preview-shot snippet-markdown-shot)
 
 @subsubsection{Scribble}
 
@@ -782,14 +825,11 @@ When you need a literal at-sign in Scribble prose, write @"@".
 
 Example Scribble preview input:
 
-@scribbleblock[
-  "#lang scribble/manual\n"
-  "\n"
-  "@title{peek Scribble Demo}\n"
-  "\n"
-  "This is plain text.\n"
-  "\n"
-  "Inline Racket: @racket[(define x 1)]\n"]
+@(verbatim (snippet-text snippet-scribble))
+
+Rendered Scribble preview:
+
+@(preview-shot snippet-scribble-shot)
 
 @subsubsection{TeX}
 
@@ -809,11 +849,11 @@ into one generic command class.
 
 Example TeX preview input:
 
-@verbatim[#:indent 2]{
-\section{Demo}
+@(snippet-block snippet-tex)
 
-Text with \% and $x+y$.
-}
+Rendered TeX preview:
+
+@(preview-shot snippet-tex-shot)
 
 @subsubsection{LaTeX}
 
@@ -833,11 +873,11 @@ and line-break commands visible as distinct structure.
 
 Example LaTeX preview input:
 
-@verbatim[#:indent 2]{
-\NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{demo}
-\LoadClass{article}
-}
+@(snippet-block snippet-latex)
+
+Rendered LaTeX preview:
+
+@(preview-shot snippet-latex-shot)
 
 @subsection{Tooling and Config}
 
@@ -859,11 +899,11 @@ without layout rewriting.
 
 Example Makefile preview input:
 
-@verbatim[#:indent 2]{
-all: build test
-build:
-\traco test map.rkt
-}
+@(snippet-block snippet-makefile)
+
+Rendered Makefile preview:
+
+@(preview-shot snippet-makefile-shot)
 
 @subsubsection{Shell}
 
@@ -881,11 +921,11 @@ ANSI stripping.
 
 Example shell preview input:
 
-@shellblock[#:shell 'bash]{
-#!/usr/bin/env bash
-export PATH
-echo "$PATH"
-}
+@(verbatim (snippet-text snippet-shell))
+
+Rendered shell preview:
+
+@(preview-shot snippet-shell-shot)
 
 @subsection{Binary Files}
 
@@ -911,12 +951,11 @@ interpret the bytes as structured text.
 
 Example binary preview input:
 
-@verbatim[#:indent 2]{
-peek --type binary path/to/file.bin
-peek --type binary --bits path/to/file.bin
-peek --type binary --search-bytes 4243 --search-bytes C4 path/to/file.bin
-peek --type binary --search-text peek path/to/file.bin
-}
+@(snippet-block snippet-binary)
+
+Rendered binary preview:
+
+@(preview-shot snippet-binary-shot)
 
 @subsection{Data Formats}
 
@@ -936,10 +975,11 @@ ANSI stripping.
 
 Example CSV preview input:
 
-@verbatim[#:indent 2]{
-name,age,city
-Ada,37,London
-}
+@(snippet-block snippet-csv)
+
+Rendered CSV preview:
+
+@(preview-shot snippet-csv-shot)
 
 @subsubsection{JSON}
 
@@ -958,13 +998,11 @@ ANSI stripping.
 
 Example JSON preview input:
 
-@verbatim[#:indent 2]{
-{
-  "name": "peek",
-  "ok": true,
-  "count": 2
-}
-}
+@(snippet-block snippet-json)
+
+Rendered JSON preview:
+
+@(preview-shot snippet-json-shot)
 
 @subsubsection{Plist}
 
@@ -982,16 +1020,11 @@ ANSI stripping.
 
 Example Plist preview input:
 
-@verbatim[#:indent 2]{
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-  <dict>
-    <key>Name</key>
-    <string>peek</string>
-  </dict>
-</plist>
-}
+@(snippet-block snippet-plist)
+
+Rendered Plist preview:
+
+@(preview-shot snippet-plist-shot)
 
 @subsubsection{TSV}
 
@@ -1009,10 +1042,11 @@ ANSI stripping.
 
 Example TSV preview input:
 
-@verbatim[#:indent 2]{
-name\tage
-Ada\t37
-}
+@(snippet-block snippet-tsv)
+
+Rendered TSV preview:
+
+@(preview-shot snippet-tsv-shot)
 
 @subsubsection{WAT}
 
@@ -1032,12 +1066,11 @@ types now use the port-oriented streaming path.
 
 Example WAT preview input:
 
-@verbatim[#:indent 2]{
-(module
-  (func $answer (result i32)
-    i32.const 42)
-  (export "answer" (func $answer)))
-}
+@(snippet-block snippet-wat)
+
+Rendered WAT preview:
+
+@(preview-shot snippet-wat-shot)
 
 @subsubsection{YAML}
 
@@ -1055,9 +1088,11 @@ ANSI stripping.
 
 Example YAML preview input:
 
-@verbatim[#:indent 2]{
-name: peek
-}
+@(snippet-block snippet-yaml)
+
+Rendered YAML preview:
+
+@(preview-shot snippet-yaml-shot)
 
 @section{Library}
 

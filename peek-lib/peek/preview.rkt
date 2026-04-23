@@ -285,6 +285,7 @@
                                      #:search-bytes (preview-options-search-bytes options))
               out)]
     [(and (or (eq? file-type 'bash)
+              (eq? file-type 'css)
               (eq? file-type 'c)
               (eq? file-type 'cpp)
               (eq? file-type 'makefile)
@@ -302,6 +303,10 @@
               (eq? file-type 'zsh))
           (color-enabled? out options))
      (case file-type
+       [(css)        (render-css-preview-port in
+                                              out
+                                              #:align? (preview-options-align? options)
+                                              #:swatches? (preview-options-swatches? options))]
        [(c)          (render-c-preview-port in out)]
        [(cpp)        (render-cpp-preview-port in out)]
        [(makefile)   (render-makefile-preview-port in out)]
@@ -320,6 +325,7 @@
        [(swift)      (render-swift-preview-port in out)]
        [(zsh)        (render-shell-preview-port in out #:shell 'zsh)])]
     [(or (eq? file-type 'bash)
+         (eq? file-type 'css)
          (eq? file-type 'c)
          (eq? file-type 'cpp)
          (eq? file-type 'makefile)
@@ -435,6 +441,7 @@
        #:mode 'binary)
      (get-output-string rendered)]
     [(or (eq? file-type 'wat)
+         (eq? file-type 'css)
          (eq? file-type 'c)
          (eq? file-type 'cpp)
          (eq? file-type 'objc)
@@ -445,6 +452,7 @@
          (eq? file-type 'java)
          (eq? file-type 'bash)
          (eq? file-type 'powershell)
+         (eq? file-type 'pascal)
          (eq? file-type 'rhombus)
          (eq? file-type 'zsh)
          (eq? file-type 'rkt)
@@ -457,6 +465,7 @@
          (eq? file-type 'tex)
          (eq? file-type 'python)
          (eq? file-type 'jsx)
+         (eq? file-type 'rust)
          (eq? file-type 'tex)
          (eq? file-type 'swift)
          (eq? file-type 'md)

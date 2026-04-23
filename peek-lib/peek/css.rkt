@@ -6,19 +6,25 @@
 ;;
 ;; CSS-specific terminal preview rendering built on lexers/css.
 
-;; render-css-preview : string? keyword-arguments -> string?
+;; render-css-preview      : string? keyword-arguments -> string?
 ;;   Render CSS with ANSI coloring and optional CSS-specific enhancements.
+;; render-css-preview-port : input-port? output-port? keyword-arguments -> void?
+;;   Render CSS from an input port to an output port.
 
 (provide
  ;; render-css-preview : string? #:align? boolean? #:swatches? boolean? -> string?
  ;;   Render CSS for terminal preview.
- render-css-preview)
+ render-css-preview
+ ;; render-css-preview-port : input-port? output-port? #:align? boolean? #:swatches? boolean? -> void?
+ ;;   Render CSS from a port for terminal preview.
+ render-css-preview-port)
 
 (require lexers/css
          lexers/token
          parser-tools/lex
          racket/list
          racket/match
+         racket/port
          racket/set
          racket/string)
 
@@ -1725,3 +1731,14 @@
                => insertion->text]
               [else
                ""])))))
+
+;; render-css-preview-port : input-port? output-port? keyword-arguments -> void?
+;;   Render CSS from an input port to an output port.
+(define (render-css-preview-port in
+                                 out
+                                 #:align?    [align? #f]
+                                 #:swatches? [swatches? #t])
+  (display (render-css-preview (port->string in)
+                               #:align? align?
+                               #:swatches? swatches?)
+           out))

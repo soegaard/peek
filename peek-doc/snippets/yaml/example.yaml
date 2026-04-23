@@ -1,0 +1,7 @@
+# YAML preview example.
+name: peek
+enabled: true
+count: 2
+tags:
+  - docs
+  - preview

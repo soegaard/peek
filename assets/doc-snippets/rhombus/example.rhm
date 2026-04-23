@@ -1,3 +1,0 @@
-#lang rhombus
-fun greet(name):
-  println("hello, $(name)")

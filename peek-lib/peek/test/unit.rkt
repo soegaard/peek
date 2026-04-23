@@ -605,6 +605,23 @@
                                 (make-preview-options #:color-mode 'always))))
 (check-true
  (let ([out (open-output-string)])
+   (preview-port (open-input-string ".card { color: #2f7ea0; }\n")
+                 "example.css"
+                 (make-preview-options #:color-mode 'always
+                                       #:swatches? #f)
+                 out)
+   (regexp-match? #px"\u001b\\[" (get-output-string out))))
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string ".card { color: #2f7ea0; }\n")
+                 "example.css"
+                 (make-preview-options #:color-mode 'always
+                                       #:swatches? #f)
+                 out)
+   (strip-ansi (get-output-string out)))
+ ".card { color: #2f7ea0; }\n")
+(check-true
+ (let ([out (open-output-string)])
    (preview-port (open-input-string "#lang racket/base\n(define x 1)\n")
                  "program.rkt"
                  (make-preview-options #:color-mode 'always)
@@ -681,6 +698,10 @@
  (strip-ansi (preview-file demo-pascal-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-pascal-path))
+(check-true
+ (regexp-match? #px"\u001b\\["
+                (preview-file demo-pascal-path
+                              (make-preview-options #:color-mode 'always))))
 (check-equal?
  (strip-ansi (preview-string plist-sample
                              #f
@@ -733,6 +754,10 @@
  (strip-ansi (preview-file demo-rust-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-rust-path))
+(check-true
+ (regexp-match? #px"\u001b\\["
+                (preview-file demo-rust-path
+                              (make-preview-options #:color-mode 'always))))
 (check-equal?
  (strip-ansi (preview-file demo-swift-path
                            (make-preview-options #:color-mode 'always)))

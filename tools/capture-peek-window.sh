@@ -39,17 +39,39 @@ fi
 mkdir -p "$(dirname -- "$output_path")"
 
 debug_log="${output_path%.png}.debug.log"
-open -na Terminal
-sleep 1
+window_id=""
+cleanup_window() {
+  if [[ -n "$window_id" ]]; then
+    osascript -e "tell application \"Terminal\" to close (first window whose id is $window_id)" >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup_window EXIT
+
 window_id="$(
   REPO_ROOT="$repo_root" INPUT_PATH="$input_abs" osascript <<'APPLESCRIPT'
 tell application "Terminal"
   activate
   set peekCommand to "racket -l peek/main " & quoted form of (system attribute "INPUT_PATH")
-  set previewCommand to "cd " & quoted form of (system attribute "REPO_ROOT") & " && printf '\\033[H\\033[2J\\033[3J' && sh -c " & quoted form of (peekCommand & " ; sleep 2 ; exec sleep 9999")
+  set previewCommand to "cd " & quoted form of (system attribute "REPO_ROOT") & " && printf '\\033[H\\033[2J\\033[3J' && sh -c " & quoted form of (peekCommand & " ; sleep 2 ; exec sleep 5")
   set previewTab to do script previewCommand
-  delay 12
-  set previewWindow to front window
+  set previewWindow to missing value
+  repeat with i from 1 to 100
+    try
+      set previewWindow to window of previewTab
+      if previewWindow is not missing value then exit repeat
+    end try
+    delay 0.1
+  end repeat
+  if previewWindow is missing value then
+    repeat with i from 1 to 50
+      try
+        set previewWindow to front window
+        if previewWindow is not missing value then exit repeat
+      end try
+      delay 0.1
+    end repeat
+  end if
+  if previewWindow is missing value then error "could not find preview window"
   set bounds of previewWindow to {120, 120, 640, 480}
   return id of previewWindow
 end tell

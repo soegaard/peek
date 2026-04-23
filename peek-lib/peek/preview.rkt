@@ -12,6 +12,8 @@
 ;; preview-options-align?              -- Whether alignment is enabled.
 ;; preview-options-swatches?           -- Whether swatches are enabled.
 ;; preview-options-color-mode          -- Color mode selection.
+;; preview-options-binary-mode         -- Binary rendering mode.
+;; preview-options-search-bytes        -- Highlighted byte sequences.
 ;; supported-file-types                -- Supported explicit file type names.
 ;; make-preview-options                -- Construct preview options.
 ;; preview-string : string? ... -> string?
@@ -34,6 +36,10 @@
  preview-options-swatches?
  ;; preview-options-color-mode Color mode selection.
  preview-options-color-mode
+ ;; preview-options-binary-mode Binary rendering mode.
+ preview-options-binary-mode
+ ;; preview-options-search-bytes Highlighted byte sequences.
+ preview-options-search-bytes
  ;; supported-file-types       Supported explicit file type names.
  supported-file-types
  ;; make-preview-options       Construct preview options.
@@ -49,8 +55,10 @@
  preview-file)
 
 (require racket/file
+         racket/bytes
          racket/path
          racket/port
+         "binary.rkt"
          "css.rkt"
          "c.rkt"
          "cpp.rkt"
@@ -78,19 +86,21 @@
          "scribble.rkt"
          "wat.rkt")
 
-(struct preview-options (type align? swatches? color-mode) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
-(define (make-preview-options #:type      [type #f]
-                              #:align?    [align? #f]
-                              #:swatches? [swatches? #t]
-                              #:color-mode [color-mode 'always])
-  (preview-options type align? swatches? color-mode))
+(define (make-preview-options #:type        [type #f]
+                              #:align?      [align? #f]
+                              #:swatches?   [swatches? #t]
+                              #:color-mode  [color-mode 'always]
+                              #:binary-mode [binary-mode 'hex]
+                              #:search-bytes [search-bytes '()])
+  (preview-options type align? swatches? color-mode binary-mode search-bytes))
 
 ;; color-enabled? : output-port? preview-options? -> boolean?
 ;;   Determine whether preview output should include ANSI color.
@@ -162,6 +172,12 @@
     [(preview-options-type options) => values]
     [else                             (detect-file-type maybe-path)]))
 
+;; bytes->text-or-false : bytes? -> (or/c string? #f)
+;;   Decode bytes as UTF-8 when possible.
+(define (bytes->text-or-false bs)
+  (with-handlers ([exn:fail? (lambda (_) #f)])
+    (bytes->string/utf-8 bs)))
+
 ;; preview-string/rendered : string? (or/c path-string? #f) preview-options? output-port? -> string?
 ;;   Preview a source string and return the rendered result.
 (define (preview-string/rendered source
@@ -171,6 +187,12 @@
   (define file-type
     (effective-file-type maybe-path options))
   (cond
+    [(eq? file-type 'binary)
+     (render-binary-preview (string->bytes/utf-8 source)
+                            #:color? (color-enabled? out options)
+                            #:bits? (eq? (preview-options-binary-mode options)
+                                         'bits)
+                            #:search-bytes (preview-options-search-bytes options))]
     [(not (color-enabled? out options)) source]
     [(eq? file-type 'css)
      (render-css-preview source
@@ -255,6 +277,13 @@
   (define file-type
     (effective-file-type maybe-path options))
   (cond
+    [(eq? file-type 'binary)
+     (display (render-binary-preview (port->bytes in)
+                                     #:color? (color-enabled? out options)
+                                     #:bits? (eq? (preview-options-binary-mode options)
+                                                  'bits)
+                                     #:search-bytes (preview-options-search-bytes options))
+              out)]
     [(and (or (eq? file-type 'bash)
               (eq? file-type 'c)
               (eq? file-type 'cpp)
@@ -368,10 +397,21 @@
     [(eq? file-type 'yaml)
      (copy-port in out)]
     [else
+     (define source-bytes
+       (port->bytes in))
      (define source
-       (port->string in))
-       (display (preview-string/rendered source maybe-path options out)
-              out)]))
+       (bytes->text-or-false source-bytes))
+     (cond
+       [(or (likely-binary-bytes? source-bytes)
+            (not source))
+        (display (render-binary-preview source-bytes
+                                        #:color? (color-enabled? out options)
+                                        #:bits? (eq? (preview-options-binary-mode options)
+                                                     'bits)
+                                        #:search-bytes (preview-options-search-bytes options))
+                 out)]
+       [else
+        (display source out)])]))
 
 ;; preview-file : path-string? preview-options? -> string?
 ;;   Preview a file from disk.
@@ -381,6 +421,19 @@
   (define file-type
     (effective-file-type path options))
   (cond
+    [(eq? file-type 'binary)
+     (define rendered
+       (open-output-string))
+     (call-with-input-file path
+       (lambda (in)
+         (render-binary-preview-port in
+                                     rendered
+                                     #:color? (color-enabled? out options)
+                                     #:bits? (eq? (preview-options-binary-mode options)
+                                                  'bits)
+                                     #:search-bytes (preview-options-search-bytes options)))
+       #:mode 'binary)
+     (get-output-string rendered)]
     [(or (eq? file-type 'wat)
          (eq? file-type 'c)
          (eq? file-type 'cpp)
@@ -417,6 +470,17 @@
          (preview-port in path options rendered)))
      (get-output-string rendered)]
     [else
+     (define source-bytes
+       (file->bytes path))
      (define source
-       (file->string path))
-     (preview-string/rendered source path options out)]))
+       (bytes->text-or-false source-bytes))
+     (cond
+       [(or (likely-binary-bytes? source-bytes)
+            (not source))
+        (render-binary-preview source-bytes
+                               #:color? (color-enabled? out options)
+                               #:bits? (eq? (preview-options-binary-mode options)
+                                            'bits)
+                               #:search-bytes (preview-options-search-bytes options))]
+       [else
+        source])]))

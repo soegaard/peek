@@ -40,9 +40,20 @@ mkdir -p "$(dirname -- "$output_path")"
 
 debug_log="${output_path%.png}.debug.log"
 window_id=""
+terminal_was_running=0
+if pgrep -x Terminal >/dev/null 2>&1; then
+  terminal_was_running=1
+fi
 cleanup_window() {
   if [[ -n "$window_id" ]]; then
-    osascript -e "tell application \"Terminal\" to close (first window whose id is $window_id)" >/dev/null 2>&1 || true
+    osascript -e "tell application \"Terminal\"
+  try
+    close (first window whose id is $window_id)
+  end try
+  if $terminal_was_running is 0 then
+    quit
+  end if
+end tell" >/dev/null 2>&1 || true
   fi
 }
 trap cleanup_window EXIT

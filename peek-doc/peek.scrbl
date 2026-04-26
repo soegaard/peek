@@ -134,7 +134,8 @@ with Codex.
 @section{Guide}
 
 @exec{peek} previews files directly in the terminal, with syntax-aware
-coloring for supported file types and a binary fallback for non-text data.
+coloring for supported file types, tree previews for supported archives, and
+a binary fallback for non-text data.
 
 It is meant as a command-line viewing tool, not as a general-purpose library.
 After installing the package, you get a @exec{peek} launcher alongside the
@@ -153,7 +154,7 @@ cat path/to/file.json | peek --type json
 
 Use @Flag{-p} or @(long-flag "pager") when you want the preview to open in a
 pager, and use @(long-flag "type") when reading from standard input or when
-you want to force a specific previewer such as @tt{binary}.
+you want to force a specific previewer such as @tt{archive} or @tt{binary}.
 
 @subsection{Supported Types}
 
@@ -179,6 +180,7 @@ surface includes:
        @seclink["json"]{JSON}, @seclink["makefile"]{Makefile},
        @seclink["plist"]{Plist}, @seclink["tsv"]{TSV}, @seclink["wat"]{WAT},
        and @seclink["yaml"]{YAML}}
+ @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
  @item{@bold{Binary files:} automatic binary detection plus explicit
        @seclink["binary-files"]{@tt{binary}} mode}
 ]
@@ -196,6 +198,7 @@ The previewers aim to stay terminal-first:
  @item{preserve source text and line breaks in the color-oriented previewers}
  @item{use file-type-aware lexers where available instead of one generic
        text highlighter}
+ @item{show a directory tree for supported archives instead of raw bytes}
  @item{fall back to a readable binary view for non-text input}
 ]
 
@@ -251,11 +254,12 @@ General options:
 @itemlist[
 @item{@DFlag{--type} @italic{type}
     selects the input type explicitly. This is mainly useful for standard
-       input. Supported values include @tt{binary}, @tt{bash}, @tt{c},
+       input. Supported values include @tt{archive}, @tt{binary}, @tt{bash}, @tt{c},
        @tt{cpp}, @tt{css}, @tt{html}, @tt{js}, @tt{json}, @tt{jsx},
        @tt{latex}, @tt{md}, @tt{pascal}, @tt{plist}, @tt{powershell},
        @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{rust}, @tt{scrbl},
        @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, and @tt{zsh}. Use
+       @tt{archive} to force archive preview for a supported archive, or use
        @tt{binary} to force the binary preview mode even when automatic
        detection would not select it.}
  @item{@DFlag{--list-file-types}
@@ -353,6 +357,7 @@ The current reference sections are:
  @item{@bold{Data formats:} @seclink["csv"]{CSV}, @seclink["json"]{JSON},
        @seclink["plist"]{Plist}, @seclink["tsv"]{TSV},
        @seclink["wat"]{WAT}, and @seclink["yaml"]{YAML}}
+ @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
  @item{@bold{Binary files:} @seclink["binary-files"]{Binary Files}}
 ]
 
@@ -997,6 +1002,29 @@ Example YAML preview input:
 Rendered YAML preview:
 
 @(preview-shot snippet-yaml-shot)
+
+@subsection[#:tag "archive-files"]{Archive Files}
+
+For Archive Files, @exec{peek} currently supports:
+
+@itemlist[
+ @item{tree previews for @tt{.zip}, @tt{.tar}, @tt{.tgz}, and @tt{.tar.gz}}
+ @item{automatic archive routing from those known extensions}
+ @item{explicit @tt{archive} mode for stdin and files}
+ @item{an explicit escape hatch to raw bytes with @tt{binary} mode}
+]
+
+The archive previewer is intentionally structural. It renders the archive as
+a directory tree instead of raw bytes. ZIP previews use Racket's
+@racketmodname[file/unzip] directory-reading support, while TAR and
+TGZ/TAR.GZ previews use the @racketmodname[file/untar] path/filter pipeline
+to collect entries without unpacking files to disk.
+
+Example archive preview command:
+
+@shellblock[#:shell 'bash]{
+peek archive.zip
+}
 
 @subsection[#:tag "binary-files"]{Binary Files}
 

@@ -1,10 +1,13 @@
 #lang racket/base
 
 (require rackunit
+         file/tar
+         file/zip
          racket/bytes
          racket/file
          racket/runtime-path
          racket/string
+         "../archive.rkt"
          "../binary.rkt"
          "../common-style.rkt"
          "../c.rkt"
@@ -105,6 +108,12 @@
 (define (strip-ansi text)
   (regexp-replace* ansi-pattern text ""))
 
+(define (string-open-paren-index text)
+  (for/or ([ch (in-string text)]
+           [i (in-naturals)])
+    (and (char=? ch #\()
+         i)))
+
 (define binary-sample
   (bytes 0 1 2 3 16 32 65 66 67 255))
 
@@ -123,6 +132,47 @@
       (when (file-exists? path)
         (delete-file path)))))
 
+(define (call-with-temp-directory proc)
+  (define dir
+    (make-temporary-file "peek-archive~a" 'directory))
+  (dynamic-wind
+    void
+    (lambda () (proc dir))
+    (lambda ()
+      (when (directory-exists? dir)
+        (delete-directory/files dir)))))
+
+(define (call-with-temp-archive-files proc)
+  (call-with-temp-directory
+   (lambda (dir)
+     (define source-dir
+       (build-path dir "source"))
+     (define zip-path
+       (build-path dir "demo.zip"))
+     (define tar-path
+       (build-path dir "demo.tar"))
+     (define tgz-path
+       (build-path dir "demo.tgz"))
+     (make-directory* (build-path source-dir "src"))
+     (call-with-output-file (build-path source-dir "README.md")
+       (lambda (out)
+         (display "# demo\n" out))
+       #:exists 'truncate/replace)
+     (call-with-output-file (build-path source-dir "src" "main.rkt")
+       (lambda (out)
+         (display "#lang racket/base\n" out)
+         (display "(displayln \"peek\")\n" out))
+       #:exists 'truncate/replace)
+     (call-with-output-file (build-path source-dir "src" "note.txt")
+       (lambda (out)
+         (display "ok\n" out))
+       #:exists 'truncate/replace)
+     (parameterize ([current-directory source-dir])
+       (zip zip-path "README.md" "src")
+       (tar tar-path "README.md" "src")
+       (tar-gzip tgz-path "README.md" "src"))
+     (proc zip-path tar-path tgz-path))))
+
 (define plist-sample
   (string-append
    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -138,7 +188,55 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+
+(call-with-temp-archive-files
+ (lambda (zip-path tar-path tgz-path)
+   (define tar-preview
+     (strip-ansi (preview-file tar-path
+                               (make-preview-options #:color-mode 'always))))
+   (check-true (regexp-match? #px"demo\\.zip"
+                              (strip-ansi (preview-file zip-path
+                                                        (make-preview-options #:color-mode 'always)))))
+   (check-true (regexp-match? #px"README\\.md"
+                              (strip-ansi (preview-file zip-path
+                                                        (make-preview-options #:color-mode 'always)))))
+   (check-true (regexp-match? #px"src/"
+                              (strip-ansi (preview-file zip-path
+                                                        (make-preview-options #:color-mode 'always)))))
+   (check-true (regexp-match? #px"1 director"
+                              (strip-ansi (preview-file zip-path
+                                                        (make-preview-options #:color-mode 'always)))))
+   (check-true (regexp-match? #px"main\\.rkt" tar-preview))
+   (check-true (regexp-match? #px"note\\.txt" tar-preview))
+   (check-true (regexp-match? #px"main\\.rkt"
+                              (strip-ansi (preview-file tgz-path
+                                                        (make-preview-options #:color-mode 'always)))))
+   (define tar-file-lines
+     (filter (lambda (line)
+               (regexp-match? #px"(main\\.rkt|note\\.txt).+\\([0-9]+ bytes\\)" line))
+             (string-split tar-preview "\n")))
+   (check-equal? (length tar-file-lines) 2)
+   (define open-paren-columns
+     (map (lambda (line)
+            (or (string-open-paren-index line)
+                -1))
+          tar-file-lines))
+   (check-true (andmap exact-nonnegative-integer? open-paren-columns))
+   (check-equal? (car open-paren-columns)
+                 (cadr open-paren-columns))
+   (check-true (regexp-match? #px"demo\\.zip"
+                              (or (render-archive-preview (file->bytes zip-path)
+                                                          #:path zip-path
+                                                          #:color? #f)
+                                  "")))
+   (check-true (regexp-match? #px"README\\.md"
+                              (let ([out (open-output-string)])
+                                (preview-port (open-input-bytes (file->bytes zip-path))
+                                              zip-path
+                                              (make-preview-options #:color-mode 'always)
+                                              out)
+                                (strip-ansi (get-output-string out)))))))
 
 (check-true (regexp-match? #px"00000000"
                            (render-binary-preview binary-sample)))

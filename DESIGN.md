@@ -55,6 +55,12 @@ which is useful when scanning for a known marker or magic number. It can also
 highlight UTF-8 text sequences in white via `--search-text`. Repeat either
 flag to highlight multiple sequences.
 
+Archive input is another special generic case. For supported archive formats,
+the generic layer routes to an archive tree preview instead of either text
+rendering or raw binary rendering. This keeps archive support separate from
+language previewers while still letting `--type binary` act as an explicit
+raw-byte override when needed.
+
 ## Lessons From `scribble-tools`
 
 The JavaScript colorer in `scribble-tools` is a useful reference point for
@@ -112,6 +118,7 @@ File-type-specific notes belong in separate files, such as:
 - [`Plist.md`](/Users/soegaard/Dropbox/GitHub/peek/Plist.md)
 - [`Pascal.md`](/Users/soegaard/Dropbox/GitHub/peek/Pascal.md)
 - [`Binary.md`](/Users/soegaard/Dropbox/GitHub/peek/Binary.md)
+- [`Archive.md`](/Users/soegaard/Dropbox/GitHub/peek/Archive.md)
 - [`Python.md`](/Users/soegaard/Dropbox/GitHub/peek/Python.md)
 - [`TeX.md`](/Users/soegaard/Dropbox/GitHub/peek/TeX.md)
 - [`LaTeX.md`](/Users/soegaard/Dropbox/GitHub/peek/LaTeX.md)

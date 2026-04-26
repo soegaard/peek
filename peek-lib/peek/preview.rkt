@@ -58,6 +58,7 @@
          racket/bytes
          racket/path
          racket/port
+         "archive.rkt"
          "binary.rkt"
          "css.rkt"
          "c.rkt"
@@ -90,7 +91,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -122,6 +123,9 @@
      (define file-name
        (path->string (file-name-from-path (simple-form-path maybe-path))))
      (cond
+       [(regexp-match? #px"(?i:\\.zip)$" path-string) 'archive]
+       [(regexp-match? #px"(?i:\\.tar)$" path-string) 'archive]
+       [(regexp-match? #px"(?i:\\.(?:tar\\.gz|tgz))$" path-string) 'archive]
        [(or (regexp-match? #px"(?i:\\.go)$" path-string)
             (member file-name '("go.mod" "go.work")))
         'go]
@@ -187,6 +191,11 @@
   (define file-type
     (effective-file-type maybe-path options))
   (cond
+    [(eq? file-type 'archive)
+     (or (render-archive-preview (string->bytes/utf-8 source)
+                                 #:path maybe-path
+                                 #:color? (color-enabled? out options))
+         source)]
     [(eq? file-type 'binary)
      (render-binary-preview (string->bytes/utf-8 source)
                             #:color? (color-enabled? out options)
@@ -277,6 +286,21 @@
   (define file-type
     (effective-file-type maybe-path options))
   (cond
+    [(eq? file-type 'archive)
+     (define source-bytes
+       (port->bytes in))
+     (define rendered
+       (render-archive-preview source-bytes
+                               #:path maybe-path
+                               #:color? (color-enabled? out options)))
+     (if rendered
+         (display rendered out)
+         (display (render-binary-preview source-bytes
+                                         #:color? (color-enabled? out options)
+                                         #:bits? (eq? (preview-options-binary-mode options)
+                                                      'bits)
+                                         #:search-bytes (preview-options-search-bytes options))
+                  out))]
     [(eq? file-type 'binary)
      (display (render-binary-preview (port->bytes in)
                                      #:color? (color-enabled? out options)
@@ -407,7 +431,13 @@
        (port->bytes in))
      (define source
        (bytes->text-or-false source-bytes))
+     (define archive-rendered
+       (render-archive-preview source-bytes
+                               #:path maybe-path
+                               #:color? (color-enabled? out options)))
      (cond
+       [archive-rendered
+        (display archive-rendered out)]
        [(or (likely-binary-bytes? source-bytes)
             (not source))
         (display (render-binary-preview source-bytes
@@ -427,6 +457,17 @@
   (define file-type
     (effective-file-type path options))
   (cond
+    [(eq? file-type 'archive)
+     (define source-bytes
+       (file->bytes path))
+     (or (render-archive-preview source-bytes
+                                 #:path path
+                                 #:color? (color-enabled? out options))
+         (render-binary-preview source-bytes
+                                #:color? (color-enabled? out options)
+                                #:bits? (eq? (preview-options-binary-mode options)
+                                             'bits)
+                                #:search-bytes (preview-options-search-bytes options)))]
     [(eq? file-type 'binary)
      (define rendered
        (open-output-string))
@@ -483,7 +524,13 @@
        (file->bytes path))
      (define source
        (bytes->text-or-false source-bytes))
+     (define archive-rendered
+       (render-archive-preview source-bytes
+                               #:path path
+                               #:color? (color-enabled? out options)))
      (cond
+       [archive-rendered
+        archive-rendered]
        [(or (likely-binary-bytes? source-bytes)
             (not source))
         (render-binary-preview source-bytes

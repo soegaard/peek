@@ -306,9 +306,21 @@
 (define (node-label-width node)
   (string-length (node-base-label node)))
 
-;; node-label : tree-node? boolean? exact-nonnegative-integer? -> string?
-;;   Render one node label with an optional aligned size suffix.
-(define (node-label node color? [size-column-width 0])
+;; node-size-width : tree-node? -> exact-nonnegative-integer?
+;;   Compute the width of a node's size in decimal digits.
+(define (node-size-width node)
+  (cond
+    [(tree-node-size node)
+     (string-length (number->string (tree-node-size node)))]
+    [else
+     0]))
+
+;; node-label : tree-node? boolean? exact-nonnegative-integer? exact-nonnegative-integer? -> string?
+;;   Render one node label with optional aligned size columns.
+(define (node-label node
+                    color?
+                    [size-column-width 0]
+                    [size-value-width 0])
   (define base-text
     (node-base-label node))
   (define padded-base
@@ -332,15 +344,22 @@
        (styled color? ansi-identifier padded-base)]))
   (cond
     [(tree-node-size node)
+     (define size-text
+       (number->string (tree-node-size node)))
      (string-append base
                     (styled color? ansi-comment
-                            (format " (~a bytes)" (tree-node-size node))))]
+                            (format " (~a bytes)"
+                                    (string-append
+                                     (make-string (max 0 (- size-value-width
+                                                            (string-length size-text)))
+                                                  #\space)
+                                     size-text))))]
     [else
      base]))
 
-;; append-tree-lines! : tree-node? string? boolean? boolean? exact-nonnegative-integer? (listof string?) -> (listof string?)
+;; append-tree-lines! : tree-node? string? boolean? boolean? exact-nonnegative-integer? exact-nonnegative-integer? (listof string?) -> (listof string?)
 ;;   Render child lines recursively.
-(define (append-tree-lines! node prefix last? color? size-column-width lines)
+(define (append-tree-lines! node prefix last? color? size-column-width size-value-width lines)
   (define branch
     (styled color? ansi-delimiter
             (if last? "└── " "├── ")))
@@ -349,7 +368,8 @@
                    (styled color? ansi-delimiter
                            (if last? "    " "│   "))))
   (define here
-    (string-append prefix branch (node-label node color? size-column-width)))
+    (string-append prefix branch
+                   (node-label node color? size-column-width size-value-width)))
   (define children
     (tree-children node))
   (define child-size-column-width
@@ -358,6 +378,10 @@
       (if (tree-node-size child)
           (max max-width (node-label-width child))
           max-width)))
+  (define child-size-value-width
+    (for/fold ([max-width 0])
+              ([child (in-list children)])
+      (max max-width (node-size-width child))))
   (define with-self
     (append lines (list here)))
   (for/fold ([acc with-self])
@@ -373,7 +397,10 @@
     (define child-line
       (string-append next-prefix
                      child-branch
-                     (node-label child color? child-size-column-width)))
+                     (node-label child
+                                 color?
+                                 child-size-column-width
+                                 child-size-value-width)))
     (define child-children
       (tree-children child))
     (define with-child
@@ -386,6 +413,7 @@
                           (= j (sub1 (length child-children)))
                           color?
                           child-size-column-width
+                          child-size-value-width
                           acc2))))
 
 ;; tree->lines : tree-node? string? boolean? -> (listof string?)
@@ -406,6 +434,10 @@
          (if (tree-node-size child)
              (max max-width (node-label-width child))
              max-width)))
+     (define root-size-value-width
+       (for/fold ([max-width 0])
+                 ([child (in-list children)])
+         (max max-width (node-size-width child))))
      (for/fold ([lines (list header)])
                ([child (in-list children)]
                 [i (in-naturals)])
@@ -414,6 +446,7 @@
                            (= i (sub1 (length children)))
                            color?
                            root-size-column-width
+                           root-size-value-width
                            lines))]))
 
 ;; tree-counts : tree-node? -> (values exact-nonnegative-integer? exact-nonnegative-integer? exact-nonnegative-integer?)

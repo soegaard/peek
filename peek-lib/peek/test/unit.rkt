@@ -214,17 +214,23 @@
                                                         (make-preview-options #:color-mode 'always)))))
    (define tar-file-lines
      (filter (lambda (line)
-               (regexp-match? #px"(main\\.rkt|note\\.txt).+\\([0-9]+ bytes\\)" line))
+               (regexp-match? #px"(main\\.rkt|note\\.txt).+\\( *[0-9]+ bytes\\)" line))
              (string-split tar-preview "\n")))
    (check-equal? (length tar-file-lines) 2)
-   (define open-paren-columns
+   (define bytes-columns
      (map (lambda (line)
-            (or (string-open-paren-index line)
+            (or (regexp-match-positions #px" bytes\\)" line)
                 -1))
           tar-file-lines))
-   (check-true (andmap exact-nonnegative-integer? open-paren-columns))
-   (check-equal? (car open-paren-columns)
-                 (cadr open-paren-columns))
+   (define bytes-start-columns
+     (map (lambda (match-or-false)
+            (if (pair? match-or-false)
+                (caar match-or-false)
+                -1))
+          bytes-columns))
+   (check-true (andmap exact-nonnegative-integer? bytes-start-columns))
+   (check-equal? (car bytes-start-columns)
+                 (cadr bytes-start-columns))
    (check-true (regexp-match? #px"demo\\.zip"
                               (or (render-archive-preview (file->bytes zip-path)
                                                           #:path zip-path

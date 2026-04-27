@@ -133,7 +133,7 @@
   (define binary-mode 'hex)
   (define search-byte-specs '())
   (define search-text-specs '())
-  (define pager? #f)
+  (define pager? #t)
   (define list-file-types? #f)
   (define type #f)
   (define file-path #f)
@@ -155,6 +155,9 @@
    [("-p" "--pager")
     "Pipe output through $PAGER or less -R."
     (set! pager? #t)]
+   [("-P" "--no-pager")
+    "Do not pipe output through $PAGER or less -R."
+    (set! pager? #f)]
    [("--color") value
                 "Choose color mode: always, auto, or never."
                 (set! color-mode

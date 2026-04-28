@@ -232,9 +232,9 @@
     [else
      ansi-keyword]))
 
-;; markdown-like-style : symbol? (listof symbol?) -> string?
+;; markdown-like-style : symbol? (listof symbol?) boolean? -> string?
 ;;   Choose the ANSI style for one Markdown token/category pair.
-(define (markdown-like-style category tags)
+(define (markdown-like-style category tags pretty?)
   (cond
     [(memq 'embedded-css tags)
      (css-like-style category tags)]
@@ -289,6 +289,10 @@
     [(or (memq 'malformed-token tags)
          (eq? category 'unknown))
      ansi-malformed]
+    [(and pretty?
+          (or (memq 'markdown-link-destination tags)
+              (memq 'markdown-link-title tags)))
+     ansi-comment]
     [(memq 'markdown-strong-text tags)
      ansi-keyword]
     [(memq 'markdown-text tags)
@@ -329,9 +333,10 @@
 
 ;; token-style : markdown-token -> string?
 ;;   Choose the ANSI style for one normalized Markdown token.
-(define (token-style token)
+(define (token-style token pretty?)
   (markdown-like-style (markdown-token-category token)
-                       (markdown-token-tags token)))
+                       (markdown-token-tags token)
+                       pretty?))
 
 ;; markdown-token-display-text : markdown-token? boolean? -> string?
 ;;   Choose the visible token text, optionally omitting source punctuation.
@@ -438,7 +443,7 @@
                                  #:pretty? [pretty? #f])
   (apply string-append
          (for/list ([token (annotate-markdown-tokens source)])
-           (colorize-text (token-style token)
+           (colorize-text (token-style token pretty?)
                           (markdown-token-display-text token pretty?)))))
 
 ;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? -> void?

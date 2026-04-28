@@ -597,6 +597,14 @@
  (strip-ansi (render-markdown-preview "[link](https://example.com \"title\")\n"
                                       #:pretty? #t))
  "link https://example.com — title\n")
+(check-true
+ (string-contains? (render-markdown-preview "[link](https://example.com \"title\")\n"
+                                            #:pretty? #t)
+                   (string-append ansi-comment " https://example.com" ansi-reset)))
+(check-true
+ (string-contains? (render-markdown-preview "[link](https://example.com \"title\")\n"
+                                            #:pretty? #t)
+                   (string-append ansi-comment " — title" ansi-reset)))
 (check-equal?
  (strip-ansi (render-markdown-preview "*em* and **bold** and ~~gone~~\n"
                                       #:pretty? #t))

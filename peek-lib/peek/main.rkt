@@ -131,6 +131,7 @@
   (define swatches? #t)
   (define color-mode 'always)
   (define binary-mode 'hex)
+  (define pretty? #f)
   (define search-byte-specs '())
   (define search-text-specs '())
   (define pager? #t)
@@ -168,6 +169,9 @@
    [("--bits")
     "Render binary input as bits instead of hex."
     (set! binary-mode 'bits)]
+   [("--pretty")
+    "Enable pretty rendering when the selected file type supports it."
+    (set! pretty? #t)]
    #:multi
    [("--search-bytes") spec
     "Highlight raw bytes; repeat to add another hex byte sequence."
@@ -199,7 +203,8 @@
                              #:search-bytes (append (map search-byte-spec->bytes
                                                          (reverse search-byte-specs))
                                                     (map search-text-spec->bytes
-                                                         (reverse search-text-specs)))))
+                                                         (reverse search-text-specs)))
+                             #:pretty? pretty?))
      (define (write-preview out)
        (cond
          [file-path

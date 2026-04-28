@@ -30,6 +30,7 @@ Guidelines
 17. Standalone WAT preview should support true streaming for very large files.
 18. Corpus round-trip tests should enforce a hard 2-minute timeout per file and report the file that timed out.
 18. Markdown and JavaScript corpus round-trip tests should enforce a hard 1-minute timeout per file and report the file that timed out.
+19. In Markdown `--pretty` mode, it is acceptable to drop low-value wrapper punctuation such as backticks or link/image/autolink wrappers when the meaningful text and styling are preserved.
 
 
 Coding guidelines for Racket code.

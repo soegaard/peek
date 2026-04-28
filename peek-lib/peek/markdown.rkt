@@ -6,16 +6,16 @@
 ;;
 ;; Markdown-specific terminal preview rendering built on `lexers/markdown`.
 
-;; render-markdown-preview : string? -> string?
+;; render-markdown-preview : string? #:pretty? boolean? -> string?
 ;;   Render Markdown for terminal preview.
-;; render-markdown-preview-port : input-port? output-port? -> void?
+;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? -> void?
 ;;   Render Markdown from a port for terminal preview.
 
 (provide
- ;; render-markdown-preview : string? -> string?
+ ;; render-markdown-preview : string? #:pretty? boolean? -> string?
  ;;   Render Markdown for terminal preview.
  render-markdown-preview
- ;; render-markdown-preview-port : input-port? output-port? -> void?
+ ;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? -> void?
  ;;   Render Markdown from a port for terminal preview.
  render-markdown-preview-port)
 
@@ -74,11 +74,23 @@
     [else
      '()]))
 
-;; annotate-inline-span-tags : (listof markdown-token?) -> (listof markdown-token?)
-;;   Attach consumer-side inline emphasis context such as strong spans.
-(define (annotate-inline-span-tags tokens)
+;; markdown-heading-level : markdown-token? -> (or/c exact-positive-integer? #f)
+;;   Infer the heading level from one Markdown heading marker token.
+(define (markdown-heading-level token)
+  (define text
+    (markdown-token-text token))
+  (cond
+    [(positive? (string-length text))
+     (string-length text)]
+    [else
+     #f]))
+
+;; annotate-markdown-context : (listof markdown-token?) -> (listof markdown-token?)
+;;   Attach consumer-side inline and structural context tags.
+(define (annotate-markdown-context tokens)
   (let loop ([remaining tokens]
              [strong-open? #f]
+             [pending-heading-level #f]
              [acc '()])
     (cond
       [(null? remaining)
@@ -90,21 +102,48 @@
          (markdown-token-tags token))
        (define strong-delimiter?
          (memq 'markdown-strong-delimiter tags))
+       (define heading-marker?
+         (memq 'markdown-heading-marker tags))
+       (define heading-text?
+         (memq 'markdown-heading-text tags))
+       (define current-heading-level
+         (cond
+           [heading-marker?
+            (markdown-heading-level token)]
+           [else
+            pending-heading-level]))
        (define strong-text?
          (and strong-open?
               (memq 'markdown-text tags)))
        (define next-token
-         (cond
-           [strong-text?
-            (struct-copy markdown-token token
-                         [tags (append tags
-                                       '(markdown-strong-text))])]
-           [else
-            token]))
+         (struct-copy markdown-token token
+                      [tags (append tags
+                                    (cond
+                                      [strong-text?
+                                       '(markdown-strong-text)]
+                                      [else
+                                       '()])
+                                    (cond
+                                      [current-heading-level
+                                       (list (string->symbol
+                                              (format "markdown-heading-level-~a"
+                                                      current-heading-level)))]
+                                      [else
+                                       '()]))]))
        (loop (cdr remaining)
              (if strong-delimiter?
                  (not strong-open?)
                  strong-open?)
+             (cond
+               [(and heading-text?
+                     pending-heading-level)
+                #f]
+               [heading-marker?
+                current-heading-level]
+               [(eq? (markdown-token-category token) 'whitespace)
+                pending-heading-level]
+               [else
+                #f])
              (cons next-token acc))])))
 
 ;; annotate-markdown-tokens : string? -> (listof markdown-token?)
@@ -119,7 +158,7 @@
     (for/hash ([token derived])
       (values (derived-token-key token)
               (markdown-derived-token-tags token))))
-  (annotate-inline-span-tags
+  (annotate-markdown-context
    (for/list ([token projected]
               #:unless (lexer-token-eof? token))
      (define start
@@ -142,6 +181,25 @@
                   [tags (append tags
                                 (markdown-racket-extra-tags tags
                                                             text))]))))
+
+;; markdown-heading-style : (listof symbol?) -> string?
+;;   Choose a graded style for one Markdown heading token.
+(define (markdown-heading-style tags)
+  (cond
+    [(memq 'markdown-heading-level-1 tags)
+     "\033[1;38;2;140;210;255m"]
+    [(memq 'markdown-heading-level-2 tags)
+     "\033[1;38;2;110;190;245m"]
+    [(memq 'markdown-heading-level-3 tags)
+     "\033[38;2;86;156;214m"]
+    [(memq 'markdown-heading-level-4 tags)
+     "\033[38;2;118;169;214m"]
+    [(memq 'markdown-heading-level-5 tags)
+     "\033[38;2;150;182;206m"]
+    [(memq 'markdown-heading-level-6 tags)
+     "\033[38;2;180;194;204m"]
+    [else
+     ansi-keyword]))
 
 ;; markdown-like-style : symbol? (listof symbol?) -> string?
 ;;   Choose the ANSI style for one Markdown token/category pair.
@@ -206,7 +264,7 @@
      ""]
     [(or (memq 'markdown-heading-marker tags)
          (memq 'markdown-heading-text tags))
-     ansi-keyword]
+     (markdown-heading-style tags)]
     [(or (memq 'markdown-blockquote-marker tags)
          (memq 'markdown-list-marker tags)
          (memq 'markdown-task-marker tags)
@@ -244,17 +302,76 @@
   (markdown-like-style (markdown-token-category token)
                        (markdown-token-tags token)))
 
-;; render-markdown-preview : string? -> string?
+;; markdown-token-display-text : markdown-token? boolean? -> string?
+;;   Choose the visible token text, optionally omitting source punctuation.
+(define (markdown-token-display-text token pretty?)
+  (define text
+    (markdown-token-text token))
+  (define tags
+    (markdown-token-tags token))
+  (define embedded-token?
+    (for/or ([tag (in-list tags)])
+      (and (symbol? tag)
+           (regexp-match? #px"^embedded-" (symbol->string tag)))))
+  (cond
+    [(and pretty?
+          (memq 'markdown-image-marker tags))
+     ""]
+    [(and pretty?
+          (eq? (markdown-token-category token) 'delimiter)
+          (not embedded-token?)
+          (member text '("[" "]" "(" ")")))
+     ""]
+    [(and pretty?
+          (memq 'markdown-code-span tags))
+     (define leading-backticks
+       (for/fold ([count 0])
+                 ([ch (in-string text)]
+                  #:break (not (char=? ch #\`)))
+         (add1 count)))
+     (cond
+       [(and (positive? leading-backticks)
+             (>= (string-length text)
+                 (* 2 leading-backticks))
+             (string=? (substring text 0 leading-backticks)
+                       (make-string leading-backticks #\`))
+             (string=? (substring text
+                                  (- (string-length text) leading-backticks))
+                       (make-string leading-backticks #\`)))
+       (substring text
+                   leading-backticks
+                   (- (string-length text) leading-backticks))]
+       [else
+        text])]
+    [(and pretty?
+          (memq 'markdown-link-destination tags))
+     (string-append " " text)]
+    [(and pretty?
+          (memq 'markdown-link-title tags))
+     (string-append " " text)]
+    [(and pretty?
+          (memq 'markdown-autolink tags)
+          (>= (string-length text) 2)
+          (string-prefix? text "<")
+          (string-suffix? text ">"))
+     (substring text 1 (sub1 (string-length text)))]
+    [else
+     text]))
+
+;; render-markdown-preview : string? #:pretty? boolean? -> string?
 ;;   Render Markdown for terminal preview.
-(define (render-markdown-preview source)
+(define (render-markdown-preview source
+                                 #:pretty? [pretty? #f])
   (apply string-append
          (for/list ([token (annotate-markdown-tokens source)])
            (colorize-text (token-style token)
-                          (markdown-token-text token)))))
+                          (markdown-token-display-text token pretty?)))))
 
-;; render-markdown-preview-port : input-port? output-port? -> void?
+;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? -> void?
 ;;   Render Markdown from a port for terminal preview.
 (define (render-markdown-preview-port in
-                                     [out (current-output-port)])
-  (display (render-markdown-preview (port->string in))
+                                     [out (current-output-port)]
+                                     #:pretty? [pretty? #f])
+  (display (render-markdown-preview (port->string in)
+                                    #:pretty? pretty?)
            out))

@@ -5,6 +5,7 @@
          file/zip
          racket/bytes
          racket/file
+         racket/list
          racket/runtime-path
          racket/string
          "../archive.rkt"
@@ -537,6 +538,58 @@
 (check-true
  (regexp-match? #px"Title"
                 (render-markdown-preview "# Title\n\nText\n")))
+(define markdown-heading-sample
+  "# One\n## Two\n### Three\n#### Four\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview markdown-heading-sample))
+ markdown-heading-sample)
+(define markdown-heading-rendered
+  (render-markdown-preview markdown-heading-sample))
+(define markdown-heading-rendered-pretty
+  (render-markdown-preview markdown-heading-sample
+                           #:pretty? #t))
+(define markdown-heading-styles
+  (for/list ([heading (in-list '("One" "Two" "Three" "Four"))])
+    (define match
+      (regexp-match (regexp (format "(\u001b\\[[0-9;]*m)~a\u001b\\[0m"
+                                    heading))
+                    markdown-heading-rendered))
+    (and match
+         (cadr match))))
+(define markdown-heading-styles-pretty
+  (for/list ([heading (in-list '("One" "Two" "Three" "Four"))])
+    (define match
+      (regexp-match (regexp (format "(\u001b\\[[0-9;]*m)~a\u001b\\[0m"
+                                    heading))
+                    markdown-heading-rendered-pretty))
+    (and match
+         (cadr match))))
+(check-true (andmap string? markdown-heading-styles))
+(check-equal? (length (remove-duplicates markdown-heading-styles))
+              4)
+(check-true (andmap string? markdown-heading-styles-pretty))
+(check-equal? markdown-heading-styles-pretty
+              markdown-heading-styles)
+(check-equal?
+ (strip-ansi (render-markdown-preview "Use `x` and `y`.\n"
+                                      #:pretty? #t))
+ "Use x and y.\n")
+(check-true
+ (string-contains? (render-markdown-preview "Use `x` and `y`.\n"
+                                            #:pretty? #t)
+                   (string-append ansi-literal "x" ansi-reset)))
+(check-equal?
+ (strip-ansi (render-markdown-preview "[link](dest)\n"
+                                      #:pretty? #t))
+ "link dest\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "![alt](img.png)\n"
+                                      #:pretty? #t))
+ "alt img.png\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "<https://example.com>\n"
+                                      #:pretty? #t))
+ "https://example.com\n")
 (check-equal?
  (strip-ansi (render-markdown-preview "**bold**\n"))
  "**bold**\n")
@@ -630,6 +683,20 @@
  (strip-ansi (render-port->string render-markdown-preview-port
                                   markdown-racket-vocabulary-sample))
  markdown-racket-vocabulary-sample)
+(check-equal?
+ (strip-ansi (render-port->string (lambda (in out)
+                                    (render-markdown-preview-port in
+                                                                  out
+                                                                  #:pretty? #t))
+                                  "Use `x` and `y`.\n"))
+ "Use x and y.\n")
+(check-equal?
+ (strip-ansi (render-port->string (lambda (in out)
+                                    (render-markdown-preview-port in
+                                                                  out
+                                                                  #:pretty? #t))
+                                  "[link](dest)\n"))
+ "link dest\n")
 (check-equal?
  (strip-ansi (render-port->string render-markdown-preview-port
                                   "**bold**\n"))
@@ -905,6 +972,24 @@
                 (preview-string "# Title\n\nText\n"
                                 "README.md"
                                 (make-preview-options #:color-mode 'always))))
+(check-equal?
+ (strip-ansi (preview-string "Use `x` and `y`.\n"
+                             "README.md"
+                             (make-preview-options #:color-mode 'always
+                                                   #:pretty? #t)))
+ "Use x and y.\n")
+(check-equal?
+ (strip-ansi (preview-string "![alt](img.png)\n"
+                             "README.md"
+                             (make-preview-options #:color-mode 'always
+                                                   #:pretty? #t)))
+ "alt img.png\n")
+(check-equal?
+ (strip-ansi (preview-string "```racket\n(letrec ([x e])\n  body)\n```\n"
+                             "README.md"
+                             (make-preview-options #:color-mode 'always
+                                                   #:pretty? #t)))
+ "```racket\n(letrec ([x e])\n  body)\n```\n")
 (check-true
  (regexp-match? #px"Demo Document"
                 (preview-file demo-markdown-path

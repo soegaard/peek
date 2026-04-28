@@ -14,6 +14,7 @@
 ;; preview-options-color-mode          -- Color mode selection.
 ;; preview-options-binary-mode         -- Binary rendering mode.
 ;; preview-options-search-bytes        -- Highlighted byte sequences.
+;; preview-options-pretty?             -- Whether pretty mode is enabled.
 ;; supported-file-types                -- Supported explicit file type names.
 ;; make-preview-options                -- Construct preview options.
 ;; preview-string : string? ... -> string?
@@ -40,6 +41,8 @@
  preview-options-binary-mode
  ;; preview-options-search-bytes Highlighted byte sequences.
  preview-options-search-bytes
+ ;; preview-options-pretty?     Whether pretty mode is enabled.
+ preview-options-pretty?
  ;; supported-file-types       Supported explicit file type names.
  supported-file-types
  ;; make-preview-options       Construct preview options.
@@ -87,7 +90,7 @@
          "scribble.rkt"
          "wat.rkt")
 
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty?) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
@@ -100,8 +103,9 @@
                               #:swatches?   [swatches? #t]
                               #:color-mode  [color-mode 'always]
                               #:binary-mode [binary-mode 'hex]
-                              #:search-bytes [search-bytes '()])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes))
+                              #:search-bytes [search-bytes '()]
+                              #:pretty?     [pretty? #f])
+  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty?))
 
 ;; color-enabled? : output-port? preview-options? -> boolean?
 ;;   Determine whether preview output should include ANSI color.
@@ -237,7 +241,8 @@
      (render-javascript-preview source
                                 #:jsx? #t)]
     [(eq? file-type 'md)
-     (render-markdown-preview source)]
+     (render-markdown-preview source
+                              #:pretty? (preview-options-pretty? options))]
     [(eq? file-type 'latex)
      (render-latex-preview source)]
     [(eq? file-type 'powershell)
@@ -403,7 +408,9 @@
        [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
        [(latex) (render-latex-preview-port in out)]
        [(swift) (render-swift-preview-port in out)]
-       [(md)    (render-markdown-preview-port in out)]
+       [(md)    (render-markdown-preview-port in
+                                              out
+                                              #:pretty? (preview-options-pretty? options))]
        [(scrbl) (render-scribble-preview-port in out)])]
     [(or (eq? file-type 'html)
          (eq? file-type 'js)

@@ -9,4 +9,7 @@
                      "lexers-lib"
                      "rackunit-lib"))
 
+(define compile-omit-paths '("peek/test/fixtures"))
+(define test-omit-paths    '("peek/test/fixtures"))
+
 (define license 'MIT)

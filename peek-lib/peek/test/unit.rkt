@@ -191,6 +191,55 @@
 (check-equal? supported-file-types
               '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
+(call-with-temp-directory
+ (lambda (dir)
+   (define source-dir
+     (build-path dir "folder"))
+   (make-directory* source-dir)
+   (make-directory* (build-path source-dir "alpha"))
+   (make-directory* (build-path source-dir "beta"))
+   (call-with-output-file (build-path source-dir "tiny.txt")
+     (lambda (out)
+       (display "x" out))
+     #:exists 'truncate/replace)
+   (call-with-output-file (build-path source-dir "longer-name.txt")
+     (lambda (out)
+       (display "hello" out))
+     #:exists 'truncate/replace)
+   (make-file-or-directory-link (build-path source-dir "tiny.txt")
+                                (build-path source-dir "tiny-link"))
+   (define directory-preview
+     (strip-ansi (preview-file source-dir
+                               (make-preview-options #:color-mode 'always))))
+   (define directory-lines
+     (filter (lambda (line)
+               (not (string=? line "")))
+             (string-split directory-preview "\n")))
+   (check-equal? (take directory-lines 2)
+                 '("alpha/" "beta/"))
+   (check-true (regexp-match? #px"tiny-link +-> " directory-preview))
+   (define file-lines
+     (filter (lambda (line)
+               (regexp-match? #px"\\( *[0-9]+ bytes\\)" line))
+             directory-lines))
+   (check-equal? (length file-lines) 2)
+   (define bytes-columns
+     (map (lambda (line)
+            (regexp-match-positions #px" bytes\\)" line))
+          file-lines))
+   (define bytes-start-columns
+     (map caar bytes-columns))
+   (check-equal? (car bytes-start-columns)
+                 (cadr bytes-start-columns))
+   (define digit-columns
+     (map (lambda (line)
+            (regexp-match-positions #px"[0-9]+ bytes\\)" line))
+          file-lines))
+   (define digit-start-columns
+     (map caar digit-columns))
+   (check-equal? (car digit-start-columns)
+                 (cadr digit-start-columns))))
+
 (call-with-temp-archive-files
  (lambda (zip-path tar-path tgz-path)
    (define tar-preview

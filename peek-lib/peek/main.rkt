@@ -192,7 +192,8 @@
      (print-supported-file-types)]
     [else
      (when file-path
-       (unless (file-exists? file-path)
+       (unless (or (file-exists? file-path)
+                   (directory-exists? file-path))
          (usage-error (format "file not found: ~a" file-path))))
      (define options
        (make-preview-options #:type      type
@@ -208,9 +209,7 @@
      (define (write-preview out)
        (cond
          [file-path
-          (call-with-input-file file-path
-            (lambda (in)
-              (preview-port in file-path options out)))]
+          (display (preview-file file-path options out) out)]
          [else
           (preview-port (current-input-port) #f options out)]))
      (cond

@@ -63,6 +63,7 @@
          racket/port
          "archive.rkt"
          "binary.rkt"
+         "directory.rkt"
          "css.rkt"
          "c.rkt"
          "cpp.rkt"
@@ -122,10 +123,16 @@
   (cond
     [(not maybe-path) #f]
     [else
+     (cond
+       [(directory-exists? maybe-path) 'directory]
+       [else
      (define path-string
        (path->string (simple-form-path maybe-path)))
      (define file-name
-       (path->string (file-name-from-path (simple-form-path maybe-path))))
+       (let ([tail (file-name-from-path (simple-form-path maybe-path))])
+         (if tail
+             (path->string tail)
+             path-string)))
      (cond
        [(regexp-match? #px"(?i:\\.zip)$" path-string) 'archive]
        [(regexp-match? #px"(?i:\\.tar)$" path-string) 'archive]
@@ -171,7 +178,7 @@
        [(regexp-match? #px"(?i:\\.(?:rkt|ss|scm|rktd))$" path-string)
         'rkt]
        [else
-        #f])]))
+        #f])])]))
 
 ;; effective-file-type : (or/c path-string? #f) preview-options? -> (or/c symbol? #f)
 ;;   Resolve the selected file type from options and path.
@@ -200,6 +207,8 @@
                                  #:path maybe-path
                                  #:color? (color-enabled? out options))
          source)]
+    [(eq? file-type 'directory)
+     source]
     [(eq? file-type 'binary)
      (render-binary-preview (string->bytes/utf-8 source)
                             #:color? (color-enabled? out options)
@@ -306,6 +315,8 @@
                                                       'bits)
                                          #:search-bytes (preview-options-search-bytes options))
                   out))]
+    [(eq? file-type 'directory)
+     (copy-port in out)]
     [(eq? file-type 'binary)
      (display (render-binary-preview (port->bytes in)
                                      #:color? (color-enabled? out options)
@@ -464,6 +475,9 @@
   (define file-type
     (effective-file-type path options))
   (cond
+    [(directory-exists? path)
+     (render-directory-preview path
+                               #:color? (color-enabled? out options))]
     [(eq? file-type 'archive)
      (define source-bytes
        (file->bytes path))

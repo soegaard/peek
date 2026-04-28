@@ -290,6 +290,12 @@
          (eq? category 'unknown))
      ansi-malformed]
     [(and pretty?
+          (or (memq 'markdown-list-marker tags)
+              (memq 'markdown-task-marker tags)
+              (memq 'markdown-blockquote-marker tags)
+              (memq 'markdown-thematic-break tags)))
+     ansi-comment]
+    [(and pretty?
           (or (memq 'markdown-link-destination tags)
               (memq 'markdown-link-title tags)))
      ansi-comment]

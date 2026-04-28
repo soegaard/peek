@@ -613,10 +613,18 @@
  (strip-ansi (render-markdown-preview "- [ ] todo\n- [x] done\n"
                                       #:pretty? #t))
  "- ☐ todo\n- ☒ done\n")
+(check-true
+ (string-contains? (render-markdown-preview "- [ ] todo\n"
+                                            #:pretty? #t)
+                   (string-append ansi-comment "-" ansi-reset)))
 (check-equal?
  (strip-ansi (render-markdown-preview "> quote\n"
                                       #:pretty? #t))
  "│ quote\n")
+(check-true
+ (string-contains? (render-markdown-preview "> quote\n"
+                                            #:pretty? #t)
+                   (string-append ansi-comment "│ " ansi-reset)))
 (check-equal?
  (strip-ansi (render-markdown-preview "---\n"
                                       #:pretty? #t))

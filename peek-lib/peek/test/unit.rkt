@@ -641,6 +641,31 @@
  (strip-ansi (render-markdown-preview "```text\nplain\n```\n"))
  "```text\nplain\n```\n")
 (check-equal?
+ (strip-ansi (render-markdown-preview
+              (string-append
+               "| Name | Role | Score |\n"
+               "| :--- | :--: | ---: |\n"
+               "| Ada | dev | 37 |\n"
+               "| Grace Hopper | lead | 5 |\n")
+              #:pretty? #t))
+ (string-append
+  "| Name         | Role | Score |\n"
+  "| :----------- | :--: | ----: |\n"
+  "| Ada          | dev  |    37 |\n"
+  "| Grace Hopper | lead |     5 |\n"))
+(check-equal?
+ (strip-ansi (render-markdown-preview
+              (string-append
+               "| Name | Role | Score |\n"
+               "| :--- | :--: | ---: |\n"
+               "| Ada | dev | 37 |\n"
+               "| Grace Hopper | lead | 5 |\n")))
+ (string-append
+  "| Name | Role | Score |\n"
+  "| :--- | :--: | ---: |\n"
+  "| Ada | dev | 37 |\n"
+  "| Grace Hopper | lead | 5 |\n"))
+(check-equal?
  (strip-ansi (render-markdown-preview "**bold**\n"))
  "**bold**\n")
 (check-true

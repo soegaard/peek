@@ -537,6 +537,12 @@
 (check-true
  (regexp-match? #px"Title"
                 (render-markdown-preview "# Title\n\nText\n")))
+(check-equal?
+ (strip-ansi (render-markdown-preview "**bold**\n"))
+ "**bold**\n")
+(check-true
+ (string-contains? (render-markdown-preview "**bold**\n")
+                   (string-append ansi-keyword "bold" ansi-reset)))
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-keyword))
                 (render-markdown-preview "```racket\n#lang racket/base\n```\n")))
@@ -624,6 +630,14 @@
  (strip-ansi (render-port->string render-markdown-preview-port
                                   markdown-racket-vocabulary-sample))
  markdown-racket-vocabulary-sample)
+(check-equal?
+ (strip-ansi (render-port->string render-markdown-preview-port
+                                  "**bold**\n"))
+ "**bold**\n")
+(check-true
+ (string-contains? (render-port->string render-markdown-preview-port
+                                        "**bold**\n")
+                   (string-append ansi-keyword "bold" ansi-reset)))
 (check-true
  (regexp-match? (regexp (regexp-quote ansi-keyword))
                 (render-port->string render-markdown-preview-port

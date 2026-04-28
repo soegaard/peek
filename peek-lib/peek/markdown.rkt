@@ -74,6 +74,39 @@
     [else
      '()]))
 
+;; annotate-inline-span-tags : (listof markdown-token?) -> (listof markdown-token?)
+;;   Attach consumer-side inline emphasis context such as strong spans.
+(define (annotate-inline-span-tags tokens)
+  (let loop ([remaining tokens]
+             [strong-open? #f]
+             [acc '()])
+    (cond
+      [(null? remaining)
+       (reverse acc)]
+      [else
+       (define token
+         (car remaining))
+       (define tags
+         (markdown-token-tags token))
+       (define strong-delimiter?
+         (memq 'markdown-strong-delimiter tags))
+       (define strong-text?
+         (and strong-open?
+              (memq 'markdown-text tags)))
+       (define next-token
+         (cond
+           [strong-text?
+            (struct-copy markdown-token token
+                         [tags (append tags
+                                       '(markdown-strong-text))])]
+           [else
+            token]))
+       (loop (cdr remaining)
+             (if strong-delimiter?
+                 (not strong-open?)
+                 strong-open?)
+             (cons next-token acc))])))
+
 ;; annotate-markdown-tokens : string? -> (listof markdown-token?)
 ;;   Combine projected Markdown categories with derived tags.
 (define (annotate-markdown-tokens source)
@@ -86,28 +119,29 @@
     (for/hash ([token derived])
       (values (derived-token-key token)
               (markdown-derived-token-tags token))))
-  (for/list ([token projected]
-             #:unless (lexer-token-eof? token))
-    (define start
-      (lexer-token-start token))
-    (define end
-      (lexer-token-end token))
-    (define text
-      (lexer-token-value token))
-    (define base
-      (markdown-token (lexer-token-name token)
-                      text
-                      '()
-                      start
-                      end))
-    (define tags
-      (hash-ref derived-tags-by-key
-                (markdown-token-key base)
-                '()))
-    (struct-copy markdown-token base
-                 [tags (append tags
-                               (markdown-racket-extra-tags tags
-                                                           text))])))
+  (annotate-inline-span-tags
+   (for/list ([token projected]
+              #:unless (lexer-token-eof? token))
+     (define start
+       (lexer-token-start token))
+     (define end
+       (lexer-token-end token))
+     (define text
+       (lexer-token-value token))
+     (define base
+       (markdown-token (lexer-token-name token)
+                       text
+                       '()
+                       start
+                       end))
+     (define tags
+       (hash-ref derived-tags-by-key
+                 (markdown-token-key base)
+                 '()))
+     (struct-copy markdown-token base
+                  [tags (append tags
+                                (markdown-racket-extra-tags tags
+                                                            text))]))))
 
 ;; markdown-like-style : symbol? (listof symbol?) -> string?
 ;;   Choose the ANSI style for one Markdown token/category pair.
@@ -166,6 +200,8 @@
     [(or (memq 'malformed-token tags)
          (eq? category 'unknown))
      ansi-malformed]
+    [(memq 'markdown-strong-text tags)
+     ansi-keyword]
     [(memq 'markdown-text tags)
      ""]
     [(or (memq 'markdown-heading-marker tags)
@@ -220,20 +256,5 @@
 ;;   Render Markdown from a port for terminal preview.
 (define (render-markdown-preview-port in
                                      [out (current-output-port)])
-  (port-count-lines! in)
-  (define lexer
-    (make-markdown-derived-lexer))
-  (let loop ()
-    (define token
-      (lexer in))
-    (unless (eq? token 'eof)
-      (define tags
-        (append (markdown-derived-token-tags token)
-                (markdown-racket-extra-tags (markdown-derived-token-tags token)
-                                            (markdown-derived-token-text token))))
-      (display (colorize-text (markdown-like-style
-                               (derived-token-category token)
-                               tags)
-                              (markdown-derived-token-text token))
-               out)
-      (loop))))
+  (display (render-markdown-preview (port->string in))
+           out))

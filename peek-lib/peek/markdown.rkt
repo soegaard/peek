@@ -383,7 +383,17 @@
      (string-append " " text)]
     [(and pretty?
           (memq 'markdown-link-title tags))
-     (string-append " " text)]
+     (define bare-title
+       (cond
+         [(and (>= (string-length text) 2)
+               (or (and (string-prefix? text "\"")
+                        (string-suffix? text "\""))
+                   (and (string-prefix? text "'")
+                        (string-suffix? text "'"))))
+          (substring text 1 (sub1 (string-length text)))]
+         [else
+          text]))
+     (string-append " — " bare-title)]
     [(and pretty?
           (memq 'markdown-autolink tags)
           (>= (string-length text) 2)

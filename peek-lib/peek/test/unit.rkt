@@ -594,6 +594,10 @@
                                       #:pretty? #t))
  "https://example.com\n")
 (check-equal?
+ (strip-ansi (render-markdown-preview "[link](https://example.com \"title\")\n"
+                                      #:pretty? #t))
+ "link https://example.com — title\n")
+(check-equal?
  (strip-ansi (render-markdown-preview "*em* and **bold** and ~~gone~~\n"
                                       #:pretty? #t))
  "em and bold and gone\n")

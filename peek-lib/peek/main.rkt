@@ -132,6 +132,7 @@
   (define color-mode 'always)
   (define binary-mode 'hex)
   (define pretty? #f)
+  (define directory-sort 'kind)
   (define search-byte-specs '())
   (define search-text-specs '())
   (define pager? #t)
@@ -172,6 +173,12 @@
    [("-p" "--pretty")
     "Enable pretty rendering when the selected file type supports it."
     (set! pretty? #t)]
+   [("--kind")
+    "Sort directory previews by kind and then by name."
+    (set! directory-sort 'kind)]
+   [("--size")
+    "Sort directory previews by kind and then by file size."
+    (set! directory-sort 'size)]
    #:multi
    [("--search-bytes") spec
     "Highlight raw bytes; repeat to add another hex byte sequence."
@@ -201,6 +208,7 @@
                              #:swatches? swatches?
                              #:color-mode color-mode
                              #:binary-mode binary-mode
+                             #:directory-sort directory-sort
                              #:search-bytes (append (map search-byte-spec->bytes
                                                          (reverse search-byte-specs))
                                                     (map search-text-spec->bytes

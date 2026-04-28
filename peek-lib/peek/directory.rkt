@@ -104,19 +104,55 @@
                      (and (eq? kind 'link) (link-target-string full-path))
                      (and (eq? kind 'file) (executable-file? full-path)))))
 
-;; sort-directory-entries : (listof directory-entry?) -> (listof directory-entry?)
-;;   Sort entries by kind and then by case-insensitive name.
-(define (sort-directory-entries entries)
+;; entry-name< ? : directory-entry? directory-entry? -> boolean?
+;;   Compare entries by visible name.
+(define (entry-name<? a b)
+  (string-ci<? (directory-entry-display-name a)
+               (directory-entry-display-name b)))
+
+;; file-kind-key : directory-entry? -> string?
+;;   Compute a grouping key for file-kind sorting.
+(define (file-kind-key entry)
+  (case (directory-entry-kind entry)
+    [(directory) ""]
+    [(link) "~link"]
+    [else
+     (define name
+       (path->string (directory-entry-name entry)))
+     (define match
+       (regexp-match #px"(?i:(\\.[^.]+))$" name))
+     (cond
+       [match
+        (string-downcase (cadr match))]
+       [else
+        "~none"])]))
+
+;; sort-directory-entries : (listof directory-entry?) symbol? -> (listof directory-entry?)
+;;   Sort entries by the selected directory sort mode.
+(define (sort-directory-entries entries sort-mode)
   (sort entries
         (lambda (a b)
           (define rank-a
             (entry-rank (directory-entry-kind a)))
           (define rank-b
             (entry-rank (directory-entry-kind b)))
-          (or (< rank-a rank-b)
-              (and (= rank-a rank-b)
-                   (string-ci<? (directory-entry-display-name a)
-                                (directory-entry-display-name b)))))))
+          (case sort-mode
+            [(size)
+             (or (< rank-a rank-b)
+                 (and (= rank-a rank-b)
+                      (or (> (or (directory-entry-size a) -1)
+                             (or (directory-entry-size b) -1))
+                          (and (= (or (directory-entry-size a) -1)
+                                  (or (directory-entry-size b) -1))
+                               (entry-name<? a b)))))]
+            [else
+             (or (< rank-a rank-b)
+                 (and (= rank-a rank-b)
+                      (or (string-ci<? (file-kind-key a)
+                                       (file-kind-key b))
+                          (and (string-ci=? (file-kind-key a)
+                                            (file-kind-key b))
+                               (entry-name<? a b)))))]))))
 
 ;; size-field-width : (listof directory-entry?) -> exact-nonnegative-integer?
 ;;   Compute the width needed for right-aligned file sizes.
@@ -169,12 +205,14 @@
     [else
      styled-name]))
 
-;; render-directory-preview : path-string? #:color? boolean? -> string?
+;; render-directory-preview : path-string? #:color? boolean? #:sort-mode symbol? -> string?
 ;;   Render a directory listing.
 (define (render-directory-preview path
-                                  #:color? [color? #t])
+                                  #:color? [color? #t]
+                                  #:sort-mode [sort-mode 'kind])
   (define entries
-    (sort-directory-entries (collect-directory-entries path)))
+    (sort-directory-entries (collect-directory-entries path)
+                            sort-mode))
   (cond
     [(null? entries)
      (styled color? ansi-comment "(empty directory)\n")]

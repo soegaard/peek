@@ -15,6 +15,7 @@
 ;; preview-options-binary-mode         -- Binary rendering mode.
 ;; preview-options-search-bytes        -- Highlighted byte sequences.
 ;; preview-options-pretty?             -- Whether pretty mode is enabled.
+;; preview-options-directory-sort      -- Directory sort mode.
 ;; supported-file-types                -- Supported explicit file type names.
 ;; make-preview-options                -- Construct preview options.
 ;; preview-string : string? ... -> string?
@@ -43,6 +44,8 @@
  preview-options-search-bytes
  ;; preview-options-pretty?     Whether pretty mode is enabled.
  preview-options-pretty?
+ ;; preview-options-directory-sort Directory sort mode.
+ preview-options-directory-sort
  ;; supported-file-types       Supported explicit file type names.
  supported-file-types
  ;; make-preview-options       Construct preview options.
@@ -91,7 +94,7 @@
          "scribble.rkt"
          "wat.rkt")
 
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty?) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
@@ -105,8 +108,9 @@
                               #:color-mode  [color-mode 'always]
                               #:binary-mode [binary-mode 'hex]
                               #:search-bytes [search-bytes '()]
-                              #:pretty?     [pretty? #f])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty?))
+                              #:pretty?     [pretty? #f]
+                              #:directory-sort [directory-sort 'kind])
+  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty? directory-sort))
 
 ;; color-enabled? : output-port? preview-options? -> boolean?
 ;;   Determine whether preview output should include ANSI color.
@@ -477,7 +481,8 @@
   (cond
     [(directory-exists? path)
      (render-directory-preview path
-                               #:color? (color-enabled? out options))]
+                               #:color? (color-enabled? out options)
+                               #:sort-mode (preview-options-directory-sort options))]
     [(eq? file-type 'archive)
      (define source-bytes
        (file->bytes path))

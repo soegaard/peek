@@ -238,7 +238,49 @@
    (define digit-start-columns
      (map caar digit-columns))
    (check-equal? (car digit-start-columns)
-                 (cadr digit-start-columns))))
+                 (cadr digit-start-columns))
+   (define size-preview
+     (strip-ansi (preview-file source-dir
+                               (make-preview-options #:color-mode 'always
+                                                     #:directory-sort 'size))))
+   (define size-lines
+     (filter (lambda (line)
+               (not (string=? line "")))
+             (string-split size-preview "\n")))
+   (define tiny-index
+     (index-of size-lines "tiny.txt        (1 bytes)"))
+   (define longer-index
+     (index-of size-lines "longer-name.txt (5 bytes)"))
+   (check-true (exact-nonnegative-integer? tiny-index))
+   (check-true (exact-nonnegative-integer? longer-index))
+   (check-true (< longer-index tiny-index))
+   (call-with-output-file (build-path source-dir "notes.md")
+     (lambda (out)
+       (display "notes" out))
+     #:exists 'truncate/replace)
+   (call-with-output-file (build-path source-dir "module.rkt")
+     (lambda (out)
+       (display "#lang racket/base" out))
+     #:exists 'truncate/replace)
+   (define kind-preview
+     (strip-ansi (preview-file source-dir
+                               (make-preview-options #:color-mode 'always
+                                                     #:directory-sort 'kind))))
+   (define kind-lines
+     (filter (lambda (line)
+               (not (string=? line "")))
+             (string-split kind-preview "\n")))
+   (define md-index
+     (index-of kind-lines "notes.md        ( 5 bytes)"))
+   (define rkt-index
+     (index-of kind-lines "module.rkt      (17 bytes)"))
+   (define txt-index
+     (index-of kind-lines "longer-name.txt ( 5 bytes)"))
+   (check-true (exact-nonnegative-integer? md-index))
+   (check-true (exact-nonnegative-integer? rkt-index))
+   (check-true (exact-nonnegative-integer? txt-index))
+   (check-true (< md-index rkt-index))
+   (check-true (< rkt-index txt-index))))
 
 (call-with-temp-archive-files
  (lambda (zip-path tar-path tgz-path)

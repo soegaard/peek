@@ -91,6 +91,7 @@
   (let loop ([remaining tokens]
              [strong-open? #f]
              [pending-heading-level #f]
+             [hide-code-info-newline? #f]
              [acc '()])
     (cond
       [(null? remaining)
@@ -106,6 +107,9 @@
          (memq 'markdown-heading-marker tags))
        (define heading-text?
          (memq 'markdown-heading-text tags))
+       (define code-info-text?
+         (and (memq 'markdown-code-info-string tags)
+              (string-ci=? (markdown-token-text token) "text")))
        (define current-heading-level
          (cond
            [heading-marker?
@@ -133,6 +137,15 @@
                                       [else
                                        '()])
                                     (cond
+                                      [(and hide-code-info-newline?
+                                            (eq? (markdown-token-category token)
+                                                 'whitespace)
+                                            (string=? (markdown-token-text token)
+                                                      "\n"))
+                                       '(markdown-hidden-code-info-newline)]
+                                      [else
+                                       '()])
+                                    (cond
                                       [current-heading-level
                                        (list (string->symbol
                                               (format "markdown-heading-level-~a"
@@ -153,6 +166,15 @@
                 pending-heading-level]
                [else
                 #f])
+             (cond
+               [code-info-text?
+                #t]
+               [(and hide-code-info-newline?
+                     (eq? (markdown-token-category token) 'whitespace)
+                     (string=? (markdown-token-text token) "\n"))
+                #f]
+               [else
+                hide-code-info-newline?])
              (cons next-token acc))])))
 
 ;; annotate-markdown-tokens : string? -> (listof markdown-token?)
@@ -325,6 +347,13 @@
   (cond
     [(and pretty?
           (memq 'markdown-code-fence tags))
+     ""]
+    [(and pretty?
+          (memq 'markdown-code-info-string tags)
+          (string-ci=? text "text"))
+     ""]
+    [(and pretty?
+          (memq 'markdown-hidden-code-info-newline tags))
      ""]
     [(and pretty?
           (memq 'markdown-blockquote-marker tags))

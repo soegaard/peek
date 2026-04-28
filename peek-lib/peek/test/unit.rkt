@@ -618,6 +618,13 @@
                                       #:pretty? #t))
  "racket\n(define x 1)\n\n")
 (check-equal?
+ (strip-ansi (render-markdown-preview "```text\nplain\n```\n"
+                                      #:pretty? #t))
+ "plain\n\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "```text\nplain\n```\n"))
+ "```text\nplain\n```\n")
+(check-equal?
  (strip-ansi (render-markdown-preview "**bold**\n"))
  "**bold**\n")
 (check-true

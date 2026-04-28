@@ -134,8 +134,8 @@ with Codex.
 @section{Guide}
 
 @exec{peek} previews files directly in the terminal, with syntax-aware
-coloring for supported file types, tree previews for supported archives, and
-a binary fallback for non-text data.
+coloring for supported file types, flat listings for directory paths, tree
+previews for supported archives, and a binary fallback for non-text data.
 
 It is meant as a command-line viewing tool, not as a general-purpose library.
 After installing the package, you get a @exec{peek} launcher alongside the
@@ -148,6 +148,7 @@ already have:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
+peek path/to/folder/
 peek -P path/to/file.css
 cat path/to/file.json | peek --type json
 }
@@ -183,6 +184,7 @@ surface includes:
        @seclink["json"]{JSON}, @seclink["makefile"]{Makefile},
        @seclink["plist"]{Plist}, @seclink["tsv"]{TSV}, @seclink["wat"]{WAT},
        and @seclink["yaml"]{YAML}}
+ @item{@bold{Directory paths:} @seclink["directory-paths"]{Directory Paths}}
  @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
  @item{@bold{Binary files:} automatic binary detection plus explicit
        @seclink["binary-files"]{@tt{binary}} mode}
@@ -201,6 +203,7 @@ The previewers aim to stay terminal-first:
  @item{preserve source text and line breaks in the color-oriented previewers}
  @item{use file-type-aware lexers where available instead of one generic
        text highlighter}
+ @item{show a flat listing for directory paths}
  @item{show a directory tree for supported archives instead of raw bytes}
  @item{fall back to a readable binary view for non-text input}
 ]
@@ -229,6 +232,12 @@ Typical file-preview usage looks like this:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
+}
+
+Directory paths are previewed directly from the path:
+
+@shellblock[#:shell 'bash]{
+peek path/to/folder/
 }
 
 When reading from standard input, use @(long-flag "type") to select the
@@ -268,6 +277,14 @@ General options:
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
+ @item{@(long-flag "kind")
+       sorts directory previews by group, keeping directories first, then
+       links, then regular files grouped by file kind such as Markdown files
+       or Racket files. Entries inside each group are sorted
+       alphabetically.}
+ @item{@(long-flag "size")
+       sorts directory previews by group, keeping directories first, then
+       links, then regular files sorted by descending size.}
  @item{@Flag{-a}, @DFlag{--align}
        enables CSS-specific alignment. This may rewrite spacing to improve the
        readability of declarations and aligned rule groups.}
@@ -367,6 +384,7 @@ The current reference sections are:
  @item{@bold{Data formats:} @seclink["csv"]{CSV}, @seclink["json"]{JSON},
        @seclink["plist"]{Plist}, @seclink["tsv"]{TSV},
        @seclink["wat"]{WAT}, and @seclink["yaml"]{YAML}}
+ @item{@bold{Directory paths:} @seclink["directory-paths"]{Directory Paths}}
  @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
  @item{@bold{Binary files:} @seclink["binary-files"]{Binary Files}}
 ]
@@ -1012,6 +1030,43 @@ Example YAML preview input:
 Rendered YAML preview:
 
 @(preview-shot snippet-yaml-shot)
+
+@subsection[#:tag "directory-paths"]{Directory Paths}
+
+For a directory path, @exec{peek} supports:
+
+@itemlist[
+ @item{automatic routing from the path itself}
+ @item{a flat, @tt{ls}-like listing}
+ @item{directories first, followed by links, then regular files}
+ @item{simple kind-aware coloring}
+ @item{right-aligned size fields for regular files}
+ @item{blank-line dividers between major groups}
+ @item{@tt{--kind} sorting by file kind and name}
+ @item{@tt{--size} sorting by size inside the regular-file group}
+]
+
+Directory preview is intentionally simple. It is not trying to mirror the
+full option surface of @exec{ls}; it just gives a quick structural view of a
+folder from the terminal.
+
+Example directory preview command:
+
+@shellblock[#:shell 'bash]{
+peek path/to/folder/
+}
+
+Sorting by file kind:
+
+@shellblock[#:shell 'bash]{
+peek --kind path/to/folder/
+}
+
+Sorting by size:
+
+@shellblock[#:shell 'bash]{
+peek --size path/to/folder/
+}
 
 @subsection[#:tag "archive-files"]{Archive Files}
 

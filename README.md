@@ -21,6 +21,7 @@ pager:
 
 ```sh
 peek path/to/file.css
+peek path/to/folder/
 peek path/to/archive.zip
 peek path/to/file.bin
 peek path/to/file.c
@@ -184,6 +185,10 @@ source text and line breaks without layout rewriting. Swift uses the `swift`
 previewer and preserves source text and line breaks without layout rewriting.
 YAML uses the `yaml` previewer and preserves source text and line breaks
 without layout rewriting.
+Directory paths use the directory previewer and show a flat listing with
+directories first, simple kind-aware coloring, right-aligned file sizes, and
+optional `--kind` / `--size` sorting. Directory preview is selected from the
+path itself, not with `--type`.
 TeX uses the `tex` previewer and preserves source text and line breaks
 without layout rewriting, while giving math shifts, accent commands, spacing
 commands, parameters, and delimiters their own terminal structure. LaTeX

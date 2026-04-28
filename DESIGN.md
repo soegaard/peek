@@ -61,6 +61,14 @@ rendering or raw binary rendering. This keeps archive support separate from
 language previewers while still letting `--type binary` act as an explicit
 raw-byte override when needed.
 
+Directory input is another path-oriented generic case. When the input path is
+a directory, the generic layer routes to a flat directory preview instead of
+treating the path as a file. This preview stays intentionally close to `ls`:
+directories appear first, links next, regular files after that, regular-file
+sizes are aligned, and optional sorting can group by file kind or by size.
+That keeps folder preview separate from both archive trees and text-language
+previewers.
+
 ## Lessons From `scribble-tools`
 
 The JavaScript colorer in `scribble-tools` is a useful reference point for
@@ -119,6 +127,7 @@ File-type-specific notes belong in separate files, such as:
 - [`Pascal.md`](/Users/soegaard/Dropbox/GitHub/peek/Pascal.md)
 - [`Binary.md`](/Users/soegaard/Dropbox/GitHub/peek/Binary.md)
 - [`Archive.md`](/Users/soegaard/Dropbox/GitHub/peek/Archive.md)
+- [`Directory.md`](/Users/soegaard/Dropbox/GitHub/peek/Directory.md)
 - [`Python.md`](/Users/soegaard/Dropbox/GitHub/peek/Python.md)
 - [`TeX.md`](/Users/soegaard/Dropbox/GitHub/peek/TeX.md)
 - [`LaTeX.md`](/Users/soegaard/Dropbox/GitHub/peek/LaTeX.md)

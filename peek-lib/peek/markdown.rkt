@@ -124,6 +124,15 @@
                                       [else
                                        '()])
                                     (cond
+                                      [(and pending-heading-level
+                                            (eq? (markdown-token-category token)
+                                                 'whitespace)
+                                            (string=? (markdown-token-text token)
+                                                      " "))
+                                       '(markdown-heading-gap)]
+                                      [else
+                                       '()])
+                                    (cond
                                       [current-heading-level
                                        (list (string->symbol
                                               (format "markdown-heading-level-~a"
@@ -314,6 +323,32 @@
       (and (symbol? tag)
            (regexp-match? #px"^embedded-" (symbol->string tag)))))
   (cond
+    [(and pretty?
+          (memq 'markdown-code-fence tags))
+     ""]
+    [(and pretty?
+          (memq 'markdown-blockquote-marker tags))
+     "│ "]
+    [(and pretty?
+          (memq 'markdown-thematic-break tags))
+     "───\n"]
+    [(and pretty?
+          (memq 'markdown-heading-gap tags))
+     ""]
+    [(and pretty?
+          (memq 'markdown-heading-marker tags))
+     ""]
+    [(and pretty?
+          (not embedded-token?)
+          (or (memq 'markdown-emphasis-delimiter tags)
+              (memq 'markdown-strong-delimiter tags)
+              (memq 'markdown-strikethrough-delimiter tags)))
+     ""]
+    [(and pretty?
+          (memq 'markdown-task-marker tags))
+     (cond
+       [(string-ci=? text "[x]") "☒"]
+       [else "☐"])]
     [(and pretty?
           (memq 'markdown-image-marker tags))
      ""]

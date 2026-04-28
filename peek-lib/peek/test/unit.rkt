@@ -571,6 +571,9 @@
 (check-equal? markdown-heading-styles-pretty
               markdown-heading-styles)
 (check-equal?
+ (strip-ansi markdown-heading-rendered-pretty)
+ "One\nTwo\nThree\nFour\n")
+(check-equal?
  (strip-ansi (render-markdown-preview "Use `x` and `y`.\n"
                                       #:pretty? #t))
  "Use x and y.\n")
@@ -590,6 +593,26 @@
  (strip-ansi (render-markdown-preview "<https://example.com>\n"
                                       #:pretty? #t))
  "https://example.com\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "*em* and **bold** and ~~gone~~\n"
+                                      #:pretty? #t))
+ "em and bold and gone\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "- [ ] todo\n- [x] done\n"
+                                      #:pretty? #t))
+ "- ☐ todo\n- ☒ done\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "> quote\n"
+                                      #:pretty? #t))
+ "│ quote\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "---\n"
+                                      #:pretty? #t))
+ "───\n")
+(check-equal?
+ (strip-ansi (render-markdown-preview "```racket\n(define x 1)\n```\n"
+                                      #:pretty? #t))
+ "racket\n(define x 1)\n\n")
 (check-equal?
  (strip-ansi (render-markdown-preview "**bold**\n"))
  "**bold**\n")
@@ -989,7 +1012,7 @@
                              "README.md"
                              (make-preview-options #:color-mode 'always
                                                    #:pretty? #t)))
- "```racket\n(letrec ([x e])\n  body)\n```\n")
+ "racket\n(letrec ([x e])\n  body)\n\n")
 (check-true
  (regexp-match? #px"Demo Document"
                 (preview-file demo-markdown-path

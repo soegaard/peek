@@ -211,6 +211,7 @@
    (define directory-preview
      (strip-ansi (preview-file source-dir
                                (make-preview-options #:color-mode 'always))))
+   (check-true (regexp-match? #px"beta/\n\ntiny-link" directory-preview))
    (define directory-lines
      (filter (lambda (line)
                (not (string=? line "")))
@@ -266,6 +267,8 @@
      (strip-ansi (preview-file source-dir
                                (make-preview-options #:color-mode 'always
                                                      #:directory-sort 'kind))))
+   (check-true (regexp-match? #px"notes\\.md +\\( 5 bytes\\)\n\nmodule\\.rkt"
+                              kind-preview))
    (define kind-lines
      (filter (lambda (line)
                (not (string=? line "")))

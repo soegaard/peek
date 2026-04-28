@@ -205,6 +205,22 @@
     [else
      styled-name]))
 
+;; group-boundary? : (or/c directory-entry? #f) directory-entry? symbol? -> boolean?
+;;   Decide whether a blank-line divider should appear before the current entry.
+(define (group-boundary? previous entry sort-mode)
+  (and previous
+       (or (not (= (entry-rank (directory-entry-kind previous))
+                   (entry-rank (directory-entry-kind entry))))
+           (and (eq? sort-mode 'kind)
+                (string-ci=? (file-kind-key previous)
+                             (file-kind-key entry))
+                #f)
+           (and (eq? sort-mode 'kind)
+                (= (entry-rank (directory-entry-kind previous))
+                   (entry-rank (directory-entry-kind entry)))
+                (not (string-ci=? (file-kind-key previous)
+                                  (file-kind-key entry)))))))
+
 ;; render-directory-preview : path-string? #:color? boolean? #:sort-mode symbol? -> string?
 ;;   Render a directory listing.
 (define (render-directory-preview path
@@ -221,9 +237,24 @@
        (name-field-width entries))
      (define size-width
        (size-field-width entries))
+     (define rendered-lines
+       (let loop ([rest entries]
+                  [previous #f]
+                  [acc '()])
+         (cond
+           [(null? rest)
+            (reverse acc)]
+           [else
+            (define entry
+              (car rest))
+            (define next-acc
+              (cons (render-entry-line entry name-width size-width color?)
+                    (if (group-boundary? previous entry sort-mode)
+                        (cons "" acc)
+                        acc)))
+            (loop (cdr rest)
+                  entry
+                  next-acc)])))
      (string-append
-      (string-join
-       (for/list ([entry (in-list entries)])
-         (render-entry-line entry name-width size-width color?))
-       "\n")
+      (string-join rendered-lines "\n")
       "\n")]))

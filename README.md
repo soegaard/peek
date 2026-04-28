@@ -16,7 +16,8 @@ raco pkg install peek
 
 ## Quick Start
 
-Preview a file directly:
+Preview a file directly. By default, `peek` opens the rendered output in a
+pager:
 
 ```sh
 peek path/to/file.css
@@ -91,10 +92,16 @@ List the currently supported explicit file types:
 peek --list-file-types
 ```
 
-Open output in a pager:
+Write output directly to the terminal instead of using the default pager:
 
 ```sh
-peek -p path/to/file.css
+peek -P path/to/file.css
+```
+
+Enable pretty rendering when a previewer supports it:
+
+```sh
+peek -p path/to/file.md
 ```
 
 ## Examples

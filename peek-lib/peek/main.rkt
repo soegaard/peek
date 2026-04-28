@@ -153,7 +153,7 @@
    [("--no-swatches")
     "Disable CSS swatches."
     (set! swatches? #f)]
-   [("-p" "--pager")
+   [("--pager")
     "Pipe output through $PAGER or less -R."
     (set! pager? #t)]
    [("-P" "--no-pager")
@@ -169,7 +169,7 @@
    [("--bits")
     "Render binary input as bits instead of hex."
     (set! binary-mode 'bits)]
-   [("--pretty")
+   [("-p" "--pretty")
     "Enable pretty rendering when the selected file type supports it."
     (set! pretty? #t)]
    #:multi

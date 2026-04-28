@@ -148,13 +148,16 @@ already have:
 
 @shellblock[#:shell 'bash]{
 peek path/to/file.css
-peek -p path/to/file.css
+peek -P path/to/file.css
 cat path/to/file.json | peek --type json
 }
 
-Use @Flag{-p} or @(long-flag "pager") when you want the preview to open in a
-pager, and use @(long-flag "type") when reading from standard input or when
-you want to force a specific previewer such as @tt{archive} or @tt{binary}.
+By default, @exec{peek} opens rendered output in a pager. Use @Flag{-P} or
+@(long-flag "no-pager") when you want direct terminal output instead, and use
+@Flag{-p} or @(long-flag "pretty") when you want a supported previewer to use
+its prettier terminal rendering, and use @(long-flag "type") when reading
+from standard input or when you want to force a specific previewer such as
+@tt{archive} or @tt{binary}.
 
 @subsection{Supported Types}
 
@@ -244,7 +247,7 @@ peek --list-file-types
 Useful command-line combinations:
 
 @shellblock[#:shell 'bash]{
-peek -p path/to/file.css
+peek -P path/to/file.css
 }
 
 @subsection{Options}
@@ -270,10 +273,15 @@ General options:
        readability of declarations and aligned rule groups.}
  @item{@DFlag{--no-swatches}
        disables CSS color swatches while keeping syntax coloring enabled.}
- @item{@Flag{-p}, @DFlag{--pager}
-       sends preview output through the configured pager. @exec{peek} uses the
-       @envvar{PAGER} environment variable when it is set, and otherwise falls
-       back to @tt{less -R}.}
+ @item{@Flag{-p}, @DFlag{--pretty}
+       enables pretty rendering when the selected file type supports it.}
+ @item{@DFlag{--pager}
+       sends preview output through the configured pager. This is the default
+       behavior. @exec{peek} uses the @envvar{PAGER} environment variable when
+       it is set, and otherwise falls back to @tt{less -R}.}
+ @item{@Flag{-P}, @DFlag{--no-pager}
+       writes preview output directly to the terminal instead of opening a
+       pager.}
  @item{@DFlag{--color} @litchar{always}@litchar{|}@litchar{auto}@litchar{|}@litchar{never}
        controls ANSI color output. The default is @litchar{always}.}
 ]
@@ -302,8 +310,9 @@ Binary preview options:
 
 @subsection{Pagers}
 
-Use @Flag{-p} or @DFlag{--pager} when you want @exec{peek} to open its output
-in a pager instead of writing directly to the terminal.
+By default, @exec{peek} opens its output in a pager. Use @Flag{-P} or
+@DFlag{--no-pager} when you want @exec{peek} to write directly to the
+terminal instead.
 
 By default, @exec{peek} uses:
 
@@ -315,13 +324,13 @@ By default, @exec{peek} uses:
 On Unix-like systems, a common usage is:
 
 @shellblock[#:shell 'bash]{
-peek -p path/to/file.css
+peek path/to/file.css
 }
 
 or, with an explicit pager selection:
 
 @shellblock[#:shell 'bash]{
-PAGER="less -R" peek -p path/to/file.css
+PAGER="less -R" peek path/to/file.css
 }
 
 On Windows, pager availability depends on what is installed. One practical
@@ -330,11 +339,12 @@ example, if @tt{less.exe} is available from Git for Windows:
 
 @shellblock[#:shell 'powershell]{
 $env:PAGER = "C:\Program Files\Git\usr\bin\less.exe -R"
-peek -p path\to\file.css
+peek path\to\file.css
 }
 
-If @envvar{PAGER} is not set and @tt{less} is not installed, pager mode will
-fail with an error instead of silently falling back to plain output.
+If @envvar{PAGER} is not set and @tt{less} is not installed, the default
+pager mode will fail with an error instead of silently falling back to plain
+output.
 
 @section{Reference}
 

@@ -129,15 +129,12 @@
   (let loop ([remaining lines]
              [line-no 0]
              [in-fence? #f]
-             [exact-match #f]
-             [partial-matches '()])
+             [first-partial-match #f])
     (cond
       [(null? remaining)
        (cond
-         [exact-match
-          exact-match]
-         [(= (length partial-matches) 1)
-          (car partial-matches)]
+         [first-partial-match
+          first-partial-match]
          [else
           #f])]
       [else
@@ -151,8 +148,7 @@
           (loop (cdr remaining)
                 (add1 line-no)
                 (not in-fence?)
-                exact-match
-                partial-matches)]
+                first-partial-match)]
          [(and heading
                (markdown-heading-title-match? (cadr heading) section))
           line-no]
@@ -161,14 +157,13 @@
           (loop (cdr remaining)
                 (add1 line-no)
                 in-fence?
-                exact-match
-                (cons line-no partial-matches))]
+                (or first-partial-match
+                    line-no))]
          [else
           (loop (cdr remaining)
                 (add1 line-no)
                 in-fence?
-                exact-match
-                partial-matches)])])))
+                first-partial-match)])])))
 
 ;; extract-markdown-section : string? string? -> string?
 ;;   Extract one Markdown section by heading title.

@@ -1013,6 +1013,33 @@
 
 (check-equal?
  (let ([out (open-output-string)])
+   (preview-port (open-input-string "alpha\nbeta\n")
+                 #f
+                 (make-preview-options #:color-mode 'never
+                                       #:line-numbers? #t)
+                 out)
+   (get-output-string out))
+ "     1\talpha\n     2\tbeta\n")
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define numbered-path
+     (build-path dir "numbered.rkt"))
+   (call-with-output-file numbered-path
+     (lambda (out)
+       (display "a\nb\nc\nd\ne\n" out))
+     #:exists 'truncate/replace)
+   (define out
+     (open-output-string))
+   (preview-path-port numbered-path
+                      (make-preview-options #:color-mode 'never
+                                            #:line-numbers? #t)
+                      out)
+   (check-equal? (get-output-string out)
+                 " 1\ta\n 2\tb\n 3\tc\n 4\td\n 5\te\n")))
+
+(check-equal?
+ (let ([out (open-output-string)])
    (preview-port (open-input-string "<!doctype html><main id=\"app\">Hi</main>\n")
                  "index.html"
                  (make-preview-options #:color-mode 'always)

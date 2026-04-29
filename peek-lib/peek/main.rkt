@@ -132,6 +132,7 @@
   (define color-mode 'always)
   (define binary-mode 'hex)
   (define pretty? #f)
+  (define line-numbers? #f)
   (define directory-sort 'kind)
   (define search-byte-specs '())
   (define search-text-specs '())
@@ -173,6 +174,9 @@
    [("-p" "--pretty")
     "Enable pretty rendering when the selected file type supports it."
     (set! pretty? #t)]
+   [("-n" "--line-numbers")
+    "Prefix output lines with nl-style line numbers."
+    (set! line-numbers? #t)]
    [("--kind")
     "Sort directory previews by kind and then by name."
     (set! directory-sort 'kind)]
@@ -213,6 +217,7 @@
                                                          (reverse search-byte-specs))
                                                     (map search-text-spec->bytes
                                                          (reverse search-text-specs)))
+                             #:line-numbers? line-numbers?
                              #:pretty? pretty?))
      (define (write-preview out)
        (cond

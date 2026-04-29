@@ -292,6 +292,11 @@ General options:
        disables CSS color swatches while keeping syntax coloring enabled.}
  @item{@Flag{-p}, @DFlag{--pretty}
        enables pretty rendering when the selected file type supports it.}
+ @item{@Flag{-n}, @DFlag{--line-numbers}
+       prefixes output lines with @exec{nl}-style line numbers. For file
+       previews, @exec{peek} estimates the number-field width from the file
+       size so it can start emitting immediately instead of counting lines
+       first.}
  @item{@DFlag{--pager}
        sends preview output through the configured pager. This is the default
        behavior. @exec{peek} uses the @envvar{PAGER} environment variable when

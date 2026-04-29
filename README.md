@@ -105,6 +105,12 @@ Enable pretty rendering when a previewer supports it:
 peek -p path/to/file.md
 ```
 
+Add nl-style line numbers:
+
+```sh
+peek -n -P path/to/file.rkt
+```
+
 ## Examples
 
 A few small previews, rendered by `peek`:

@@ -15,6 +15,7 @@
 ;; preview-options-binary-mode         -- Binary rendering mode.
 ;; preview-options-search-bytes        -- Highlighted byte sequences.
 ;; preview-options-pretty?             -- Whether pretty mode is enabled.
+;; preview-options-line-numbers?       -- Whether line numbers are enabled.
 ;; preview-options-directory-sort      -- Directory sort mode.
 ;; supported-file-types                -- Supported explicit file type names.
 ;; make-preview-options                -- Construct preview options.
@@ -46,6 +47,8 @@
  preview-options-search-bytes
  ;; preview-options-pretty?     Whether pretty mode is enabled.
  preview-options-pretty?
+ ;; preview-options-line-numbers? Whether line numbers are enabled.
+ preview-options-line-numbers?
  ;; preview-options-directory-sort Directory sort mode.
  preview-options-directory-sort
  ;; supported-file-types       Supported explicit file type names.
@@ -69,6 +72,7 @@
          racket/bytes
          racket/path
          racket/port
+         racket/string
          "archive.rkt"
          "binary.rkt"
          "directory.rkt"
@@ -99,7 +103,7 @@
          "scribble.rkt"
          "wat.rkt")
 
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty? directory-sort) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty? line-numbers? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
@@ -114,8 +118,92 @@
                               #:binary-mode [binary-mode 'hex]
                               #:search-bytes [search-bytes '()]
                               #:pretty?     [pretty? #f]
+                              #:line-numbers? [line-numbers? #f]
                               #:directory-sort [directory-sort 'kind])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty? directory-sort))
+  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty? line-numbers? directory-sort))
+
+;; -----------------------------------------------------------------------------
+;; Line numbering
+
+;; default-line-number-width : exact-positive-integer?
+;;   Fallback line-number field width for streaming stdin previews.
+(define default-line-number-width
+  6)
+
+;; estimated-line-number-width : (or/c path-string? #f) -> exact-positive-integer?
+;;   Estimate the width of the line-number field from file size when possible.
+(define (estimated-line-number-width maybe-path)
+  (cond
+    [(and maybe-path
+          (file-exists? maybe-path))
+     (string-length
+      (number->string
+       (max 1
+            (file-size maybe-path))))]
+    [else
+     default-line-number-width]))
+
+;; line-number-prefix : exact-positive-integer? exact-positive-integer? -> string?
+;;   Build one nl-style line-number prefix.
+(define (line-number-prefix width line-no)
+  (define digits
+    (number->string line-no))
+  (string-append (make-string (max 0 (- width (string-length digits))) #\space)
+                 digits
+                 "\t"))
+
+;; make-line-number-output-port : output-port? exact-positive-integer? -> output-port?
+;;   Wrap an output port with nl-style line numbers.
+(define (make-line-number-output-port out width)
+  (define current-line
+    1)
+  (define at-line-start?
+    #t)
+  (define (emit-prefix)
+    (when at-line-start?
+      (display (line-number-prefix width current-line) out)
+      (set! at-line-start? #f)))
+  (define (write-out bs start end non-block? breakable?)
+    (let loop ([pos start]
+               [segment-start start])
+      (cond
+        [(= pos end)
+         (when (< segment-start end)
+           (emit-prefix)
+           (write-bytes bs out segment-start end))
+         (- end start)]
+        [(= (bytes-ref bs pos) 10)
+         (emit-prefix)
+         (write-bytes bs out segment-start (add1 pos))
+         (set! at-line-start? #t)
+         (set! current-line (add1 current-line))
+         (loop (add1 pos) (add1 pos))]
+        [else
+         (loop (add1 pos) segment-start)])))
+  (make-output-port 'peek/line-numbers
+                    always-evt
+                    write-out
+                    void))
+
+;; maybe-wrap-line-number-output-port : output-port? (or/c path-string? #f) preview-options? -> output-port?
+;;   Wrap an output port with line numbers when requested.
+(define (maybe-wrap-line-number-output-port out maybe-path options)
+  (cond
+    [(preview-options-line-numbers? options)
+     (make-line-number-output-port out
+                                   (estimated-line-number-width maybe-path))]
+    [else
+     out]))
+
+;; add-line-numbers-to-string : string? (or/c path-string? #f) preview-options? -> string?
+;;   Add nl-style line numbers to a fully rendered preview string.
+(define (add-line-numbers-to-string rendered maybe-path options)
+  (define out
+    (open-output-string))
+  (define numbered-out
+    (maybe-wrap-line-number-output-port out maybe-path options))
+  (display rendered numbered-out)
+  (get-output-string out))
 
 ;; color-enabled? : output-port? preview-options? -> boolean?
 ;;   Determine whether preview output should include ANSI color.
@@ -298,7 +386,13 @@
                         [maybe-path #f]
                         [options (make-preview-options)]
                         [out (current-output-port)])
-  (preview-string/rendered source maybe-path options out))
+  (define rendered
+    (preview-string/rendered source maybe-path options out))
+  (cond
+    [(preview-options-line-numbers? options)
+     (add-line-numbers-to-string rendered maybe-path options)]
+    [else
+     rendered]))
 
 ;; preview-port : input-port? (or/c path-string? #f) preview-options? output-port? -> void?
 ;;   Preview from an input port to an output port.
@@ -306,6 +400,8 @@
                       [maybe-path #f]
                       [options (make-preview-options)]
                       [out (current-output-port)])
+  (define actual-out
+    (maybe-wrap-line-number-output-port out maybe-path options))
   (define file-type
     (effective-file-type maybe-path options))
   (cond
@@ -315,24 +411,24 @@
      (define rendered
        (render-archive-preview source-bytes
                                #:path maybe-path
-                               #:color? (color-enabled? out options)))
+                               #:color? (color-enabled? actual-out options)))
      (if rendered
-         (display rendered out)
+         (display rendered actual-out)
          (display (render-binary-preview source-bytes
-                                         #:color? (color-enabled? out options)
+                                         #:color? (color-enabled? actual-out options)
                                          #:bits? (eq? (preview-options-binary-mode options)
                                                       'bits)
                                          #:search-bytes (preview-options-search-bytes options))
-                  out))]
+                  actual-out))]
     [(eq? file-type 'directory)
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [(eq? file-type 'binary)
      (display (render-binary-preview (port->bytes in)
-                                     #:color? (color-enabled? out options)
+                                     #:color? (color-enabled? actual-out options)
                                      #:bits? (eq? (preview-options-binary-mode options)
                                                   'bits)
                                      #:search-bytes (preview-options-search-bytes options))
-              out)]
+              actual-out)]
     [(and (or (eq? file-type 'bash)
               (eq? file-type 'css)
               (eq? file-type 'c)
@@ -350,29 +446,29 @@
               (eq? file-type 'tex)
               (eq? file-type 'swift)
               (eq? file-type 'zsh))
-          (color-enabled? out options))
+          (color-enabled? actual-out options))
      (case file-type
        [(css)        (render-css-preview-port in
-                                              out
+                                              actual-out
                                               #:align? (preview-options-align? options)
                                               #:swatches? (preview-options-swatches? options))]
-       [(c)          (render-c-preview-port in out)]
-       [(cpp)        (render-cpp-preview-port in out)]
-       [(makefile)   (render-makefile-preview-port in out)]
-       [(objc)       (render-objc-preview-port in out)]
-       [(csv)        (render-csv-preview-port in out)]
-       [(go)         (render-go-preview-port in out)]
-       [(haskell)    (render-haskell-preview-port in out)]
-       [(java)       (render-java-preview-port in out)]
-       [(plist)      (render-plist-preview-port in out)]
-       [(latex)      (render-latex-preview-port in out)]
-       [(bash)       (render-shell-preview-port in out #:shell 'bash)]
-       [(powershell) (render-shell-preview-port in out #:shell 'powershell)]
-       [(pascal)     (render-pascal-preview-port in out)]
-       [(rust)       (render-rust-preview-port in out)]
-       [(tex)        (render-tex-preview-port in out)]
-       [(swift)      (render-swift-preview-port in out)]
-       [(zsh)        (render-shell-preview-port in out #:shell 'zsh)])]
+       [(c)          (render-c-preview-port in actual-out)]
+       [(cpp)        (render-cpp-preview-port in actual-out)]
+       [(makefile)   (render-makefile-preview-port in actual-out)]
+       [(objc)       (render-objc-preview-port in actual-out)]
+       [(csv)        (render-csv-preview-port in actual-out)]
+       [(go)         (render-go-preview-port in actual-out)]
+       [(haskell)    (render-haskell-preview-port in actual-out)]
+       [(java)       (render-java-preview-port in actual-out)]
+       [(plist)      (render-plist-preview-port in actual-out)]
+       [(latex)      (render-latex-preview-port in actual-out)]
+       [(bash)       (render-shell-preview-port in actual-out #:shell 'bash)]
+       [(powershell) (render-shell-preview-port in actual-out #:shell 'powershell)]
+       [(pascal)     (render-pascal-preview-port in actual-out)]
+       [(rust)       (render-rust-preview-port in actual-out)]
+       [(tex)        (render-tex-preview-port in actual-out)]
+       [(swift)      (render-swift-preview-port in actual-out)]
+       [(zsh)        (render-shell-preview-port in actual-out #:shell 'zsh)])]
     [(or (eq? file-type 'bash)
          (eq? file-type 'css)
          (eq? file-type 'c)
@@ -390,22 +486,22 @@
          (eq? file-type 'tex)
          (eq? file-type 'swift)
          (eq? file-type 'zsh))
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [(and (eq? file-type 'wat)
-          (color-enabled? out options))
-     (render-wat-preview-port in out)]
+          (color-enabled? actual-out options))
+     (render-wat-preview-port in actual-out)]
     [(eq? file-type 'wat)
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [(and (eq? file-type 'rkt)
-          (color-enabled? out options))
-     (render-racket-preview-port in out)]
+          (color-enabled? actual-out options))
+     (render-racket-preview-port in actual-out)]
     [(eq? file-type 'rkt)
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [(and (eq? file-type 'rhombus)
-          (color-enabled? out options))
-     (render-rhombus-preview-port in out)]
+          (color-enabled? actual-out options))
+     (render-rhombus-preview-port in actual-out)]
     [(eq? file-type 'rhombus)
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [(and (or (eq? file-type 'html)
               (eq? file-type 'java)
               (eq? file-type 'js)
@@ -417,21 +513,21 @@
               (eq? file-type 'swift)
               (eq? file-type 'md)
               (eq? file-type 'scrbl))
-          (color-enabled? out options))
+          (color-enabled? actual-out options))
      (case file-type
-       [(html)  (render-html-preview-port in out)]
-       [(java)  (render-java-preview-port in out)]
-       [(js)    (render-javascript-preview-port in out)]
-       [(json)  (render-json-preview-port in out)]
-       [(plist) (render-plist-preview-port in out)]
-       [(python) (render-python-preview-port in out)]
-       [(jsx)   (render-javascript-preview-port in out #:jsx? #t)]
-       [(latex) (render-latex-preview-port in out)]
-       [(swift) (render-swift-preview-port in out)]
+       [(html)  (render-html-preview-port in actual-out)]
+       [(java)  (render-java-preview-port in actual-out)]
+       [(js)    (render-javascript-preview-port in actual-out)]
+       [(json)  (render-json-preview-port in actual-out)]
+       [(plist) (render-plist-preview-port in actual-out)]
+       [(python) (render-python-preview-port in actual-out)]
+       [(jsx)   (render-javascript-preview-port in actual-out #:jsx? #t)]
+       [(latex) (render-latex-preview-port in actual-out)]
+       [(swift) (render-swift-preview-port in actual-out)]
        [(md)    (render-markdown-preview-port in
-                                              out
+                                              actual-out
                                               #:pretty? (preview-options-pretty? options))]
-       [(scrbl) (render-scribble-preview-port in out)])]
+       [(scrbl) (render-scribble-preview-port in actual-out)])]
     [(or (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'json)
@@ -442,17 +538,17 @@
          (eq? file-type 'swift)
          (eq? file-type 'md)
          (eq? file-type 'scrbl))
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [(and (eq? file-type 'tsv)
-          (color-enabled? out options))
-     (render-tsv-preview-port in out)]
+          (color-enabled? actual-out options))
+     (render-tsv-preview-port in actual-out)]
     [(eq? file-type 'tsv)
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [(and (eq? file-type 'yaml)
-          (color-enabled? out options))
-     (render-yaml-preview-port in out)]
+          (color-enabled? actual-out options))
+     (render-yaml-preview-port in actual-out)]
     [(eq? file-type 'yaml)
-     (copy-port in out)]
+     (copy-port in actual-out)]
     [else
      (define source-bytes
        (port->bytes in))
@@ -461,20 +557,20 @@
      (define archive-rendered
        (render-archive-preview source-bytes
                                #:path maybe-path
-                               #:color? (color-enabled? out options)))
+                               #:color? (color-enabled? actual-out options)))
      (cond
        [archive-rendered
-        (display archive-rendered out)]
+        (display archive-rendered actual-out)]
        [(or (likely-binary-bytes? source-bytes)
             (not source))
         (display (render-binary-preview source-bytes
-                                        #:color? (color-enabled? out options)
+                                        #:color? (color-enabled? actual-out options)
                                         #:bits? (eq? (preview-options-binary-mode options)
                                                      'bits)
                                         #:search-bytes (preview-options-search-bytes options))
-                 out)]
+                 actual-out)]
        [else
-        (display source out)])]))
+        (display source actual-out)])]))
 
 ;; preview-file : path-string? preview-options? -> string?
 ;;   Preview a file from disk.
@@ -485,13 +581,17 @@
     (effective-file-type path options))
   (cond
     [(directory-exists? path)
+     (define actual-out
+       (maybe-wrap-line-number-output-port out path options))
      (display (render-directory-preview path
-                                        #:color? (color-enabled? out options)
+                                        #:color? (color-enabled? actual-out options)
                                         #:sort-mode (preview-options-directory-sort options))
-              out)]
+              actual-out)]
     [(or (eq? file-type 'archive)
          (eq? file-type 'binary))
-     (display (preview-file path options out) out)]
+     (define actual-out
+       (maybe-wrap-line-number-output-port out path options))
+     (display (preview-file path options actual-out) actual-out)]
     [else
      (call-with-input-file path
        (lambda (in)
@@ -506,20 +606,28 @@
     (effective-file-type path options))
   (cond
     [(directory-exists? path)
-     (render-directory-preview path
-                               #:color? (color-enabled? out options)
-                               #:sort-mode (preview-options-directory-sort options))]
+     (define rendered
+       (render-directory-preview path
+                                 #:color? (color-enabled? out options)
+                                 #:sort-mode (preview-options-directory-sort options)))
+     (if (preview-options-line-numbers? options)
+         (add-line-numbers-to-string rendered path options)
+         rendered)]
     [(eq? file-type 'archive)
      (define source-bytes
        (file->bytes path))
-     (or (render-archive-preview source-bytes
-                                 #:path path
-                                 #:color? (color-enabled? out options))
-         (render-binary-preview source-bytes
-                                #:color? (color-enabled? out options)
-                                #:bits? (eq? (preview-options-binary-mode options)
-                                             'bits)
-                                #:search-bytes (preview-options-search-bytes options)))]
+     (define rendered
+       (or (render-archive-preview source-bytes
+                                   #:path path
+                                   #:color? (color-enabled? out options))
+           (render-binary-preview source-bytes
+                                  #:color? (color-enabled? out options)
+                                  #:bits? (eq? (preview-options-binary-mode options)
+                                               'bits)
+                                  #:search-bytes (preview-options-search-bytes options))))
+     (if (preview-options-line-numbers? options)
+         (add-line-numbers-to-string rendered path options)
+         rendered)]
     [(eq? file-type 'binary)
      (define rendered
        (open-output-string))
@@ -532,7 +640,11 @@
                                                   'bits)
                                      #:search-bytes (preview-options-search-bytes options)))
        #:mode 'binary)
-     (get-output-string rendered)]
+     (define text
+       (get-output-string rendered))
+     (if (preview-options-line-numbers? options)
+         (add-line-numbers-to-string text path options)
+         text)]
     [(or (eq? file-type 'wat)
          (eq? file-type 'css)
          (eq? file-type 'c)
@@ -582,13 +694,21 @@
                                #:color? (color-enabled? out options)))
      (cond
        [archive-rendered
-        archive-rendered]
+        (if (preview-options-line-numbers? options)
+            (add-line-numbers-to-string archive-rendered path options)
+            archive-rendered)]
        [(or (likely-binary-bytes? source-bytes)
             (not source))
-        (render-binary-preview source-bytes
-                               #:color? (color-enabled? out options)
-                               #:bits? (eq? (preview-options-binary-mode options)
-                                            'bits)
-                               #:search-bytes (preview-options-search-bytes options))]
+        (define rendered
+          (render-binary-preview source-bytes
+                                 #:color? (color-enabled? out options)
+                                 #:bits? (eq? (preview-options-binary-mode options)
+                                              'bits)
+                                 #:search-bytes (preview-options-search-bytes options)))
+        (if (preview-options-line-numbers? options)
+            (add-line-numbers-to-string rendered path options)
+            rendered)]
        [else
-        source])]))
+        (if (preview-options-line-numbers? options)
+            (add-line-numbers-to-string source path options)
+            source)])]))

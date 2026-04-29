@@ -31,6 +31,7 @@ Guidelines
 18. Corpus round-trip tests should enforce a hard 2-minute timeout per file and report the file that timed out.
 18. Markdown and JavaScript corpus round-trip tests should enforce a hard 1-minute timeout per file and report the file that timed out.
 19. In Markdown `--pretty` mode, it is acceptable to drop low-value wrapper punctuation such as backticks, heading markers, emphasis/strong/strikethrough delimiters, task markers, or link/image/autolink wrappers when the meaningful text and styling are preserved.
+20. Preview rendering should aim to show the first page of output quickly, especially for large files.
 
 
 Coding guidelines for Racket code.

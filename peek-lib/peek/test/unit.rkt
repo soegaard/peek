@@ -655,6 +655,14 @@
                 (render-markdown-preview "# Title\n\nText\n")))
 (define markdown-heading-sample
   "# One\n## Two\n### Three\n#### Four\n")
+(define markdown-section-sample
+  (string-append
+   "# One\n"
+   "Alpha\n"
+   "## Two\n"
+   "Beta\n"
+   "# Three\n"
+   "Gamma\n"))
 (check-equal?
  (strip-ansi (render-markdown-preview markdown-heading-sample))
  markdown-heading-sample)
@@ -688,6 +696,19 @@
 (check-equal?
  (strip-ansi markdown-heading-rendered-pretty)
  "One\nTwo\nThree\nFour\n")
+(check-equal?
+ (extract-markdown-section markdown-section-sample "One")
+ "# One\nAlpha\n## Two\nBeta\n")
+(check-equal?
+ (extract-markdown-section markdown-section-sample "two")
+ "## Two\nBeta\n")
+(check-equal?
+ (extract-markdown-section markdown-section-sample "thr")
+ "# Three\nGamma\n")
+(check-exn
+ exn:fail:user?
+ (lambda ()
+   (extract-markdown-section markdown-section-sample "Missing")))
 (check-equal?
  (strip-ansi (render-markdown-preview "Use `x` and `y`.\n"
                                       #:pretty? #t))
@@ -1074,6 +1095,16 @@
                  out)
    (strip-ansi (get-output-string out)))
  "<!doctype html><main id=\"app\">Hi</main>\n")
+
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string markdown-section-sample)
+                 "example.md"
+                 (make-preview-options #:color-mode 'never
+                                       #:section "Three")
+                 out)
+   (get-output-string out))
+ "# Three\nGamma\n")
 
 (check-equal?
  (strip-ansi (preview-file demo-tex-path

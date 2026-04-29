@@ -140,6 +140,7 @@
   (define color-mode 'always)
   (define binary-mode 'hex)
   (define pretty? #f)
+  (define section #f)
   (define line-numbers? #f)
   (define directory-sort 'kind)
   (define search-byte-specs '())
@@ -183,6 +184,9 @@
    [("-p" "--pretty")
     "Enable pretty rendering when the selected file type supports it."
     (set! pretty? #t)]
+   [("--section") value
+    "Render one named section when the selected file type supports it."
+    (set! section value)]
    [("-n" "--line-numbers")
     "Prefix output lines with nl-style line numbers."
     (set! line-numbers? #t)]
@@ -229,6 +233,7 @@
                                                          (reverse search-byte-specs))
                                                     (map search-text-spec->bytes
                                                          (reverse search-text-specs)))
+                             #:section section
                              #:grep-patterns (map grep-spec->regexp
                                                   (reverse grep-specs))
                              #:line-numbers? line-numbers?
@@ -239,11 +244,14 @@
           (preview-path-port file-path options out)]
          [else
           (preview-port (current-input-port) #f options out)]))
-     (cond
-       [pager?
-        (call-with-pager-output write-preview)]
-       [else
-        (write-preview (current-output-port))])]))
+     (with-handlers ([exn:fail:user?
+                      (lambda (e)
+                        (usage-error (exn-message e)))])
+       (cond
+         [pager?
+          (call-with-pager-output write-preview)]
+         [else
+          (write-preview (current-output-port))]))]))
 
 (module+ main
   (main))

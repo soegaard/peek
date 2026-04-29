@@ -117,6 +117,12 @@ Emphasize rendered lines whose text matches a regexp:
 peek --grep TODO -P path/to/file.rkt
 ```
 
+Preview one Markdown section by heading title:
+
+```sh
+peek --section "Demo Document" -P path/to/file.md
+```
+
 ## Examples
 
 A few small previews, rendered by `peek`:

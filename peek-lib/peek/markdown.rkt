@@ -6,12 +6,17 @@
 ;;
 ;; Markdown-specific terminal preview rendering built on `lexers/markdown`.
 
+;; extract-markdown-section : string? string? -> string?
+;;   Extract one Markdown section by heading title.
 ;; render-markdown-preview : string? #:pretty? boolean? -> string?
 ;;   Render Markdown for terminal preview.
 ;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? -> void?
 ;;   Render Markdown from a port for terminal preview.
 
 (provide
+ ;; extract-markdown-section : string? string? -> string?
+ ;;   Extract one Markdown section by heading title.
+ extract-markdown-section
  ;; render-markdown-preview : string? #:pretty? boolean? -> string?
  ;;   Render Markdown for terminal preview.
  render-markdown-preview
@@ -78,6 +83,152 @@
 ;;   Recognize a Markdown fenced-code delimiter line.
 (define (fenced-code-boundary-line? line)
   (regexp-match? #px"^\\s*(```|~~~)" line))
+
+;; markdown-atx-heading : string? -> (or/c (list/c exact-positive-integer? string?) #f)
+;;   Parse one ATX heading line into its level and normalized title.
+(define (markdown-atx-heading line)
+  (define match
+    (regexp-match #px"^\\s{0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+[ \t]*)?$"
+                  line))
+  (cond
+    [match
+     (list (string-length (cadr match))
+           (string-trim (caddr match)))]
+    [else
+     #f]))
+
+;; markdown-heading-title-match? : string? string? -> boolean?
+;;   Compare one heading title to a requested section name.
+(define (markdown-heading-title-match? title requested)
+  (string-ci=? (string-trim title)
+               (string-trim requested)))
+
+;; markdown-heading-title-contains? : string? string? -> boolean?
+;;   Determine whether one heading title contains the requested section name.
+(define (markdown-heading-title-contains? title requested)
+  (define normalized-title
+    (string-downcase (string-trim title)))
+  (define normalized-requested
+    (string-downcase (string-trim requested)))
+  (and (not (string=? normalized-requested ""))
+       (string-contains? normalized-title
+                         normalized-requested)))
+
+;; markdown-heading-matches : string? string? -> (or/c exact-nonnegative-integer? #f)
+;;   Find the line number of a requested section heading.
+(define (markdown-heading-matches source section)
+  (define lines
+    (string-split source "\n" #:trim? #f))
+  (let loop ([remaining lines]
+             [line-no 0]
+             [in-fence? #f]
+             [exact-match #f]
+             [partial-matches '()])
+    (cond
+      [(null? remaining)
+       (cond
+         [exact-match
+          exact-match]
+         [(= (length partial-matches) 1)
+          (car partial-matches)]
+         [else
+          #f])]
+      [else
+       (define line
+         (car remaining))
+       (define heading
+         (and (not in-fence?)
+              (markdown-atx-heading line)))
+       (cond
+         [(fenced-code-boundary-line? line)
+          (loop (cdr remaining)
+                (add1 line-no)
+                (not in-fence?)
+                exact-match
+                partial-matches)]
+         [(and heading
+               (markdown-heading-title-match? (cadr heading) section))
+          line-no]
+         [(and heading
+               (markdown-heading-title-contains? (cadr heading) section))
+          (loop (cdr remaining)
+                (add1 line-no)
+                in-fence?
+                exact-match
+                (cons line-no partial-matches))]
+         [else
+          (loop (cdr remaining)
+                (add1 line-no)
+                in-fence?
+                exact-match
+                partial-matches)])])))
+
+;; extract-markdown-section : string? string? -> string?
+;;   Extract one Markdown section by heading title.
+(define (extract-markdown-section source section)
+  (define lines
+    (string-split source "\n" #:trim? #f))
+  (define source-ends-with-newline?
+    (and (positive? (string-length source))
+         (char=? (string-ref source (sub1 (string-length source))) #\newline)))
+  (define matched-line
+    (markdown-heading-matches source section))
+  (unless matched-line
+    (raise-user-error 'markdown
+                      (format "section not found: ~a" section)))
+  (let loop ([remaining lines]
+             [line-no 0]
+             [in-fence? #f]
+             [section-start matched-line]
+             [section-level #f])
+    (cond
+      [(null? remaining)
+       (define selected
+         (drop lines section-start))
+       (define rendered
+         (string-join selected "\n"))
+       (if (and source-ends-with-newline?
+                (not (string-suffix? rendered "\n")))
+           (string-append rendered "\n")
+           rendered)]
+      [else
+       (define line
+         (car remaining))
+       (define heading
+         (and (not in-fence?)
+              (markdown-atx-heading line)))
+       (cond
+         [(fenced-code-boundary-line? line)
+          (loop (cdr remaining)
+                (add1 line-no)
+                (not in-fence?)
+                section-start
+                section-level)]
+         [(and heading
+               (= line-no section-start))
+          (loop (cdr remaining)
+                (add1 line-no)
+                in-fence?
+                line-no
+                (car heading))]
+         [(and heading
+               section-level
+               (<= (car heading) section-level))
+          (define selected
+            (take (drop lines section-start)
+                  (- line-no section-start)))
+          (define rendered
+            (string-join selected "\n"))
+          (if (and source-ends-with-newline?
+                   (not (string-suffix? rendered "\n")))
+              (string-append rendered "\n")
+              rendered)]
+         [else
+          (loop (cdr remaining)
+                (add1 line-no)
+                in-fence?
+                section-start
+                section-level)])])))
 
 ;; table-row-cells : string? -> (or/c (listof string?) #f)
 ;;   Parse one Markdown table row into trimmed cell text.
@@ -666,24 +817,31 @@
     [else
      text]))
 
-;; render-markdown-preview : string? #:pretty? boolean? -> string?
+;; render-markdown-preview : string? #:pretty? boolean? #:section (or/c string? #f) -> string?
 ;;   Render Markdown for terminal preview.
 (define (render-markdown-preview source
-                                 #:pretty? [pretty? #f])
+                                 #:pretty? [pretty? #f]
+                                 #:section [section #f])
   (define source*
-    (if pretty?
-        (normalize-markdown-tables source)
-        source))
+    (let ([selected-source
+           (if section
+               (extract-markdown-section source section)
+               source)])
+      (if pretty?
+          (normalize-markdown-tables selected-source)
+          selected-source)))
   (apply string-append
          (for/list ([token (annotate-markdown-tokens source*)])
            (colorize-text (token-style token pretty?)
                           (markdown-token-display-text token pretty?)))))
 
-;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? -> void?
+;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? #:section (or/c string? #f) -> void?
 ;;   Render Markdown from a port for terminal preview.
 (define (render-markdown-preview-port in
                                      [out (current-output-port)]
-                                     #:pretty? [pretty? #f])
+                                     #:pretty? [pretty? #f]
+                                     #:section [section #f])
   (display (render-markdown-preview (port->string in)
-                                    #:pretty? pretty?)
+                                    #:pretty? pretty?
+                                    #:section section)
            out))

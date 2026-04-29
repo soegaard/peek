@@ -15,6 +15,7 @@
 ;; preview-options-binary-mode         -- Binary rendering mode.
 ;; preview-options-search-bytes        -- Highlighted byte sequences.
 ;; preview-options-pretty?             -- Whether pretty mode is enabled.
+;; preview-options-section             -- Selected named section.
 ;; preview-options-grep-patterns       -- Line-matching regexps.
 ;; preview-options-line-numbers?       -- Whether line numbers are enabled.
 ;; preview-options-directory-sort      -- Directory sort mode.
@@ -48,6 +49,8 @@
  preview-options-search-bytes
  ;; preview-options-pretty?     Whether pretty mode is enabled.
  preview-options-pretty?
+ ;; preview-options-section     Selected named section.
+ preview-options-section
  ;; preview-options-grep-patterns Line-matching regexps.
  preview-options-grep-patterns
  ;; preview-options-line-numbers? Whether line numbers are enabled.
@@ -106,7 +109,7 @@
          "scribble.rkt"
          "wat.rkt")
 
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty? grep-patterns line-numbers? directory-sort) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty? section grep-patterns line-numbers? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
@@ -121,10 +124,11 @@
                               #:binary-mode [binary-mode 'hex]
                               #:search-bytes [search-bytes '()]
                               #:pretty?     [pretty? #f]
+                              #:section     [section #f]
                               #:grep-patterns [grep-patterns '()]
                               #:line-numbers? [line-numbers? #f]
                               #:directory-sort [directory-sort 'kind])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty? grep-patterns line-numbers? directory-sort))
+  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty? section grep-patterns line-numbers? directory-sort))
 
 ;; -----------------------------------------------------------------------------
 ;; Line numbering
@@ -461,7 +465,8 @@
                                 #:jsx? #t)]
     [(eq? file-type 'md)
      (render-markdown-preview source
-                              #:pretty? (preview-options-pretty? options))]
+                              #:pretty? (preview-options-pretty? options)
+                              #:section (preview-options-section options))]
     [(eq? file-type 'latex)
      (render-latex-preview source)]
     [(eq? file-type 'powershell)
@@ -644,8 +649,14 @@
        [(swift) (render-swift-preview-port in actual-out)]
        [(md)    (render-markdown-preview-port in
                                               actual-out
-                                              #:pretty? (preview-options-pretty? options))]
+                                              #:pretty? (preview-options-pretty? options)
+                                              #:section (preview-options-section options))]
        [(scrbl) (render-scribble-preview-port in actual-out)])]
+    [(and (eq? file-type 'md)
+          (preview-options-section options))
+     (display (extract-markdown-section (port->string in)
+                                        (preview-options-section options))
+              actual-out)]
     [(or (eq? file-type 'html)
          (eq? file-type 'js)
          (eq? file-type 'json)
@@ -654,8 +665,9 @@
          (eq? file-type 'jsx)
          (eq? file-type 'latex)
          (eq? file-type 'swift)
-         (eq? file-type 'md)
          (eq? file-type 'scrbl))
+     (copy-port in actual-out)]
+    [(eq? file-type 'md)
      (copy-port in actual-out)]
     [(and (eq? file-type 'tsv)
           color?)

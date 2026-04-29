@@ -297,6 +297,10 @@ General options:
        previews, @exec{peek} estimates the number-field width from the file
        size so it can start emitting immediately instead of counting lines
        first.}
+ @item{@DFlag{--section} @italic{title}
+       renders one named section when the selected file type supports it.
+       Markdown currently matches section titles against ATX headings such as
+       @tt{# Title} or @tt{## Subtitle}.}
  @item{@DFlag{--grep} @italic{regexp}
        emphasizes rendered lines whose text matches a regular expression.
        Repeat the flag to add more patterns.}

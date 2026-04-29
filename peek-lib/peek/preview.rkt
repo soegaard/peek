@@ -382,6 +382,34 @@
     [else
      (string-append header "\n")]))
 
+;; diff-line-marker : symbol? boolean? -> string?
+;;   Render one diff line marker.
+(define (diff-line-marker kind color?)
+  (define marker
+    (case kind
+      [(added)   "+ "]
+      [(removed) "- "]
+      [else      "  "]))
+  (cond
+    [color?
+     (string-append ansi-comment marker ansi-reset)]
+    [else
+     marker]))
+
+;; diff-line-number-prefix : git-diff-line? exact-positive-integer? -> string?
+;;   Render one numbered diff prefix.
+(define (diff-line-number-prefix line width)
+  (string-append (diff-line-marker (git-diff-line-kind line) #f)
+                 (cond
+                   [(git-diff-line-new-line-no line)
+                    (line-number-prefix width
+                                        (git-diff-line-new-line-no line))]
+                   [(git-diff-line-old-line-no line)
+                    (line-number-prefix width
+                                        (git-diff-line-old-line-no line))]
+                   [else
+                    (line-number-blank-prefix width)])))
+
 ;; add-diff-line-numbers : string? exact-positive-integer? exact-positive-integer? -> string?
 ;;   Prefix rendered diff lines with original file line numbers.
 (define (add-diff-line-numbers rendered start-line width)
@@ -398,6 +426,31 @@
       (newline out)
       (loop (add1 line-no))))
   (get-output-string out))
+
+;; render-diff-line : git-diff-line? path-string? preview-options? output-port? boolean? exact-positive-integer? boolean? -> string?
+;;   Render one parsed diff line with marker and optional numbering.
+(define (render-diff-line line path options out color? line-number-width line-numbers?)
+  (define rendered
+    (preview-string/rendered (string-append (git-diff-line-text line) "\n")
+                             path
+                             options
+                             out))
+  (define prefix
+    (cond
+      [line-numbers?
+       (string-append (diff-line-marker (git-diff-line-kind line) color?)
+                      (cond
+                        [(git-diff-line-new-line-no line)
+                         (line-number-prefix line-number-width
+                                             (git-diff-line-new-line-no line))]
+                        [(git-diff-line-old-line-no line)
+                         (line-number-prefix line-number-width
+                                             (git-diff-line-old-line-no line))]
+                        [else
+                         (line-number-blank-prefix line-number-width)]))]
+      [else
+       (diff-line-marker (git-diff-line-kind line) color?)]))
+  (string-append prefix rendered))
 
 ;; diff-preview-options : preview-options? -> preview-options?
 ;;   Remove incompatible postprocessing from per-hunk rendering.
@@ -430,15 +483,9 @@
      (raise-user-error 'diff "--section does not combine with --diff yet")]
     [else
      (define hunks
-       (git-working-tree-hunks path))
+       (git-working-tree-render-hunks path))
      (when (null? hunks)
        (raise-user-error 'diff (format "no changed hunks: ~a" path)))
-     (define lines
-       (file->lines path))
-     (define slices
-       (expand-git-diff-hunks hunks
-                              (length lines)
-                              diff-context-lines))
      (define hunk-options
        (diff-preview-options options))
      (define color?
@@ -446,24 +493,29 @@
      (define line-number-width
        (string-length
         (number->string
-         (max 1 (length lines)))))
+         (max 1
+              (for*/fold ([largest 1])
+                         ([hunk (in-list hunks)]
+                          [line (in-list (git-diff-render-hunk-lines hunk))])
+                (max largest
+                     (or (git-diff-line-new-line-no line)
+                         (git-diff-line-old-line-no line)
+                         1)))))))
      (define rendered-hunks
-       (for/list ([slice (in-list slices)])
-         (define snippet
-           (slice-lines->string lines
-                                (git-diff-slice-start slice)
-                                (git-diff-slice-end slice)))
+       (for/list ([hunk (in-list hunks)])
          (define rendered-snippet
-           (preview-string/rendered snippet path hunk-options out))
-         (string-append (diff-header-line (git-diff-slice-anchor slice)
+           (apply string-append
+                  (for/list ([line (in-list (git-diff-render-hunk-lines hunk))])
+                    (render-diff-line line
+                                      path
+                                      hunk-options
+                                      out
+                                      color?
+                                      line-number-width
+                                      (preview-options-line-numbers? options)))))
+         (string-append (diff-header-line (git-diff-render-hunk-anchor hunk)
                                           color?)
-                        (cond
-                          [(preview-options-line-numbers? options)
-                           (add-diff-line-numbers rendered-snippet
-                                                  (git-diff-slice-start slice)
-                                                  line-number-width)]
-                          [else
-                           rendered-snippet]))))
+                        rendered-snippet)))
      (define final-options
        (make-preview-options #:type           (preview-options-type options)
                              #:align?         (preview-options-align? options)
@@ -477,10 +529,7 @@
                              #:grep-patterns  (preview-options-grep-patterns options)
                              #:line-numbers?  #f
                              #:directory-sort (preview-options-directory-sort options)))
-     (postprocess-rendered-string (string-join rendered-hunks
-                                               (if (preview-options-line-numbers? options)
-                                                   ""
-                                                   "\n"))
+     (postprocess-rendered-string (string-join rendered-hunks "\n")
                                   path
                                   color?
                                   final-options)]))

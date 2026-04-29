@@ -749,6 +749,21 @@
                         2)
  (list (git-diff-slice 5 3 10)
        (git-diff-slice 20 18 22)))
+(check-equal?
+ (parse-git-diff-render-hunks
+  (string-append
+   "diff --git a/demo.rkt b/demo.rkt\n"
+   "@@ -2,3 +2,3 @@\n"
+   " (define (greet name)\n"
+   "-  (string-append \"hello, \" name))\n"
+   "+  (string-append \"hello, \" person))\n"
+   " (define untouched 1)\n"))
+ (list (git-diff-render-hunk
+        2
+        (list (git-diff-line 'context 2 2 "(define (greet name)")
+              (git-diff-line 'removed 3 #f "  (string-append \"hello, \" name))")
+              (git-diff-line 'added #f 3 "  (string-append \"hello, \" person))")
+              (git-diff-line 'context 4 4 "(define untouched 1)")))))
 (check-exn
  exn:fail:user?
  (lambda ()
@@ -1150,18 +1165,19 @@
        (display "#lang racket/base\n" out)
        (display "(define (greet person)\n" out)
        (display "  (string-append \"hello, \" person))\n" out)
-       (display "(define untouched 1)\n" out)
        (display "(define added 2)\n" out))
      #:exists 'truncate/replace)
    (define rendered
      (strip-ansi (preview-file source-path
                                (make-preview-options #:color-mode 'always
                                                      #:diff? #t))))
-   (check-true (regexp-match? #px"@@ changed near line 2 @@"
+   (check-true (regexp-match? #px"@@ changed near line 1 @@"
                               rendered))
    (check-true (regexp-match? #px"person"
                               rendered))
    (check-true (regexp-match? #px"added"
+                              rendered))
+   (check-true (regexp-match? #px"- \\(define untouched 1\\)"
                               rendered))
    (check-false (regexp-match? #px"no changed hunks"
                                rendered))
@@ -1170,12 +1186,14 @@
                                (make-preview-options #:color-mode 'always
                                                      #:diff? #t
                                                      #:line-numbers? #t))))
-   (check-true (regexp-match? #px"^@@ changed near line 2 @@\n1\t#lang racket/base\n2\t\\(define \\(greet person\\)"
+   (check-true (regexp-match? #px"^@@ changed near line 1 @@\n  1\t#lang racket/base\n- 2\t\\(define \\(greet name\\)"
                               numbered))
    (check-true (string-contains? numbered
-                                 "3\t  (string-append \"hello, \" person))\n"))
+                                 "- 4\t(define untouched 1)\n"))
    (check-true (string-contains? numbered
-                                 "5\t(define added 2)\n"))))
+                                 "+ 3\t  (string-append \"hello, \" person))\n"))
+   (check-true (string-contains? numbered
+                                 "+ 4\t(define added 2)\n"))))
 
 (check-equal?
  (let ([out (open-output-string)])

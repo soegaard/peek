@@ -117,6 +117,18 @@ Emphasize rendered lines whose text matches a regexp:
 peek --grep TODO -P path/to/file.rkt
 ```
 
+Preview only the changed Git hunks for one file:
+
+```sh
+peek --diff path/to/file.rkt
+peek -n --diff path/to/file.rkt
+```
+
+Diff preview shows context lines with a leading two-space marker, removed
+lines with `- `, and added lines with `+ `. When line numbers are enabled,
+context and added lines use the current-file line numbers, while removed lines
+use the old-file line numbers from Git.
+
 Preview one Markdown section by heading title:
 
 ```sh

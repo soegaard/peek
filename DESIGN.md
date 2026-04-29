@@ -69,6 +69,15 @@ sizes are aligned, and optional sorting can group by file kind or by size.
 That keeps folder preview separate from both archive trees and text-language
 previewers.
 
+Git-focused diff preview is another generic path-oriented layer. `--diff`
+does not try to replace `git diff`; instead, it asks Git for the changed
+working-tree hunks for one file and reuses the normal file-type previewer on
+the visible hunk lines. Context, removed, and added lines are preserved as
+separate diff rows, which keeps deleted lines visible without turning `peek`
+into a full patch viewer. The current design is intentionally file-path-only
+and buffered, so ordinary file preview keeps its fast port-to-port streaming
+path while diff preview remains simple and predictable.
+
 ## Lessons From `scribble-tools`
 
 The JavaScript colorer in `scribble-tools` is a useful reference point for

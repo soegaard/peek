@@ -257,6 +257,7 @@ Useful command-line combinations:
 
 @shellblock[#:shell 'bash]{
 peek -P path/to/file.css
+peek --diff path/to/file.rkt
 }
 
 @subsection{Options}
@@ -304,6 +305,13 @@ General options:
  @item{@DFlag{--grep} @italic{regexp}
        emphasizes rendered lines whose text matches a regular expression.
        Repeat the flag to add more patterns.}
+ @item{@DFlag{--diff}
+       renders only the changed Git hunks for one file path, with a small
+       amount of context around each hunk and normal syntax coloring inside
+       the selected lines. Context lines use a two-space marker, removed
+       lines use @tt{- }, and added lines use @tt{+ }. With
+       @Flag{-n}, context and added lines use the current-file line numbers,
+       while removed lines use the old-file line numbers from Git.}
  @item{@DFlag{--pager}
        sends preview output through the configured pager. This is the default
        behavior. @exec{peek} uses the @envvar{PAGER} environment variable when

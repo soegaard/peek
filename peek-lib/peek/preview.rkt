@@ -427,14 +427,21 @@
       (loop (add1 line-no))))
   (get-output-string out))
 
-;; render-diff-line : git-diff-line? path-string? preview-options? output-port? boolean? exact-positive-integer? boolean? -> string?
+;; rendered-lines : string? -> (listof string?)
+;;   Split rendered preview text into lines without a trailing empty sentinel.
+(define (rendered-lines rendered)
+  (define pieces
+    (string-split (ensure-trailing-newline rendered) "\n"))
+  (cond
+    [(and (pair? pieces)
+          (string=? (last pieces) ""))
+     (drop-right pieces 1)]
+    [else
+     pieces]))
+
+;; render-diff-line : git-diff-line? string? boolean? exact-positive-integer? boolean? -> string?
 ;;   Render one parsed diff line with marker and optional numbering.
-(define (render-diff-line line path options out color? line-number-width line-numbers?)
-  (define rendered
-    (preview-string/rendered (string-append (git-diff-line-text line) "\n")
-                             path
-                             options
-                             out))
+(define (render-diff-line line rendered-line color? line-number-width line-numbers?)
   (define prefix
     (cond
       [line-numbers?
@@ -450,7 +457,68 @@
                          (line-number-blank-prefix line-number-width)]))]
       [else
        (diff-line-marker (git-diff-line-kind line) color?)]))
-  (string-append prefix rendered))
+  (string-append prefix rendered-line "\n"))
+
+;; render-diff-line/fallback : git-diff-line? path-string? preview-options? output-port? boolean? exact-positive-integer? boolean? -> string?
+;;   Render one diff line independently when hunk-level rendering cannot be used.
+(define (render-diff-line/fallback line path options out color? line-number-width line-numbers?)
+  (define rendered
+    (preview-string/rendered (string-append (git-diff-line-text line) "\n")
+                             path
+                             options
+                             out))
+  (define rendered-line
+    (cond
+      [(pair? (rendered-lines rendered))
+       (car (rendered-lines rendered))]
+      [else
+       ""]))
+  (render-diff-line line
+                    rendered-line
+                    color?
+                    line-number-width
+                    line-numbers?))
+
+;; current-file-rendered-lines : path-string? preview-options? output-port? -> (or/c (listof string?) #f)
+;;   Render the whole current file and return one rendered line per source line when possible.
+(define (current-file-rendered-lines path options out)
+  (define source
+    (file->string path))
+  (define source-lines
+    (drop-right (string-split source "\n" #:trim? #f) 1))
+  (define rendered
+    (preview-string/rendered source
+                             path
+                             options
+                             out))
+  (define lines
+    (rendered-lines rendered))
+  (and (= (length lines)
+          (length source-lines))
+       lines))
+
+;; render-diff-hunk-snippet : git-diff-render-hunk? path-string? preview-options? output-port? boolean? exact-positive-integer? boolean? (or/c (listof string?) #f) -> string?
+;;   Render one diff hunk, reusing whole-file rendered lines when possible.
+(define (render-diff-hunk-snippet hunk path options out color? line-number-width line-numbers? file-rendered-lines)
+  (apply string-append
+         (for/list ([line (in-list (git-diff-render-hunk-lines hunk))])
+           (cond
+             [(and file-rendered-lines
+                   (git-diff-line-new-line-no line))
+              (render-diff-line line
+                                (list-ref file-rendered-lines
+                                          (sub1 (git-diff-line-new-line-no line)))
+                                color?
+                                line-number-width
+                                line-numbers?)]
+             [else
+              (render-diff-line/fallback line
+                                         path
+                                         options
+                                         out
+                                         color?
+                                         line-number-width
+                                         line-numbers?)]))))
 
 ;; diff-preview-options : preview-options? -> preview-options?
 ;;   Remove incompatible postprocessing from per-hunk rendering.
@@ -490,6 +558,8 @@
        (diff-preview-options options))
      (define color?
        (color-enabled? out options))
+     (define file-rendered-lines
+       (current-file-rendered-lines path hunk-options out))
      (define line-number-width
        (string-length
         (number->string
@@ -504,15 +574,14 @@
      (define rendered-hunks
        (for/list ([hunk (in-list hunks)])
          (define rendered-snippet
-           (apply string-append
-                  (for/list ([line (in-list (git-diff-render-hunk-lines hunk))])
-                    (render-diff-line line
-                                      path
-                                      hunk-options
-                                      out
-                                      color?
-                                      line-number-width
-                                      (preview-options-line-numbers? options)))))
+           (render-diff-hunk-snippet hunk
+                                     path
+                                     hunk-options
+                                     out
+                                     color?
+                                     line-number-width
+                                     (preview-options-line-numbers? options)
+                                     file-rendered-lines))
          (string-append (diff-header-line (git-diff-render-hunk-anchor hunk)
                                           color?)
                         rendered-snippet)))

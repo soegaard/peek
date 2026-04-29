@@ -1195,6 +1195,37 @@
    (check-true (string-contains? numbered
                                  "+ 4\t(define added 2)\n"))))
 
+(call-with-temp-git-repo
+ (lambda (dir)
+   (define source-path
+     (build-path dir "demo.html"))
+   (call-with-output-file source-path
+     (lambda (out)
+       (display "<body>\n" out)
+       (display "  <script>\n" out)
+       (display "  const value = 1;\n" out)
+       (display "  </script>\n" out)
+       (display "</body>\n" out))
+     #:exists 'truncate/replace)
+   (parameterize ([current-directory dir])
+     (check-true (system* git-executable "add" "demo.html"))
+     (check-true (system* git-executable "commit" "-q" "-m" "initial")))
+   (call-with-output-file source-path
+     (lambda (out)
+       (display "<body>\n" out)
+       (display "  <script>\n" out)
+       (display "  const value = 2;\n" out)
+       (display "  </script>\n" out)
+       (display "</body>\n" out))
+     #:exists 'truncate/replace)
+   (define rendered
+     (preview-file source-path
+                   (make-preview-options #:color-mode 'always
+                                         #:diff? #t)))
+   (check-true (regexp-match? #px"\u001b\\[" rendered))
+   (check-true (regexp-match? #px"const" (strip-ansi rendered)))
+   (check-true (regexp-match? #px"\u001b\\[[0-9;]*mconst" rendered))))
+
 (check-equal?
  (let ([out (open-output-string)])
    (preview-port (open-input-string "<!doctype html><main id=\"app\">Hi</main>\n")

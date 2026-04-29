@@ -8,12 +8,14 @@
          racket/list
          racket/runtime-path
          racket/string
+         racket/system
          "../archive.rkt"
          "../binary.rkt"
          "../common-style.rkt"
          "../c.rkt"
          "../css.rkt"
          "../delimited.rkt"
+         "../git-diff.rkt"
          "../go.rkt"
          "../html.rkt"
          "../java.rkt"
@@ -142,6 +144,21 @@
     (lambda ()
       (when (directory-exists? dir)
         (delete-directory/files dir)))))
+
+(define git-executable
+  (find-executable-path "git"))
+
+;; call-with-temp-git-repo : (path? -> any/c) -> any/c
+;;   Create a small temporary Git repository for diff-preview tests.
+(define (call-with-temp-git-repo proc)
+  (call-with-temp-directory
+   (lambda (dir)
+     (when git-executable
+       (parameterize ([current-directory dir])
+         (check-true (system* git-executable "init" "-q"))
+         (check-true (system* git-executable "config" "user.email" "peek@example.com"))
+         (check-true (system* git-executable "config" "user.name" "peek test"))
+         (proc dir))))))
 
 (define (call-with-temp-archive-files proc)
   (call-with-temp-directory
@@ -714,6 +731,24 @@
    "Beta\n")
   "problem")
  "## 1. Problem\nAlpha\n### 1.2 Problems with naive lowering\nBeta\n")
+(check-equal?
+ (parse-git-diff-hunks
+  (string-append
+   "diff --git a/demo.rkt b/demo.rkt\n"
+   "@@ -3,0 +3,2 @@\n"
+   "@@ -10,2 +12 @@\n"
+   "@@ -20 +21,0 @@\n"))
+ (list (git-diff-hunk 3 2)
+       (git-diff-hunk 12 1)
+       (git-diff-hunk 21 0)))
+(check-equal?
+ (expand-git-diff-hunks (list (git-diff-hunk 5 2)
+                              (git-diff-hunk 8 1)
+                              (git-diff-hunk 20 0))
+                        30
+                        2)
+ (list (git-diff-slice 5 3 10)
+       (git-diff-slice 20 18 22)))
 (check-exn
  exn:fail:user?
  (lambda ()
@@ -1095,6 +1130,52 @@
                       out)
    (check-equal? (get-output-string out)
                  " 1\talpha\n 2\tbeta\n 3\t> gamma\n")))
+
+(call-with-temp-git-repo
+ (lambda (dir)
+   (define source-path
+     (build-path dir "demo.rkt"))
+   (call-with-output-file source-path
+     (lambda (out)
+       (display "#lang racket/base\n" out)
+       (display "(define (greet name)\n" out)
+       (display "  (string-append \"hello, \" name))\n" out)
+       (display "(define untouched 1)\n" out))
+     #:exists 'truncate/replace)
+   (parameterize ([current-directory dir])
+     (check-true (system* git-executable "add" "demo.rkt"))
+     (check-true (system* git-executable "commit" "-q" "-m" "initial")))
+   (call-with-output-file source-path
+     (lambda (out)
+       (display "#lang racket/base\n" out)
+       (display "(define (greet person)\n" out)
+       (display "  (string-append \"hello, \" person))\n" out)
+       (display "(define untouched 1)\n" out)
+       (display "(define added 2)\n" out))
+     #:exists 'truncate/replace)
+   (define rendered
+     (strip-ansi (preview-file source-path
+                               (make-preview-options #:color-mode 'always
+                                                     #:diff? #t))))
+   (check-true (regexp-match? #px"@@ changed near line 2 @@"
+                              rendered))
+   (check-true (regexp-match? #px"person"
+                              rendered))
+   (check-true (regexp-match? #px"added"
+                              rendered))
+   (check-false (regexp-match? #px"no changed hunks"
+                               rendered))
+   (define numbered
+     (strip-ansi (preview-file source-path
+                               (make-preview-options #:color-mode 'always
+                                                     #:diff? #t
+                                                     #:line-numbers? #t))))
+   (check-true (regexp-match? #px"^@@ changed near line 2 @@\n1\t#lang racket/base\n2\t\\(define \\(greet person\\)"
+                              numbered))
+   (check-true (string-contains? numbered
+                                 "3\t  (string-append \"hello, \" person))\n"))
+   (check-true (string-contains? numbered
+                                 "5\t(define added 2)\n"))))
 
 (check-equal?
  (let ([out (open-output-string)])

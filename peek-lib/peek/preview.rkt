@@ -14,6 +14,7 @@
 ;; preview-options-color-mode          -- Color mode selection.
 ;; preview-options-binary-mode         -- Binary rendering mode.
 ;; preview-options-search-bytes        -- Highlighted byte sequences.
+;; preview-options-diff?               -- Whether Git-focused diff preview is enabled.
 ;; preview-options-pretty?             -- Whether pretty mode is enabled.
 ;; preview-options-section             -- Selected named section.
 ;; preview-options-grep-patterns       -- Line-matching regexps.
@@ -47,6 +48,8 @@
  preview-options-binary-mode
  ;; preview-options-search-bytes Highlighted byte sequences.
  preview-options-search-bytes
+ ;; preview-options-diff?       Whether Git-focused diff preview is enabled.
+ preview-options-diff?
  ;; preview-options-pretty?     Whether pretty mode is enabled.
  preview-options-pretty?
  ;; preview-options-section     Selected named section.
@@ -76,11 +79,14 @@
 
 (require racket/file
          racket/bytes
+         racket/list
          racket/path
          racket/port
          racket/string
+         "common-style.rkt"
          "archive.rkt"
          "binary.rkt"
+         "git-diff.rkt"
          "directory.rkt"
          "css.rkt"
          "c.rkt"
@@ -109,7 +115,7 @@
          "scribble.rkt"
          "wat.rkt")
 
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes pretty? section grep-patterns line-numbers? directory-sort) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? pretty? section grep-patterns line-numbers? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
@@ -123,12 +129,13 @@
                               #:color-mode  [color-mode 'always]
                               #:binary-mode [binary-mode 'hex]
                               #:search-bytes [search-bytes '()]
+                              #:diff?       [diff? #f]
                               #:pretty?     [pretty? #f]
                               #:section     [section #f]
                               #:grep-patterns [grep-patterns '()]
                               #:line-numbers? [line-numbers? #f]
                               #:directory-sort [directory-sort 'kind])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes pretty? section grep-patterns line-numbers? directory-sort))
+  (preview-options type align? swatches? color-mode binary-mode search-bytes diff? pretty? section grep-patterns line-numbers? directory-sort))
 
 ;; -----------------------------------------------------------------------------
 ;; Line numbering
@@ -170,6 +177,12 @@
     (number->string line-no))
   (string-append (make-string (max 0 (- width (string-length digits))) #\space)
                  digits
+                 "\t"))
+
+;; line-number-blank-prefix : exact-positive-integer? -> string?
+;;   Build one empty nl-style prefix.
+(define (line-number-blank-prefix width)
+  (string-append (make-string width #\space)
                  "\t"))
 
 ;; make-line-number-output-port : output-port? exact-positive-integer? -> output-port?
@@ -330,6 +343,147 @@
     [(never)  #f]
     [(auto)   (terminal-port? out)]
     [else     #t]))
+
+;; diff-context-lines : exact-nonnegative-integer?
+;;   Number of unchanged context lines to show around each Git hunk.
+(define diff-context-lines
+  2)
+
+;; ensure-trailing-newline : string? -> string?
+;;   Add a trailing newline when one is missing.
+(define (ensure-trailing-newline text)
+  (cond
+    [(or (string=? text "")
+         (string-suffix? text "\n"))
+     text]
+    [else
+     (string-append text "\n")]))
+
+;; slice-lines->string : (listof string?) exact-positive-integer? exact-nonnegative-integer? -> string?
+;;   Convert a 1-based inclusive line slice back into source text.
+(define (slice-lines->string lines start end)
+  (cond
+    [(< end start)
+     ""]
+    [else
+     (string-join (take (drop lines (sub1 start))
+                        (add1 (- end start)))
+                  "\n"
+                  #:after-last "\n")]))
+
+;; diff-header-line : exact-positive-integer? boolean? -> string?
+;;   Render one diff-hunk header line.
+(define (diff-header-line anchor color?)
+  (define header
+    (format "@@ changed near line ~a @@" anchor))
+  (cond
+    [color?
+     (string-append ansi-comment header ansi-reset "\n")]
+    [else
+     (string-append header "\n")]))
+
+;; add-diff-line-numbers : string? exact-positive-integer? exact-positive-integer? -> string?
+;;   Prefix rendered diff lines with original file line numbers.
+(define (add-diff-line-numbers rendered start-line width)
+  (define in
+    (open-input-string (ensure-trailing-newline rendered)))
+  (define out
+    (open-output-string))
+  (let loop ([line-no start-line])
+    (define line
+      (read-line in 'any))
+    (unless (eof-object? line)
+      (display (line-number-prefix width line-no) out)
+      (display line out)
+      (newline out)
+      (loop (add1 line-no))))
+  (get-output-string out))
+
+;; diff-preview-options : preview-options? -> preview-options?
+;;   Remove incompatible postprocessing from per-hunk rendering.
+(define (diff-preview-options options)
+  (make-preview-options #:type           (preview-options-type options)
+                        #:align?         (preview-options-align? options)
+                        #:swatches?      (preview-options-swatches? options)
+                        #:color-mode     (preview-options-color-mode options)
+                        #:binary-mode    (preview-options-binary-mode options)
+                        #:search-bytes   (preview-options-search-bytes options)
+                        #:diff?          #f
+                        #:pretty?        (preview-options-pretty? options)
+                        #:section        #f
+                        #:grep-patterns  '()
+                        #:line-numbers?  #f
+                        #:directory-sort (preview-options-directory-sort options)))
+
+;; render-diff-preview : path-string? preview-options? output-port? -> string?
+;;   Render Git-changed file hunks using the normal file-type previewer.
+(define (render-diff-preview path options out)
+  (define file-type
+    (effective-file-type path options))
+  (cond
+    [(directory-exists? path)
+     (raise-user-error 'diff "directory preview does not support --diff")]
+    [(or (eq? file-type 'archive)
+         (eq? file-type 'binary))
+     (raise-user-error 'diff "archive and binary previews do not support --diff")]
+    [(preview-options-section options)
+     (raise-user-error 'diff "--section does not combine with --diff yet")]
+    [else
+     (define hunks
+       (git-working-tree-hunks path))
+     (when (null? hunks)
+       (raise-user-error 'diff (format "no changed hunks: ~a" path)))
+     (define lines
+       (file->lines path))
+     (define slices
+       (expand-git-diff-hunks hunks
+                              (length lines)
+                              diff-context-lines))
+     (define hunk-options
+       (diff-preview-options options))
+     (define color?
+       (color-enabled? out options))
+     (define line-number-width
+       (string-length
+        (number->string
+         (max 1 (length lines)))))
+     (define rendered-hunks
+       (for/list ([slice (in-list slices)])
+         (define snippet
+           (slice-lines->string lines
+                                (git-diff-slice-start slice)
+                                (git-diff-slice-end slice)))
+         (define rendered-snippet
+           (preview-string/rendered snippet path hunk-options out))
+         (string-append (diff-header-line (git-diff-slice-anchor slice)
+                                          color?)
+                        (cond
+                          [(preview-options-line-numbers? options)
+                           (add-diff-line-numbers rendered-snippet
+                                                  (git-diff-slice-start slice)
+                                                  line-number-width)]
+                          [else
+                           rendered-snippet]))))
+     (define final-options
+       (make-preview-options #:type           (preview-options-type options)
+                             #:align?         (preview-options-align? options)
+                             #:swatches?      (preview-options-swatches? options)
+                             #:color-mode     (preview-options-color-mode options)
+                             #:binary-mode    (preview-options-binary-mode options)
+                             #:search-bytes   (preview-options-search-bytes options)
+                             #:diff?          (preview-options-diff? options)
+                             #:pretty?        (preview-options-pretty? options)
+                             #:section        (preview-options-section options)
+                             #:grep-patterns  (preview-options-grep-patterns options)
+                             #:line-numbers?  #f
+                             #:directory-sort (preview-options-directory-sort options)))
+     (postprocess-rendered-string (string-join rendered-hunks
+                                               (if (preview-options-line-numbers? options)
+                                                   ""
+                                                   "\n"))
+                                  path
+                                  color?
+                                  final-options)]))
 
 ;; detect-file-type : (or/c path-string? #f) -> (or/c symbol? #f)
 ;;   Infer a supported file type from a file path.
@@ -715,6 +869,8 @@
     (effective-file-type path options))
   (begin0
    (cond
+    [(preview-options-diff? options)
+     (display (render-diff-preview path options out) out)]
     [(directory-exists? path)
      (define actual-out
        (maybe-wrap-grep-output-port
@@ -744,6 +900,8 @@
   (define color?
     (color-enabled? out options))
   (cond
+    [(preview-options-diff? options)
+     (render-diff-preview path options out)]
     [(directory-exists? path)
      (define rendered
        (render-directory-preview path

@@ -217,7 +217,7 @@
      (define (write-preview out)
        (cond
          [file-path
-          (display (preview-file file-path options out) out)]
+          (preview-path-port file-path options out)]
          [else
           (preview-port (current-input-port) #f options out)]))
      (cond

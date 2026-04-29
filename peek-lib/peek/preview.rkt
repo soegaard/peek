@@ -22,6 +22,8 @@
 ;;   Preview a source string using the selected options.
 ;; preview-port : input-port? ... -> void?
 ;;   Preview from an input port to an output port.
+;; preview-path-port : path-string? ... -> void?
+;;   Preview from a filesystem path to an output port.
 ;; preview-file : path-string? ... -> string?
 ;;   Preview a file using the selected options.
 
@@ -56,6 +58,9 @@
  ;; preview-port : input-port? (or/c path-string? #f) preview-options? output-port? -> void?
  ;;   Preview from an input port to an output port.
  preview-port
+ ;; preview-path-port : path-string? preview-options? output-port? -> void?
+ ;;   Preview directly from a filesystem path to an output port.
+ preview-path-port
  ;; preview-file : path-string? preview-options? -> string?
  ;;   Preview a file from disk.
  preview-file)
@@ -470,6 +475,27 @@
                  out)]
        [else
         (display source out)])]))
+
+;; preview-file : path-string? preview-options? -> string?
+;;   Preview a file from disk.
+(define (preview-path-port path
+                           [options (make-preview-options)]
+                           [out (current-output-port)])
+  (define file-type
+    (effective-file-type path options))
+  (cond
+    [(directory-exists? path)
+     (display (render-directory-preview path
+                                        #:color? (color-enabled? out options)
+                                        #:sort-mode (preview-options-directory-sort options))
+              out)]
+    [(or (eq? file-type 'archive)
+         (eq? file-type 'binary))
+     (display (preview-file path options out) out)]
+    [else
+     (call-with-input-file path
+       (lambda (in)
+         (preview-port in path options out)))]))
 
 ;; preview-file : path-string? preview-options? -> string?
 ;;   Preview a file from disk.

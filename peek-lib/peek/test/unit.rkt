@@ -191,6 +191,27 @@
 (check-equal? supported-file-types
               '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
+(let ([out (open-output-string)])
+  (preview-path-port demo-racket-path
+                     (make-preview-options #:color-mode 'always)
+                     out)
+  (check-true (regexp-match? ansi-pattern
+                             (get-output-string out))))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define source-dir
+     (build-path dir "folder"))
+   (make-directory* source-dir)
+   (make-directory* (build-path source-dir "alpha"))
+   (define out
+     (open-output-string))
+   (preview-path-port source-dir
+                      (make-preview-options #:color-mode 'always)
+                      out)
+   (check-true (regexp-match? #px"alpha/"
+                              (strip-ansi (get-output-string out))))))
+
 (call-with-temp-directory
  (lambda (dir)
    (define source-dir

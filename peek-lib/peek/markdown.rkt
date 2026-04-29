@@ -97,17 +97,24 @@
     [else
      #f]))
 
+;; normalize-markdown-heading-title : string? -> string?
+;;   Normalize one heading title for matching.
+(define (normalize-markdown-heading-title title)
+  (define stripped
+    (regexp-replace #px"^[0-9]+(?:\\.[0-9]+)*\\.?\\s+" (string-trim title) ""))
+  (string-trim stripped))
+
 ;; markdown-heading-title-match? : string? string? -> boolean?
 ;;   Compare one heading title to a requested section name.
 (define (markdown-heading-title-match? title requested)
-  (string-ci=? (string-trim title)
+  (string-ci=? (normalize-markdown-heading-title title)
                (string-trim requested)))
 
 ;; markdown-heading-title-contains? : string? string? -> boolean?
 ;;   Determine whether one heading title contains the requested section name.
 (define (markdown-heading-title-contains? title requested)
   (define normalized-title
-    (string-downcase (string-trim title)))
+    (string-downcase (normalize-markdown-heading-title title)))
   (define normalized-requested
     (string-downcase (string-trim requested)))
   (and (not (string=? normalized-requested ""))

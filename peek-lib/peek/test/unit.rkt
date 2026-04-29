@@ -705,6 +705,15 @@
 (check-equal?
  (extract-markdown-section markdown-section-sample "thr")
  "# Three\nGamma\n")
+(check-equal?
+ (extract-markdown-section
+  (string-append
+   "## 1. Problem\n"
+   "Alpha\n"
+   "### 1.2 Problems with naive lowering\n"
+   "Beta\n")
+  "problem")
+ "## 1. Problem\nAlpha\n### 1.2 Problems with naive lowering\nBeta\n")
 (check-exn
  exn:fail:user?
  (lambda ()

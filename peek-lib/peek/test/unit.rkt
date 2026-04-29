@@ -1021,6 +1021,16 @@
    (get-output-string out))
  "     1\talpha\n     2\tbeta\n")
 
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string "alpha\nbeta\ngamma\n")
+                 #f
+                 (make-preview-options #:color-mode 'never
+                                       #:grep-patterns (list #rx"et"))
+                 out)
+   (get-output-string out))
+ "alpha\n> beta\ngamma\n")
+
 (call-with-temp-directory
  (lambda (dir)
    (define numbered-path
@@ -1037,6 +1047,24 @@
                       out)
    (check-equal? (get-output-string out)
                  " 1\ta\n 2\tb\n 3\tc\n 4\td\n 5\te\n")))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define grep-path
+     (build-path dir "grep.rkt"))
+   (call-with-output-file grep-path
+     (lambda (out)
+       (display "alpha\nbeta\ngamma\n" out))
+     #:exists 'truncate/replace)
+   (define out
+     (open-output-string))
+   (preview-path-port grep-path
+                      (make-preview-options #:color-mode 'never
+                                            #:grep-patterns (list #rx"mm")
+                                            #:line-numbers? #t)
+                      out)
+   (check-equal? (get-output-string out)
+                 " 1\talpha\n 2\tbeta\n 3\t> gamma\n")))
 
 (check-equal?
  (let ([out (open-output-string)])

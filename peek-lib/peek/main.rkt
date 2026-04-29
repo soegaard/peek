@@ -69,6 +69,14 @@
     [else
      (string->bytes/utf-8 spec)]))
 
+;; grep-spec->regexp : string? -> regexp?
+;;   Compile a grep pattern as a regular expression.
+(define (grep-spec->regexp spec)
+  (with-handlers ([exn:fail?
+                   (lambda (_)
+                     (usage-error (format "invalid regexp after --grep: ~a" spec)))])
+    (pregexp spec)))
+
 ;; pager-command : -> (listof path-string?)
 ;;   Resolve the configured pager command.
 (define (pager-command)
@@ -136,6 +144,7 @@
   (define directory-sort 'kind)
   (define search-byte-specs '())
   (define search-text-specs '())
+  (define grep-specs '())
   (define pager? #t)
   (define list-file-types? #f)
   (define type #f)
@@ -190,6 +199,9 @@
    [("--search-text") spec
     "Highlight UTF-8 text; repeat to add another search string."
     (set! search-text-specs (cons spec search-text-specs))]
+   [("--grep") spec
+    "Emphasize preview lines whose rendered text matches a regexp."
+    (set! grep-specs (cons spec grep-specs))]
    #:args args
    (cond
      [(null? args)
@@ -217,6 +229,8 @@
                                                          (reverse search-byte-specs))
                                                     (map search-text-spec->bytes
                                                          (reverse search-text-specs)))
+                             #:grep-patterns (map grep-spec->regexp
+                                                  (reverse grep-specs))
                              #:line-numbers? line-numbers?
                              #:pretty? pretty?))
      (define (write-preview out)

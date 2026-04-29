@@ -111,6 +111,12 @@ Add nl-style line numbers:
 peek -n -P path/to/file.rkt
 ```
 
+Emphasize rendered lines whose text matches a regexp:
+
+```sh
+peek --grep TODO -P path/to/file.rkt
+```
+
 ## Examples
 
 A few small previews, rendered by `peek`:

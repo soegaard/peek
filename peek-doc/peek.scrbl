@@ -173,8 +173,9 @@ surface includes:
        @seclink["c"]{C}, @seclink["objective-c"]{Objective-C},
        @seclink["cpp"]{C++}, @seclink["go"]{Go},
        @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
-       @seclink["pascal"]{Pascal}, @seclink["shell"]{PowerShell},
-       @seclink["python"]{Python}, @seclink["rhombus"]{Rhombus},
+       @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
+       @seclink["shell"]{PowerShell}, @seclink["python"]{Python},
+       @seclink["rhombus"]{Rhombus},
        @seclink["racket"]{Racket}, @seclink["rust"]{Rust},
        @seclink["swift"]{Swift}, and @seclink["shell"]{Zsh}}
  @item{@bold{Document languages:} @seclink["markdown"]{Markdown},
@@ -269,8 +270,8 @@ General options:
     selects the input type explicitly. This is mainly useful for standard
        input. Supported values include @tt{archive}, @tt{binary}, @tt{bash}, @tt{c},
        @tt{cpp}, @tt{css}, @tt{html}, @tt{js}, @tt{json}, @tt{jsx},
-       @tt{latex}, @tt{md}, @tt{pascal}, @tt{plist}, @tt{powershell},
-       @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{rust}, @tt{scrbl},
+       @tt{latex}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
+       @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{rust}, @tt{scrbl},
        @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, and @tt{zsh}. Use
        @tt{archive} to force archive preview for a supported archive, or use
        @tt{binary} to force the binary preview mode even when automatic
@@ -394,8 +395,9 @@ The current reference sections are:
        @seclink["c"]{C}, @seclink["cpp"]{C++},
        @seclink["objective-c"]{Objective-C}, @seclink["go"]{Go},
        @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
-       @seclink["pascal"]{Pascal}, @seclink["python"]{Python},
-       @seclink["racket"]{Racket}, @seclink["rhombus"]{Rhombus},
+       @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
+       @seclink["python"]{Python}, @seclink["racket"]{Racket},
+       @seclink["rhombus"]{Rhombus},
        @seclink["rust"]{Rust}, and @seclink["swift"]{Swift}}
  @item{@bold{Document languages:} @seclink["markdown"]{Markdown},
        @seclink["scribble"]{Scribble}, @seclink["tex"]{TeX}, and
@@ -674,6 +676,21 @@ Example Python preview input:
 Rendered Python preview:
 
 @(preview-shot snippet-python-shot)
+
+@subsubsection[#:tag "mathematica"]{Mathematica}
+
+For Mathematica / Wolfram Language, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.wl} and @tt{.wls} files}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Mathematica previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping. The ambiguous @tt{.m} extension stays with Objective-C, so the
+standalone Mathematica previewer currently uses @tt{.wl} and @tt{.wls}.
 
 @subsubsection[#:tag "racket"]{Racket}
 

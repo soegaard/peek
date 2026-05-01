@@ -29,6 +29,7 @@
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
+;; mathematica-like-style -- Style Mathematica-like embedded tokens.
 ;; pascal-like-style     -- Style Pascal-like embedded tokens.
 ;; swift-like-style      -- Style Swift-like embedded tokens.
 ;; rust-like-style       -- Style Rust-like embedded tokens.
@@ -86,6 +87,8 @@
  yaml-like-style
  ;; python-like-style Style Python-like embedded tokens.
  python-like-style
+ ;; mathematica-like-style Style Mathematica-like embedded tokens.
+ mathematica-like-style
  ;; pascal-like-style Style Pascal-like embedded tokens.
  pascal-like-style
  ;; swift-like-style Style Swift-like embedded tokens.
@@ -622,6 +625,53 @@
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]
+    [else
+     ""]))
+
+;; mathematica-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Mathematica-like roles.
+(define (mathematica-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags))
+     ansi-comment]
+    [(or (memq 'mathematica-package-form tags)
+         (memq 'mathematica-scoping-form tags)
+         (memq 'mathematica-definition-form tags))
+     ansi-keyword]
+    [(or (memq 'mathematica-string-literal tags)
+         (memq 'mathematica-number tags)
+         (memq 'mathematica-integer-number tags)
+         (memq 'mathematica-real-number tags)
+         (memq 'mathematica-base-number tags)
+         (memq 'mathematica-precision-number tags)
+         (memq 'mathematica-exponent-number tags)
+         (memq 'mathematica-named-character tags)
+         (memq 'mathematica-character-escape tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'mathematica-assignment-operator tags)
+         (memq 'mathematica-rewrite-operator tags)
+         (memq 'mathematica-pattern-condition-operator tags)
+         (memq 'mathematica-composition-operator tags)
+         (memq 'mathematica-string-pattern-operator tags)
+         (memq 'mathematica-function-arrow-operator tags)
+         (eq? category 'operator))
+     ansi-delimiter]
+    [(or (memq 'mathematica-pattern tags)
+         (memq 'mathematica-slot tags)
+         (memq 'mathematica-delimiter tags)
+         (memq 'mathematica-group-delimiter tags)
+         (memq 'mathematica-part-delimiter tags)
+         (memq 'mathematica-association-delimiter tags)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [(eq? category 'identifier)
+     ansi-identifier]
     [else
      ""]))
 

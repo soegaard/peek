@@ -170,6 +170,7 @@ Current supported file types are:
 - `json`
 - `jsx`
 - `latex`
+- `mathematica`
 - `md`
 - `plist`
 - `pascal`
@@ -208,7 +209,9 @@ rewriting. Plist uses the `plist` previewer and preserves source text and
 line breaks without layout rewriting. Pascal uses
 the `pascal` previewer and preserves source text and line breaks without
 layout rewriting. Python uses the `python` previewer and preserves source text
-and line breaks without layout rewriting. Rhombus uses the `rhombus`
+and line breaks without layout rewriting. Mathematica uses the `mathematica`
+previewer for `.wl` and `.wls` sources while leaving the ambiguous `.m`
+extension with Objective-C. Rhombus uses the `rhombus`
 previewer and preserves source text and line breaks without layout rewriting.
 Shell files use the `bash`, `zsh`, and `powershell` previewers and preserve
 source text and line breaks without layout rewriting. Swift uses the `swift`

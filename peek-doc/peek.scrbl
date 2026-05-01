@@ -689,8 +689,9 @@ For Mathematica / Wolfram Language, @exec{peek} currently supports:
 
 The Mathematica previewer is intentionally color-only. It does not add layout
 rewriting or alignment, and it preserves source text and line breaks after
-ANSI stripping. The ambiguous @tt{.m} extension stays with Objective-C, so the
-standalone Mathematica previewer currently uses @tt{.wl} and @tt{.wls}.
+ANSI stripping. Files ending in @tt{.wl} and @tt{.wls} are previewed directly
+as Mathematica. For the ambiguous @tt{.m} extension, @exec{peek} inspects the
+first few lines and chooses between Mathematica and Objective-C heuristically.
 
 @subsubsection[#:tag "racket"]{Racket}
 

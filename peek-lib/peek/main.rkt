@@ -139,6 +139,7 @@
   (define swatches? #t)
   (define color-mode 'always)
   (define binary-mode 'hex)
+  (define diff? #f)
   (define pretty? #f)
   (define section #f)
   (define line-numbers? #f)
@@ -181,6 +182,9 @@
    [("--bits")
     "Render binary input as bits instead of hex."
     (set! binary-mode 'bits)]
+   [("--diff")
+    "Preview only changed Git hunks for a file path."
+    (set! diff? #t)]
    [("-p" "--pretty")
     "Enable pretty rendering when the selected file type supports it."
     (set! pretty? #t)]
@@ -222,12 +226,16 @@
        (unless (or (file-exists? file-path)
                    (directory-exists? file-path))
          (usage-error (format "file not found: ~a" file-path))))
+     (when (and diff?
+                (not file-path))
+       (usage-error "--diff requires a file path"))
      (define options
        (make-preview-options #:type      type
                              #:align?    align?
                              #:swatches? swatches?
                              #:color-mode color-mode
                              #:binary-mode binary-mode
+                             #:diff?     diff?
                              #:directory-sort directory-sort
                              #:search-bytes (append (map search-byte-spec->bytes
                                                          (reverse search-byte-specs))

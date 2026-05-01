@@ -14,6 +14,10 @@
 ;; git-diff-line?                  -- Recognize parsed diff lines.
 ;; git-diff-render-hunk            -- One parsed unified diff hunk with visible lines.
 ;; git-diff-render-hunk?           -- Recognize parsed render hunks.
+;; git-diff-render-hunk-old-start  -- First old-file line in the hunk header.
+;; git-diff-render-hunk-old-count  -- Old-file hunk length.
+;; git-diff-render-hunk-new-start  -- First new-file line in the hunk header.
+;; git-diff-render-hunk-new-count  -- New-file hunk length.
 ;; git-diff-slice                  -- One expanded preview slice.
 ;; git-diff-slice?                 -- Recognize preview slices.
 ;; git-diff-slice-anchor           -- Representative line number for a slice header.
@@ -56,12 +60,24 @@
  ;; git-diff-line-text : git-diff-line? -> string?
  ;;   Line text without diff prefix.
  git-diff-line-text
- ;; git-diff-render-hunk : exact-positive-integer? (listof git-diff-line?) -> git-diff-render-hunk?
+ ;; git-diff-render-hunk : exact-positive-integer? exact-nonnegative-integer? exact-positive-integer? exact-nonnegative-integer? exact-positive-integer? (listof git-diff-line?) -> git-diff-render-hunk?
  ;;   One parsed unified-diff hunk.
  git-diff-render-hunk
  ;; git-diff-render-hunk? : any/c -> boolean?
  ;;   Recognize parsed render hunks.
  git-diff-render-hunk?
+ ;; git-diff-render-hunk-old-start : git-diff-render-hunk? -> exact-positive-integer?
+ ;;   First old-file line in the hunk header.
+ git-diff-render-hunk-old-start
+ ;; git-diff-render-hunk-old-count : git-diff-render-hunk? -> exact-nonnegative-integer?
+ ;;   Old-file hunk length.
+ git-diff-render-hunk-old-count
+ ;; git-diff-render-hunk-new-start : git-diff-render-hunk? -> exact-positive-integer?
+ ;;   First new-file line in the hunk header.
+ git-diff-render-hunk-new-start
+ ;; git-diff-render-hunk-new-count : git-diff-render-hunk? -> exact-nonnegative-integer?
+ ;;   New-file hunk length.
+ git-diff-render-hunk-new-count
  ;; git-diff-render-hunk-anchor : git-diff-render-hunk? -> exact-positive-integer?
  ;;   Representative line number for the hunk header.
  git-diff-render-hunk-anchor
@@ -108,7 +124,7 @@
 
 (struct git-diff-hunk (start count) #:transparent)
 (struct git-diff-line (kind old-line-no new-line-no text) #:transparent)
-(struct git-diff-render-hunk (anchor lines) #:transparent)
+(struct git-diff-render-hunk (old-start old-count new-start new-count anchor lines) #:transparent)
 (struct git-diff-slice (anchor start end) #:transparent)
 
 ;; parse-hunk-line : string? -> (or/c git-diff-hunk? #f)
@@ -270,6 +286,10 @@
                #f
                '()
                (cons (git-diff-render-hunk
+                      (vector-ref current-header 0)
+                      (vector-ref current-header 1)
+                      (vector-ref current-header 2)
+                      (vector-ref current-header 3)
                       (diff-hunk-anchor (vector-ref current-header 2)
                                         (reverse current-lines))
                       (reverse current-lines))
@@ -281,6 +301,10 @@
        (reverse
         (if current-header
             (cons (git-diff-render-hunk
+                   (vector-ref current-header 0)
+                   (vector-ref current-header 1)
+                   (vector-ref current-header 2)
+                   (vector-ref current-header 3)
                    (diff-hunk-anchor (vector-ref current-header 2)
                                      (reverse current-lines))
                    (reverse current-lines))
@@ -295,6 +319,10 @@
           (lambda (header)
             (if current-header
                 (loop remaining #f #f #f '() (cons (git-diff-render-hunk
+                                                    (vector-ref current-header 0)
+                                                    (vector-ref current-header 1)
+                                                    (vector-ref current-header 2)
+                                                    (vector-ref current-header 3)
                                                     (diff-hunk-anchor (vector-ref current-header 2)
                                                                       (reverse current-lines))
                                                     (reverse current-lines))

@@ -24,6 +24,7 @@
          "../haskell.rkt"
          "../main.rkt"
          "../markdown.rkt"
+         "../mathematica.rkt"
          "../plist.rkt"
          "../pascal.rkt"
          "../python.rkt"
@@ -68,6 +69,8 @@
   "fixtures/demo.java")
 (define-runtime-path demo-json-path
   "fixtures/demo.json")
+(define-runtime-path demo-mathematica-path
+  "fixtures/demo.wl")
 (define-runtime-path demo-haskell-path
   "fixtures/demo.hs")
 (define-runtime-path demo-plist-path
@@ -206,10 +209,17 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 (let ([out (open-output-string)])
   (preview-path-port demo-racket-path
+                     (make-preview-options #:color-mode 'always)
+                     out)
+  (check-true (regexp-match? ansi-pattern
+                             (get-output-string out))))
+
+(let ([out (open-output-string)])
+  (preview-path-port demo-mathematica-path
                      (make-preview-options #:color-mode 'always)
                      out)
   (check-true (regexp-match? ansi-pattern
@@ -228,6 +238,61 @@
                       out)
    (check-true (regexp-match? #px"alpha/"
                               (strip-ansi (get-output-string out))))))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define path
+     (build-path dir "heuristic.m"))
+   (call-with-output-file path
+     (lambda (out)
+       (display "BeginPackage[\"Demo`\"]\n" out)
+       (display "Needs[\"CodeParser`\"]\n" out)
+       (display "f[x_] := x\n" out))
+     #:exists 'truncate/replace)
+   (check-equal? (preview-file path
+                               (make-preview-options #:color-mode 'always))
+                 (render-mathematica-preview (file->string path)))))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define path
+     (build-path dir "heuristic.m"))
+   (call-with-output-file path
+     (lambda (out)
+       (display "#!/usr/bin/env wolframscript\n" out)
+       (display "Needs[\"MUnit`\"]\n" out)
+       (display "f[x_] := x\n" out))
+     #:exists 'truncate/replace)
+   (check-equal? (preview-file path
+                               (make-preview-options #:color-mode 'always))
+                 (render-mathematica-preview (file->string path)))))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define path
+     (build-path dir "heuristic.m"))
+   (call-with-output-file path
+     (lambda (out)
+       (display "#import <Foundation/Foundation.h>\n" out)
+       (display "@implementation Foo\n" out)
+       (display "@end\n" out))
+     #:exists 'truncate/replace)
+   (check-equal? (preview-file path
+                               (make-preview-options #:color-mode 'always))
+                 (render-objc-preview (file->string path)))))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define path
+     (build-path dir "heuristic.m"))
+   (call-with-output-file path
+     (lambda (out)
+       (display "foo[x_] := x\n" out)
+       (display "bar = 1\n" out))
+     #:exists 'truncate/replace)
+   (check-equal? (preview-file path
+                               (make-preview-options #:color-mode 'always))
+                 (render-mathematica-preview (file->string path)))))
 
 (call-with-temp-directory
  (lambda (dir)
@@ -751,7 +816,7 @@
        (git-diff-slice 20 18 22)))
 (check-equal?
  (parse-git-diff-render-hunks
-  (string-append
+ (string-append
    "diff --git a/demo.rkt b/demo.rkt\n"
    "@@ -2,3 +2,3 @@\n"
    " (define (greet name)\n"
@@ -759,6 +824,10 @@
    "+  (string-append \"hello, \" person))\n"
    " (define untouched 1)\n"))
  (list (git-diff-render-hunk
+        2
+        3
+        2
+        3
         2
         (list (git-diff-line 'context 2 2 "(define (greet name)")
               (git-diff-line 'removed 3 #f "  (string-append \"hello, \" name))")
@@ -1167,12 +1236,20 @@
        (display "  (string-append \"hello, \" person))\n" out)
        (display "(define added 2)\n" out))
      #:exists 'truncate/replace)
+   (define colored-rendered
+     (preview-file source-path
+                   (make-preview-options #:color-mode 'always
+                                         #:diff? #t)))
    (define rendered
-     (strip-ansi (preview-file source-path
-                               (make-preview-options #:color-mode 'always
-                                                     #:diff? #t))))
-   (check-true (regexp-match? #px"@@ changed near line 1 @@"
+     (strip-ansi colored-rendered))
+   (check-true (regexp-match? #px"^diff .*demo\\.rkt\n\n@@ -1,4 \\+1,4 @@"
                               rendered))
+   (check-true (regexp-match? #px"@@ -1,4 \\+1,4 @@"
+                              rendered))
+   (check-true (string-contains? colored-rendered
+                                 (string-append ansi-malformed "- " ansi-reset)))
+   (check-true (string-contains? colored-rendered
+                                 (string-append ansi-comment "+ " ansi-reset)))
    (check-true (regexp-match? #px"person"
                               rendered))
    (check-true (regexp-match? #px"added"
@@ -1186,7 +1263,12 @@
                                (make-preview-options #:color-mode 'always
                                                      #:diff? #t
                                                      #:line-numbers? #t))))
-   (check-true (regexp-match? #px"^@@ changed near line 1 @@\n  1\t#lang racket/base\n- 2\t\\(define \\(greet name\\)"
+   (check-true (string-contains? numbered
+                                 (string-append
+                                  "Example: @@ -1,4 +1,4 @@ means:\n"
+                                  "old file lines 1..4 (4 lines)\n"
+                                  "new file lines 1..4 (4 lines)\n")))
+   (check-true (regexp-match? #px"^diff .*demo\\.rkt\n\nExample: @@ -1,4 \\+1,4 @@ means:\nold file lines 1\\.\\.4 \\(4 lines\\)\nnew file lines 1\\.\\.4 \\(4 lines\\)\n\n@@ -1,4 \\+1,4 @@\n  1\t#lang racket/base\n- 2\t\\(define \\(greet name\\)"
                               numbered))
    (check-true (string-contains? numbered
                                  "- 4\t(define untouched 1)\n"))
@@ -1194,6 +1276,24 @@
                                  "+ 3\t  (string-append \"hello, \" person))\n"))
    (check-true (string-contains? numbered
                                  "+ 4\t(define added 2)\n"))))
+
+(call-with-temp-git-repo
+ (lambda (dir)
+   (define source-path
+     (build-path dir "clean.rkt"))
+   (call-with-output-file source-path
+     (lambda (out)
+       (display "#lang racket/base\n(define x 1)\n" out))
+     #:exists 'truncate/replace)
+   (parameterize ([current-directory dir])
+     (check-true (system* git-executable "add" "clean.rkt"))
+     (check-true (system* git-executable "commit" "-q" "-m" "clean")))
+   (check-equal?
+    (strip-ansi (preview-file source-path
+                              (make-preview-options #:color-mode 'always
+                                                    #:diff? #t)))
+    (format "No changed hunks in ~a.\n"
+            source-path))))
 
 (call-with-temp-git-repo
  (lambda (dir)

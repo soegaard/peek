@@ -77,7 +77,8 @@
  ;;   Preview a file from disk.
  preview-file)
 
-(require racket/file
+(require lexers/objc
+         racket/file
          racket/bytes
          racket/list
          racket/path
@@ -100,6 +101,7 @@
          "haskell.rkt"
          "objc.rkt"
          "makefile.rkt"
+         "mathematica.rkt"
          "markdown.rkt"
          "tex.rkt"
          "latex.rkt"
@@ -119,7 +121,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -371,16 +373,75 @@
                   "\n"
                   #:after-last "\n")]))
 
-;; diff-header-line : exact-positive-integer? boolean? -> string?
-;;   Render one diff-hunk header line.
-(define (diff-header-line anchor color?)
+;; diff-file-header-line : path-string? boolean? -> string?
+;;   Render one file-level diff header line.
+(define (diff-file-header-line path color?)
   (define header
-    (format "@@ changed near line ~a @@" anchor))
+    (format "diff ~a" path))
   (cond
     [color?
      (string-append ansi-comment header ansi-reset "\n")]
     [else
      (string-append header "\n")]))
+
+;; diff-header-line : git-diff-render-hunk? boolean? -> string?
+;;   Render one diff-hunk header line.
+(define (diff-header-line hunk color?)
+  (define (range-text start count)
+    (if (= count 1)
+        (number->string start)
+        (format "~a,~a" start count)))
+  (define header
+    (format "@@ -~a +~a @@"
+            (range-text (git-diff-render-hunk-old-start hunk)
+                        (git-diff-render-hunk-old-count hunk))
+            (range-text (git-diff-render-hunk-new-start hunk)
+                        (git-diff-render-hunk-new-count hunk))))
+  (cond
+    [color?
+     (string-append ansi-comment header ansi-reset "\n")]
+    [else
+     (string-append header "\n")]))
+
+;; diff-line-number-note : git-diff-render-hunk? boolean? -> string?
+;;   Explain how numbered diff lines use old and new file line numbers.
+(define (diff-line-number-note hunk color?)
+  (define old-start
+    (git-diff-render-hunk-old-start hunk))
+  (define old-count
+    (git-diff-render-hunk-old-count hunk))
+  (define old-end
+    (+ old-start
+       (max 0
+            (sub1 old-count))))
+  (define new-start
+    (git-diff-render-hunk-new-start hunk))
+  (define new-count
+    (git-diff-render-hunk-new-count hunk))
+  (define new-end
+    (+ new-start
+       (max 0
+            (sub1 new-count))))
+  (define note
+    (format (string-append
+             "Example: @@ -~a,~a +~a,~a @@ means:\n"
+             "old file lines ~a..~a (~a lines)\n"
+             "new file lines ~a..~a (~a lines)")
+            old-start
+            old-count
+            new-start
+            new-count
+            old-start
+            old-end
+            old-count
+            new-start
+            new-end
+            new-count))
+  (cond
+    [color?
+     (string-append ansi-comment note ansi-reset "\n")]
+    [else
+     (string-append note "\n")]))
 
 ;; diff-line-marker : symbol? boolean? -> string?
 ;;   Render one diff line marker.
@@ -390,9 +451,14 @@
       [(added)   "+ "]
       [(removed) "- "]
       [else      "  "]))
+  (define style
+    (case kind
+      [(added)   ansi-comment]
+      [(removed) ansi-malformed]
+      [else      ansi-comment]))
   (cond
     [color?
-     (string-append ansi-comment marker ansi-reset)]
+     (string-append style marker ansi-reset)]
     [else
      marker]))
 
@@ -541,6 +607,21 @@
 (define (render-diff-preview path options out)
   (define file-type
     (effective-file-type path options))
+  (define color?
+    (color-enabled? out options))
+  (define final-options
+    (make-preview-options #:type           (preview-options-type options)
+                          #:align?         (preview-options-align? options)
+                          #:swatches?      (preview-options-swatches? options)
+                          #:color-mode     (preview-options-color-mode options)
+                          #:binary-mode    (preview-options-binary-mode options)
+                          #:search-bytes   (preview-options-search-bytes options)
+                          #:diff?          (preview-options-diff? options)
+                          #:pretty?        (preview-options-pretty? options)
+                          #:section        (preview-options-section options)
+                          #:grep-patterns  (preview-options-grep-patterns options)
+                          #:line-numbers?  #f
+                          #:directory-sort (preview-options-directory-sort options)))
   (cond
     [(directory-exists? path)
      (raise-user-error 'diff "directory preview does not support --diff")]
@@ -552,56 +633,63 @@
     [else
      (define hunks
        (git-working-tree-render-hunks path))
-     (when (null? hunks)
-       (raise-user-error 'diff (format "no changed hunks: ~a" path)))
-     (define hunk-options
-       (diff-preview-options options))
-     (define color?
-       (color-enabled? out options))
-     (define file-rendered-lines
-       (current-file-rendered-lines path hunk-options out))
-     (define line-number-width
-       (string-length
-        (number->string
-         (max 1
-              (for*/fold ([largest 1])
-                         ([hunk (in-list hunks)]
-                          [line (in-list (git-diff-render-hunk-lines hunk))])
-                (max largest
-                     (or (git-diff-line-new-line-no line)
-                         (git-diff-line-old-line-no line)
-                         1)))))))
-     (define rendered-hunks
-       (for/list ([hunk (in-list hunks)])
-         (define rendered-snippet
-           (render-diff-hunk-snippet hunk
-                                     path
-                                     hunk-options
-                                     out
-                                     color?
-                                     line-number-width
-                                     (preview-options-line-numbers? options)
-                                     file-rendered-lines))
-         (string-append (diff-header-line (git-diff-render-hunk-anchor hunk)
-                                          color?)
-                        rendered-snippet)))
-     (define final-options
-       (make-preview-options #:type           (preview-options-type options)
-                             #:align?         (preview-options-align? options)
-                             #:swatches?      (preview-options-swatches? options)
-                             #:color-mode     (preview-options-color-mode options)
-                             #:binary-mode    (preview-options-binary-mode options)
-                             #:search-bytes   (preview-options-search-bytes options)
-                             #:diff?          (preview-options-diff? options)
-                             #:pretty?        (preview-options-pretty? options)
-                             #:section        (preview-options-section options)
-                             #:grep-patterns  (preview-options-grep-patterns options)
-                             #:line-numbers?  #f
-                             #:directory-sort (preview-options-directory-sort options)))
-     (postprocess-rendered-string (string-join rendered-hunks "\n")
-                                  path
-                                  color?
-                                  final-options)]))
+     (if (null? hunks)
+         (let ([message
+                (format "No changed hunks in ~a.\n" path)])
+           (define rendered-message
+             (if color?
+                 (string-append ansi-comment
+                                (string-trim message "\n" #:left? #f #:right? #t)
+                                ansi-reset
+                                "\n")
+                 message))
+           (postprocess-rendered-string rendered-message
+                                        path
+                                        color?
+                                        final-options))
+         (let* ([hunk-options
+                 (diff-preview-options options)]
+                [file-rendered-lines
+                 (current-file-rendered-lines path hunk-options out)]
+                [number-note
+                 (cond
+                   [(preview-options-line-numbers? options)
+                    (string-append (diff-line-number-note (car hunks) color?)
+                                   "\n")]
+                   [else
+                    ""])]
+                [line-number-width
+                 (string-length
+                  (number->string
+                   (max 1
+                        (for*/fold ([largest 1])
+                                   ([hunk (in-list hunks)]
+                                    [line (in-list (git-diff-render-hunk-lines hunk))])
+                          (max largest
+                               (or (git-diff-line-new-line-no line)
+                                   (git-diff-line-old-line-no line)
+                                   1))))))]
+                [rendered-hunks
+                 (for/list ([hunk (in-list hunks)])
+                   (define rendered-snippet
+                     (render-diff-hunk-snippet hunk
+                                               path
+                                               hunk-options
+                                               out
+                                               color?
+                                               line-number-width
+                                               (preview-options-line-numbers? options)
+                                               file-rendered-lines))
+                   (string-append (diff-header-line hunk
+                                                    color?)
+                                  rendered-snippet))])
+           (postprocess-rendered-string (string-append (diff-file-header-line path color?)
+                                                       "\n"
+                                                       number-note
+                                                       (string-join rendered-hunks "\n"))
+                                        path
+                                        color?
+                                        final-options)))]))
 
 ;; detect-file-type : (or/c path-string? #f) -> (or/c symbol? #f)
 ;;   Infer a supported file type from a file path.
@@ -636,7 +724,11 @@
        [(regexp-match? #px"(?i:\\.mk)$" path-string) 'makefile]
        [(regexp-match? #px"(?i:(?:^|-)makefile$|(?:^|-)gnumakefile$)" (path->string (file-name-from-path (simple-form-path maybe-path))))
         'makefile]
-       [(regexp-match? #px"(?i:\\.m)$" path-string) 'objc]
+       [(regexp-match? #px"(?i:\\.m)$" path-string)
+        (cond
+          [(mathematica-m-file? maybe-path) 'mathematica]
+          [(objc-m-file? maybe-path)        'objc]
+          [else                             'mathematica])]
        [(regexp-match? #px"(?i:\\.csv)$" path-string) 'csv]
        [(regexp-match? #px"(?i:\\.html?)$" path-string) 'html]
        [(regexp-match? #px"(?i:\\.java)$" path-string) 'java]
@@ -645,6 +737,7 @@
        [(regexp-match? #px"(?i:\\.(?:json|webmanifest))$" path-string)
         'json]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
+       [(regexp-match? #px"(?i:\\.(?:wl|wls))$" path-string) 'mathematica]
        [(regexp-match? #px"(?i:\\.(?:cls|sty|latex|ltx))$" path-string) 'latex]
        [(regexp-match? #px"(?i:\\.plist)$" path-string) 'plist]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
@@ -678,6 +771,68 @@
 (define (bytes->text-or-false bs)
   (with-handlers ([exn:fail? (lambda (_) #f)])
     (bytes->string/utf-8 bs)))
+
+;; preview-prefix-line-limit : exact-positive-integer?
+;;   Maximum number of initial lines used for lightweight file heuristics.
+(define preview-prefix-line-limit
+  5)
+
+;; file-leading-lines : path-string? exact-positive-integer? -> string?
+;;   Read up to `limit` leading lines from one text file.
+(define (file-leading-lines path limit)
+  (with-handlers ([exn:fail? (lambda (_) "")])
+    (call-with-input-file path
+      (lambda (in)
+        (port-count-lines! in)
+        (let loop ([parts '()]
+                   [remaining limit])
+          (cond
+            [(zero? remaining)
+             (apply string-append (reverse parts))]
+            [else
+             (define line
+               (read-line in 'any))
+             (cond
+               [(eof-object? line)
+                (apply string-append (reverse parts))]
+               [else
+               (loop (cons (string-append line "\n") parts)
+                      (sub1 remaining))])]))))))
+
+;; mathematica-m-file? : path-string? -> boolean?
+;;   Heuristically recognize Mathematica `.m` files from the first few lines.
+(define (mathematica-m-file? path)
+  (define prefix
+    (file-leading-lines path preview-prefix-line-limit))
+  (regexp-match? #px"(?m:wolframscript)" prefix))
+
+;; objc-m-file? : path-string? -> boolean?
+;;   Heuristically recognize Objective-C `.m` files from the first few lines.
+(define (objc-m-file? path)
+  (define prefix
+    (file-leading-lines path preview-prefix-line-limit))
+  (define objc-at-keywords
+    '("@interface"
+      "@implementation"
+      "@protocol"
+      "@property"
+      "@end"
+      "@class"
+      "@import"
+      "@synthesize"
+      "@dynamic"
+      "@autoreleasepool"))
+  (with-handlers ([exn:fail? (lambda (_) #f)])
+    (ormap (lambda (token)
+             (define tags
+               (objc-derived-token-tags token))
+             (define text
+               (objc-derived-token-text token))
+             (or (memq 'comment tags)
+                 (memq 'objc-comment tags)
+                 (member text objc-at-keywords)
+                 (memq 'objc-preprocessor-directive tags)))
+           (objc-string->derived-tokens prefix))))
 
 ;; preview-string/rendered : string? (or/c path-string? #f) preview-options? output-port? -> string?
 ;;   Preview a source string and return the rendered result.
@@ -732,6 +887,8 @@
      (render-json-preview source)]
     [(eq? file-type 'plist)
      (render-plist-preview source)]
+    [(eq? file-type 'mathematica)
+     (render-mathematica-preview source)]
     [(eq? file-type 'jsx)
      (render-javascript-preview source
                                 #:jsx? #t)]
@@ -834,6 +991,7 @@
               (eq? file-type 'go)
               (eq? file-type 'haskell)
               (eq? file-type 'java)
+              (eq? file-type 'mathematica)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
               (eq? file-type 'pascal)
@@ -855,6 +1013,7 @@
        [(go)         (render-go-preview-port in actual-out)]
        [(haskell)    (render-haskell-preview-port in actual-out)]
        [(java)       (render-java-preview-port in actual-out)]
+       [(mathematica) (render-mathematica-preview-port in actual-out)]
        [(plist)      (render-plist-preview-port in actual-out)]
        [(latex)      (render-latex-preview-port in actual-out)]
        [(bash)       (render-shell-preview-port in actual-out #:shell 'bash)]
@@ -874,6 +1033,7 @@
          (eq? file-type 'go)
          (eq? file-type 'haskell)
          (eq? file-type 'java)
+         (eq? file-type 'mathematica)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
          (eq? file-type 'pascal)
@@ -1074,6 +1234,7 @@
          (eq? file-type 'java)
          (eq? file-type 'js)
          (eq? file-type 'json)
+         (eq? file-type 'mathematica)
          (eq? file-type 'plist)
          (eq? file-type 'latex)
          (eq? file-type 'tex)

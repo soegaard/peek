@@ -571,11 +571,23 @@
  (regexp-match? #px"\u001b\\[[0-9;]*mtest\u001b\\[0m"
                 (render-makefile-preview makefile-shell-sample)))
 (check-true
+ (string-contains? (render-makefile-preview makefile-shell-sample)
+                   (string-append ansi-keyword ".PHONY" ansi-reset)))
+(check-true
+ (string-contains? (render-makefile-preview makefile-shell-sample)
+                   (string-append ansi-builtin "docs" ansi-reset)))
+(check-true
  (regexp-match? #px"\u001b\\[[0-9;]*m--dest\u001b\\[0m"
                 (render-makefile-preview makefile-shell-sample)))
 (check-true
  (regexp-match? #px"\u001b\\[[0-9;]*m\\$\\(CC\\)\u001b\\[0m"
                 (render-makefile-preview makefile-shell-sample)))
+(check-true
+ (string-contains? (render-makefile-preview makefile-shell-sample)
+                   (string-append ansi-keyword "$(CC)" ansi-reset)))
+(check-false
+ (string-contains? (render-makefile-preview makefile-shell-sample)
+                   (string-append ansi-identifier "$(CC)" ansi-reset)))
 (check-true
  (string-contains? (render-makefile-preview makefile-shell-sample)
                    (string-append ansi-delimiter "|" ansi-reset)))

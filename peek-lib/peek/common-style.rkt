@@ -283,14 +283,18 @@
          (memq 'comment tags)
          (memq 'makefile-comment tags))
      ansi-comment]
+    [(memq 'makefile-special-target tags)
+     ansi-keyword]
     [(or (memq 'makefile-directive tags)
          (eq? category 'keyword))
      ansi-keyword]
-    [(or (memq 'makefile-variable tags)
-         (memq 'makefile-rule-target tags)
-         (memq 'makefile-paren-variable-reference tags)
+    [(memq 'makefile-rule-target tags)
+     ansi-builtin]
+    [(or (memq 'makefile-paren-variable-reference tags)
          (memq 'makefile-brace-variable-reference tags)
-         (memq 'makefile-variable-reference tags)
+         (memq 'makefile-variable-reference tags))
+     ansi-keyword]
+    [(or (memq 'makefile-variable tags)
          (eq? category 'identifier))
      ansi-identifier]
     [(or (memq 'makefile-recipe tags)

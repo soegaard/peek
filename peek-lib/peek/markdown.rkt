@@ -70,6 +70,35 @@
 (define (derived-token-category token)
   (vector-ref (struct->vector token) 1))
 
+;; markdown-token-has-newline? : markdown-token? -> boolean?
+;;   Determine whether one Markdown token text contains a line break.
+(define (markdown-token-has-newline? token)
+  (regexp-match? #px"\n"
+                 (markdown-token-text token)))
+
+;; markdown-code-fence-only? : markdown-token? -> boolean?
+;;   Determine whether one token is only a fenced-code delimiter line.
+(define (markdown-code-fence-only? token)
+  (regexp-match? #px"^(?:```|~~~)\r?\n?$"
+                 (markdown-token-text token)))
+
+;; trim-trailing-markdown-code-fence : string? -> string?
+;;   Remove one trailing fenced-code delimiter line from a code block token.
+(define (trim-trailing-markdown-code-fence text)
+  (define match
+    (regexp-match #px"(\r?\n)(```|~~~)(\r?\n)$"
+                  text))
+  (cond
+    [match
+     (string-append (substring text
+                               0
+                               (- (string-length text)
+                                  (string-length (car match))))
+                    (cadr match)
+                    (cadddr match))]
+    [else
+     text]))
+
 ;; markdown-racket-extra-tags : (listof symbol?) string? -> (listof symbol?)
 ;;   Attach consumer-side Racket vocabulary tags to embedded Racket code.
 (define (markdown-racket-extra-tags tags text)
@@ -516,8 +545,7 @@
                                       [(and hide-code-info-newline?
                                             (eq? (markdown-token-category token)
                                                  'whitespace)
-                                            (string=? (markdown-token-text token)
-                                                      "\n"))
+                                            (markdown-token-has-newline? token))
                                        '(markdown-hidden-code-info-newline)]
                                       [else
                                        '()])
@@ -547,7 +575,7 @@
                 #t]
                [(and hide-code-info-newline?
                      (eq? (markdown-token-category token) 'whitespace)
-                     (string=? (markdown-token-text token) "\n"))
+                     (markdown-token-has-newline? token))
                 #f]
                [else
                 hide-code-info-newline?])
@@ -733,8 +761,12 @@
            (regexp-match? #px"^embedded-" (symbol->string tag)))))
   (cond
     [(and pretty?
-          (memq 'markdown-code-fence tags))
+          (memq 'markdown-code-fence tags)
+          (markdown-code-fence-only? token))
      ""]
+    [(and pretty?
+          (memq 'markdown-code-block tags))
+     (trim-trailing-markdown-code-fence text)]
     [(and pretty?
           (memq 'markdown-code-info-string tags)
           (string-ci=? text "text"))

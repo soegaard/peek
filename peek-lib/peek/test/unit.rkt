@@ -914,6 +914,10 @@
                                       #:pretty? #t))
  "plain\n\n")
 (check-equal?
+ (strip-ansi (render-markdown-preview "```text\r\nplain\r\n```\r\n"
+                                      #:pretty? #t))
+ "plain\r\n\r\n")
+(check-equal?
  (strip-ansi (render-markdown-preview "```text\nplain\n```\n"))
  "```text\nplain\n```\n")
 (check-equal?

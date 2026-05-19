@@ -258,7 +258,10 @@ Useful command-line combinations:
 
 @shellblock[#:shell 'bash]{
 peek -P path/to/file.css
+peek --lines 20:40 -P path/to/file.rkt
+peek --toc -P README.md
 peek --diff path/to/file.rkt
+peek --diff --staged path/to/file.rkt
 }
 
 @subsection{Options}
@@ -299,6 +302,14 @@ General options:
        previews, @exec{peek} estimates the number-field width from the file
        size so it can start emitting immediately instead of counting lines
        first.}
+ @item{@DFlag{--lines} @italic{range}
+       renders only the selected output lines. Use @tt{N} for one line,
+       @tt{N:M} for an inclusive range, @tt{N:} from one line to the end,
+       or @tt{:M} from the beginning through line @tt{M}. This works well
+       together with @Flag{-n}.}
+ @item{@DFlag{--toc}
+       renders a compact heading outline when the selected file type supports
+       it. Markdown currently supports @DFlag{--toc}.}
  @item{@DFlag{--section} @italic{title}
        renders one named section when the selected file type supports it.
        Markdown currently matches section titles against ATX headings such as
@@ -313,6 +324,10 @@ General options:
        lines use @tt{- }, and added lines use @tt{+ }. With
        @Flag{-n}, context and added lines use the current-file line numbers,
        while removed lines use the old-file line numbers from Git.}
+ @item{@DFlag{--staged}, @(long-flag "cached")
+       change @DFlag{--diff} to compare the staged version of a file against
+       @tt{HEAD}. The two flag names mean the same thing. Use whichever one
+       you find easier to remember.}
  @item{@DFlag{--pager}
        sends preview output through the configured pager. This is the default
        behavior. @exec{peek} uses the @envvar{PAGER} environment variable when

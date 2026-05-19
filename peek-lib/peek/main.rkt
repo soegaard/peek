@@ -77,6 +77,52 @@
                      (usage-error (format "invalid regexp after --grep: ~a" spec)))])
     (pregexp spec)))
 
+;; parse-positive-line-number : string? string? -> exact-positive-integer?
+;;   Parse one positive line number for `--lines`.
+(define (parse-positive-line-number raw which-end)
+  (define maybe-number
+    (string->number raw))
+  (unless (exact-positive-integer? maybe-number)
+    (usage-error (format "expected a positive ~a line number after --lines: ~a"
+                         which-end
+                         raw)))
+  maybe-number)
+
+;; line-range-spec->range : string? -> preview-line-range?
+;;   Parse one `--lines` specification into a shared preview line range.
+(define (line-range-spec->range spec)
+  (define trimmed
+    (string-trim spec))
+  (cond
+    [(regexp-match #px"^([0-9]+):([0-9]+)$" trimmed)
+     =>
+     (lambda (match)
+       (define start
+         (parse-positive-line-number (list-ref match 1) "start"))
+       (define end
+         (parse-positive-line-number (list-ref match 2) "end"))
+       (when (> start end)
+         (usage-error (format "expected --lines start to be <= end: ~a"
+                              spec)))
+       (preview-line-range start end))]
+    [(regexp-match #px"^([0-9]+):$" trimmed)
+     =>
+     (lambda (match)
+       (preview-line-range (parse-positive-line-number (list-ref match 1) "start")
+                           #f))]
+    [(regexp-match #px"^:([0-9]+)$" trimmed)
+     =>
+     (lambda (match)
+       (preview-line-range #f
+                           (parse-positive-line-number (list-ref match 1) "end")))]
+    [(regexp-match #px"^[0-9]+$" trimmed)
+     (define line-no
+       (parse-positive-line-number trimmed "single"))
+     (preview-line-range line-no line-no)]
+    [else
+     (usage-error (format "expected --lines N, N:M, N:, or :M; got ~a"
+                          spec))]))
+
 ;; pager-command : -> (listof path-string?)
 ;;   Resolve the configured pager command.
 (define (pager-command)
@@ -140,8 +186,11 @@
   (define color-mode 'always)
   (define binary-mode 'hex)
   (define diff? #f)
+  (define diff-staged? #f)
   (define pretty? #f)
+  (define toc? #f)
   (define section #f)
+  (define line-range #f)
   (define line-numbers? #f)
   (define directory-sort 'kind)
   (define search-byte-specs '())
@@ -185,12 +234,24 @@
    [("--diff")
     "Preview only changed Git hunks for a file path."
     (set! diff? #t)]
+   [("--cached")
+    "With --diff, compare the staged/index version against HEAD."
+    (set! diff-staged? #t)]
+   [("--staged")
+    "With --diff, compare the staged/index version against HEAD."
+    (set! diff-staged? #t)]
    [("-p" "--pretty")
     "Enable pretty rendering when the selected file type supports it."
     (set! pretty? #t)]
+   [("--toc")
+    "Render a heading outline when the selected file type supports it."
+    (set! toc? #t)]
    [("--section") value
     "Render one named section when the selected file type supports it."
     (set! section value)]
+   [("--lines") value
+    "Render only one output line range: N, N:M, N:, or :M."
+    (set! line-range (line-range-spec->range value))]
    [("-n" "--line-numbers")
     "Prefix output lines with nl-style line numbers."
     (set! line-numbers? #t)]
@@ -229,6 +290,9 @@
      (when (and diff?
                 (not file-path))
        (usage-error "--diff requires a file path"))
+     (when (and diff-staged?
+                (not diff?))
+       (usage-error "--cached and --staged require --diff"))
      (define options
        (make-preview-options #:type      type
                              #:align?    align?
@@ -236,12 +300,15 @@
                              #:color-mode color-mode
                              #:binary-mode binary-mode
                              #:diff?     diff?
+                             #:diff-staged? diff-staged?
                              #:directory-sort directory-sort
                              #:search-bytes (append (map search-byte-spec->bytes
                                                          (reverse search-byte-specs))
                                                     (map search-text-spec->bytes
                                                          (reverse search-text-specs)))
+                             #:toc? toc?
                              #:section section
+                             #:line-range line-range
                              #:grep-patterns (map grep-spec->regexp
                                                   (reverse grep-specs))
                              #:line-numbers? line-numbers?

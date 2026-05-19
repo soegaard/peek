@@ -111,10 +111,23 @@ Add nl-style line numbers:
 peek -n -P path/to/file.rkt
 ```
 
+Preview only a line or line range:
+
+```sh
+peek --lines 20:40 -P path/to/file.rkt
+peek --lines :25 -P path/to/file.rkt
+```
+
 Emphasize rendered lines whose text matches a regexp:
 
 ```sh
 peek --grep TODO -P path/to/file.rkt
+```
+
+Preview a Markdown heading outline:
+
+```sh
+peek --toc -P README.md
 ```
 
 Preview only the changed Git hunks for one file:
@@ -122,12 +135,17 @@ Preview only the changed Git hunks for one file:
 ```sh
 peek --diff path/to/file.rkt
 peek -n --diff path/to/file.rkt
+peek --diff --staged path/to/file.rkt
 ```
 
 Diff preview shows context lines with a leading two-space marker, removed
 lines with `- `, and added lines with `+ `. When line numbers are enabled,
 context and added lines use the current-file line numbers, while removed lines
 use the old-file line numbers from Git.
+
+`--staged` and `--cached` mean the same thing. They compare the staged
+version of a file against `HEAD` instead of comparing the working tree
+against the index.
 
 Preview one Markdown section by heading title:
 

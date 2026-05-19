@@ -173,9 +173,10 @@
               (path->string file-name)
               (path->string simple))))
 
-;; git-command-output : path-string? exact-nonnegative-integer? -> string?
+;; git-command-output : path-string? exact-nonnegative-integer? #:staged? boolean? -> string?
 ;;   Run `git diff` with the requested context for one file and capture stdout.
-(define (git-command-output target-path unified)
+(define (git-command-output target-path unified
+                            #:staged? [staged? #f])
   (define git-path
     (find-executable-path "git"))
   (unless git-path
@@ -183,18 +184,22 @@
   (define-values (directory file-name)
     (path-directory+name target-path))
   (define-values (proc stdout stdin stderr)
-    (subprocess #f
-                #f
-                #f
-                git-path
-                "-C"
-                directory
-                "diff"
-                "--no-ext-diff"
-                "--no-color"
-                (format "--unified=~a" unified)
-                "--"
-                file-name))
+    (apply subprocess
+           #f
+           #f
+           #f
+           git-path
+           (append (list "-C"
+                         directory
+                         "diff"
+                         "--no-ext-diff"
+                         "--no-color")
+                   (if staged?
+                       (list "--cached")
+                       '())
+                   (list (format "--unified=~a" unified)
+                         "--"
+                         file-name))))
   (close-output-port stdin)
   (define output
     (port->string stdout))
@@ -214,10 +219,13 @@
                            (format "git diff failed for ~a" target-path)
                            error-output))]))
 
-;; git-working-tree-hunks : path-string? -> (listof git-diff-hunk?)
+;; git-working-tree-hunks : path-string? #:staged? boolean? -> (listof git-diff-hunk?)
 ;;   Ask Git for working-tree hunks for one file.
-(define (git-working-tree-hunks target-path)
-  (parse-git-diff-hunks (git-command-output target-path 0)))
+(define (git-working-tree-hunks target-path
+                                #:staged? [staged? #f])
+  (parse-git-diff-hunks (git-command-output target-path
+                                            0
+                                            #:staged? staged?)))
 
 ;; parse-render-hunk-header : string? -> (or/c (vector exact-positive-integer? exact-nonnegative-integer? exact-positive-integer? exact-nonnegative-integer?) #f)
 ;;   Parse one unified-diff hunk header into old/new coordinates.
@@ -381,10 +389,13 @@
          [else
           (finish-current (cdr remaining) hunks)])])))
 
-;; git-working-tree-render-hunks : path-string? -> (listof git-diff-render-hunk?)
+;; git-working-tree-render-hunks : path-string? #:staged? boolean? -> (listof git-diff-render-hunk?)
 ;;   Ask Git for parsed render hunks for one file.
-(define (git-working-tree-render-hunks target-path)
-  (parse-git-diff-render-hunks (git-command-output target-path 2)))
+(define (git-working-tree-render-hunks target-path
+                                       #:staged? [staged? #f])
+  (parse-git-diff-render-hunks (git-command-output target-path
+                                                    2
+                                                    #:staged? staged?)))
 
 ;; hunk-anchor-line : git-diff-hunk? exact-nonnegative-integer? -> exact-positive-integer?
 ;;   Choose the representative line number for a hunk.

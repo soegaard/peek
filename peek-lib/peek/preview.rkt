@@ -15,8 +15,11 @@
 ;; preview-options-binary-mode         -- Binary rendering mode.
 ;; preview-options-search-bytes        -- Highlighted byte sequences.
 ;; preview-options-diff?               -- Whether Git-focused diff preview is enabled.
+;; preview-options-diff-staged?        -- Whether Git diff should compare staged changes.
 ;; preview-options-pretty?             -- Whether pretty mode is enabled.
+;; preview-options-toc?                -- Whether table-of-contents mode is enabled.
 ;; preview-options-section             -- Selected named section.
+;; preview-options-line-range          -- Selected output line range.
 ;; preview-options-grep-patterns       -- Line-matching regexps.
 ;; preview-options-line-numbers?       -- Whether line numbers are enabled.
 ;; preview-options-directory-sort      -- Directory sort mode.
@@ -32,6 +35,8 @@
 ;;   Preview a file using the selected options.
 
 (provide
+ ;; preview-line-range        Selected output line range.
+ (struct-out preview-line-range)
  ;; preview-options            Shared preview configuration.
  preview-options
  ;; preview-options?           Recognize preview configuration values.
@@ -50,10 +55,16 @@
  preview-options-search-bytes
  ;; preview-options-diff?       Whether Git-focused diff preview is enabled.
  preview-options-diff?
+ ;; preview-options-diff-staged? Whether Git diff should compare staged changes.
+ preview-options-diff-staged?
  ;; preview-options-pretty?     Whether pretty mode is enabled.
  preview-options-pretty?
+ ;; preview-options-toc?        Whether table-of-contents mode is enabled.
+ preview-options-toc?
  ;; preview-options-section     Selected named section.
  preview-options-section
+ ;; preview-options-line-range  Selected output line range.
+ preview-options-line-range
  ;; preview-options-grep-patterns Line-matching regexps.
  preview-options-grep-patterns
  ;; preview-options-line-numbers? Whether line numbers are enabled.
@@ -117,7 +128,8 @@
          "scribble.rkt"
          "wat.rkt")
 
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? pretty? section grep-patterns line-numbers? directory-sort) #:transparent)
+(struct preview-line-range (start end) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
@@ -132,12 +144,15 @@
                               #:binary-mode [binary-mode 'hex]
                               #:search-bytes [search-bytes '()]
                               #:diff?       [diff? #f]
+                              #:diff-staged? [diff-staged? #f]
                               #:pretty?     [pretty? #f]
+                              #:toc?        [toc? #f]
                               #:section     [section #f]
+                              #:line-range  [line-range #f]
                               #:grep-patterns [grep-patterns '()]
                               #:line-numbers? [line-numbers? #f]
                               #:directory-sort [directory-sort 'kind])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes diff? pretty? section grep-patterns line-numbers? directory-sort))
+  (preview-options type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? directory-sort))
 
 ;; -----------------------------------------------------------------------------
 ;; Line numbering
@@ -234,6 +249,61 @@
 ;; -----------------------------------------------------------------------------
 ;; Grep-style line highlighting
 
+;; line-in-range? : exact-positive-integer? preview-line-range? -> boolean?
+;;   Determine whether one 1-based output line belongs to the selected range.
+(define (line-in-range? line-no line-range)
+  (and (or (not (preview-line-range-start line-range))
+           (<= (preview-line-range-start line-range)
+               line-no))
+       (or (not (preview-line-range-end line-range))
+           (<= line-no
+               (preview-line-range-end line-range)))))
+
+;; make-line-range-output-port : output-port? preview-line-range? -> output-port?
+;;   Wrap an output port to keep only the selected output lines.
+(define (make-line-range-output-port out line-range)
+  (define current-line
+    1)
+  (define line-buffer
+    (open-output-bytes))
+  (define (flush-buffer)
+    (define line-bytes
+      (get-output-bytes line-buffer #t))
+    (unless (zero? (bytes-length line-bytes))
+      (when (line-in-range? current-line line-range)
+        (write-bytes line-bytes out))
+      (set! current-line (add1 current-line))))
+  (define (write-out bs start end non-block? breakable?)
+    (let loop ([pos start]
+               [segment-start start])
+      (cond
+        [(= pos end)
+         (when (< segment-start end)
+           (write-bytes bs line-buffer segment-start end))
+         (- end start)]
+        [(= (bytes-ref bs pos) 10)
+         (write-bytes bs line-buffer segment-start (add1 pos))
+         (flush-buffer)
+         (loop (add1 pos) (add1 pos))]
+        [else
+         (loop (add1 pos) segment-start)])))
+  (make-output-port 'peek/line-range
+                    always-evt
+                    write-out
+                    (lambda ()
+                      (flush-buffer)
+                      (flush-output out))))
+
+;; maybe-wrap-line-range-output-port : output-port? preview-options? -> output-port?
+;;   Wrap an output port with line-range filtering when requested.
+(define (maybe-wrap-line-range-output-port out options)
+  (cond
+    [(preview-options-line-range options)
+     (make-line-range-output-port out
+                                  (preview-options-line-range options))]
+    [else
+     out]))
+
 ;; strip-ansi : string? -> string?
 ;;   Remove ANSI escape sequences from a string.
 (define (strip-ansi text)
@@ -309,32 +379,21 @@
     [else
      out]))
 
-;; add-grep-highlighting-to-string : string? boolean? preview-options? -> string?
-;;   Add grep-style highlighting to a fully rendered preview string.
-(define (add-grep-highlighting-to-string rendered color? options)
-  (define out
-    (open-output-string))
-  (define grep-out
-    (maybe-wrap-grep-output-port out color? options))
-  (display rendered grep-out)
-  (close-output-port grep-out)
-  (get-output-string out))
-
 ;; postprocess-rendered-string : string? (or/c path-string? #f) boolean? preview-options? -> string?
 ;;   Apply generic line-oriented postprocessing to a rendered preview string.
 (define (postprocess-rendered-string rendered maybe-path color? options)
-  (define grep-rendered
-    (cond
-      [(pair? (preview-options-grep-patterns options))
-       (add-grep-highlighting-to-string rendered color? options)]
-      [else
-       rendered]))
   (define out
     (open-output-string))
-  (define numbered-out
-    (maybe-wrap-line-number-output-port out maybe-path options))
-  (display grep-rendered numbered-out)
-  (close-output-port numbered-out)
+  (define actual-out
+    (maybe-wrap-grep-output-port
+     (maybe-wrap-line-number-output-port
+      (maybe-wrap-line-range-output-port out options)
+      maybe-path
+      options)
+     color?
+     options))
+  (display rendered actual-out)
+  (close-output-port actual-out)
   (get-output-string out))
 
 ;; color-enabled? : output-port? preview-options? -> boolean?
@@ -596,8 +655,11 @@
                         #:binary-mode    (preview-options-binary-mode options)
                         #:search-bytes   (preview-options-search-bytes options)
                         #:diff?          #f
+                        #:diff-staged?   #f
                         #:pretty?        (preview-options-pretty? options)
+                        #:toc?           #f
                         #:section        #f
+                        #:line-range     #f
                         #:grep-patterns  '()
                         #:line-numbers?  #f
                         #:directory-sort (preview-options-directory-sort options)))
@@ -617,8 +679,11 @@
                           #:binary-mode    (preview-options-binary-mode options)
                           #:search-bytes   (preview-options-search-bytes options)
                           #:diff?          (preview-options-diff? options)
+                          #:diff-staged?   (preview-options-diff-staged? options)
                           #:pretty?        (preview-options-pretty? options)
+                          #:toc?           (preview-options-toc? options)
                           #:section        (preview-options-section options)
+                          #:line-range     (preview-options-line-range options)
                           #:grep-patterns  (preview-options-grep-patterns options)
                           #:line-numbers?  #f
                           #:directory-sort (preview-options-directory-sort options)))
@@ -628,11 +693,14 @@
     [(or (eq? file-type 'archive)
          (eq? file-type 'binary))
      (raise-user-error 'diff "archive and binary previews do not support --diff")]
+    [(preview-options-toc? options)
+     (raise-user-error 'diff "--toc does not combine with --diff yet")]
     [(preview-options-section options)
      (raise-user-error 'diff "--section does not combine with --diff yet")]
     [else
      (define hunks
-       (git-working-tree-render-hunks path))
+       (git-working-tree-render-hunks path
+                                      #:staged? (preview-options-diff-staged? options)))
      (if (null? hunks)
          (let ([message
                 (format "No changed hunks in ~a.\n" path)])
@@ -856,6 +924,15 @@
                             #:bits? (eq? (preview-options-binary-mode options)
                                          'bits)
                             #:search-bytes (preview-options-search-bytes options))]
+    [(eq? file-type 'md)
+     (define rendered
+       (render-markdown-preview source
+                                #:pretty? (preview-options-pretty? options)
+                                #:toc? (preview-options-toc? options)
+                                #:section (preview-options-section options)))
+     (if (color-enabled? out options)
+         rendered
+         (strip-ansi rendered))]
     [(not (color-enabled? out options)) source]
     [(eq? file-type 'css)
      (render-css-preview source
@@ -892,10 +969,6 @@
     [(eq? file-type 'jsx)
      (render-javascript-preview source
                                 #:jsx? #t)]
-    [(eq? file-type 'md)
-     (render-markdown-preview source
-                              #:pretty? (preview-options-pretty? options)
-                              #:section (preview-options-section options))]
     [(eq? file-type 'latex)
      (render-latex-preview source)]
     [(eq? file-type 'powershell)
@@ -950,7 +1023,10 @@
     (color-enabled? out options))
   (define actual-out
     (maybe-wrap-grep-output-port
-     (maybe-wrap-line-number-output-port out maybe-path options)
+     (maybe-wrap-line-number-output-port
+      (maybe-wrap-line-range-output-port out options)
+      maybe-path
+      options)
      color?
      options))
   (define file-type
@@ -1082,12 +1158,16 @@
        [(md)    (render-markdown-preview-port in
                                               actual-out
                                               #:pretty? (preview-options-pretty? options)
+                                              #:toc? (preview-options-toc? options)
                                               #:section (preview-options-section options))]
        [(scrbl) (render-scribble-preview-port in actual-out)])]
     [(and (eq? file-type 'md)
-          (preview-options-section options))
-     (display (extract-markdown-section (port->string in)
-                                        (preview-options-section options))
+          (or (preview-options-section options)
+              (preview-options-toc? options)))
+     (display (preview-string/rendered (port->string in)
+                                       maybe-path
+                                       options
+                                       out)
               actual-out)]
     [(or (eq? file-type 'html)
          (eq? file-type 'js)

@@ -791,11 +791,25 @@
  (strip-ansi markdown-heading-rendered-pretty)
  "One\nTwo\nThree\nFour\n")
 (check-equal?
+ (strip-ansi (render-markdown-preview markdown-heading-sample
+                                      #:toc? #t))
+ (string-append
+  "- One\n"
+  "  - Two\n"
+  "    - Three\n"
+  "      - Four\n"))
+(check-equal?
  (extract-markdown-section markdown-section-sample "One")
  "# One\nAlpha\n## Two\nBeta\n")
 (check-equal?
  (extract-markdown-section markdown-section-sample "two")
  "## Two\nBeta\n")
+(check-equal?
+ (extract-markdown-toc markdown-section-sample)
+ (string-append
+  "- One\n"
+  "  - Two\n"
+  "- Three\n"))
 (check-equal?
  (extract-markdown-section markdown-section-sample "thr")
  "# Three\nGamma\n")
@@ -1188,6 +1202,27 @@
 
 (check-equal?
  (let ([out (open-output-string)])
+   (preview-port (open-input-string "alpha\nbeta\ngamma\ndelta\n")
+                 #f
+                 (make-preview-options #:color-mode 'never
+                                       #:line-range (preview-line-range 2 3))
+                 out)
+   (get-output-string out))
+ "beta\ngamma\n")
+
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string "alpha\nbeta\ngamma\ndelta\n")
+                 #f
+                 (make-preview-options #:color-mode 'never
+                                       #:line-range (preview-line-range 2 3)
+                                       #:line-numbers? #t)
+                 out)
+   (get-output-string out))
+ "     2\tbeta\n     3\tgamma\n")
+
+(check-equal?
+ (let ([out (open-output-string)])
    (preview-port (open-input-string "alpha\nbeta\ngamma\n")
                  #f
                  (make-preview-options #:color-mode 'never
@@ -1230,6 +1265,24 @@
                       out)
    (check-equal? (get-output-string out)
                  " 1\talpha\n 2\tbeta\n 3\t> gamma\n")))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define range-path
+     (build-path dir "range.rkt"))
+   (call-with-output-file range-path
+     (lambda (out)
+       (display "a\nb\nc\nd\ne\n" out))
+     #:exists 'truncate/replace)
+   (define out
+     (open-output-string))
+   (preview-path-port range-path
+                      (make-preview-options #:color-mode 'never
+                                            #:line-range (preview-line-range 3 4)
+                                            #:line-numbers? #t)
+                      out)
+   (check-equal? (get-output-string out)
+                 " 3\tc\n 4\td\n")))
 
 (call-with-temp-git-repo
  (lambda (dir)
@@ -1314,6 +1367,39 @@
 (call-with-temp-git-repo
  (lambda (dir)
    (define source-path
+     (build-path dir "staged.rkt"))
+   (call-with-output-file source-path
+     (lambda (out)
+       (display "#lang racket/base\n(define x 1)\n" out))
+     #:exists 'truncate/replace)
+   (parameterize ([current-directory dir])
+     (check-true (system* git-executable "add" "staged.rkt"))
+     (check-true (system* git-executable "commit" "-q" "-m" "initial")))
+   (call-with-output-file source-path
+     (lambda (out)
+       (display "#lang racket/base\n(define x 2)\n" out))
+     #:exists 'truncate/replace)
+   (parameterize ([current-directory dir])
+     (check-true (system* git-executable "add" "staged.rkt")))
+   (check-equal?
+    (strip-ansi (preview-file source-path
+                              (make-preview-options #:color-mode 'always
+                                                    #:diff? #t)))
+    (format "No changed hunks in ~a.\n"
+            source-path))
+   (define staged-rendered
+     (strip-ansi (preview-file source-path
+                               (make-preview-options #:color-mode 'always
+                                                     #:diff? #t
+                                                     #:diff-staged? #t))))
+   (check-true (regexp-match? #px"^diff .*staged\\.rkt\n\n@@ -1,2 \\+1,2 @@"
+                              staged-rendered))
+   (check-true (regexp-match? #px"\\+ \\(define x 2\\)"
+                              staged-rendered))))
+
+(call-with-temp-git-repo
+ (lambda (dir)
+   (define source-path
      (build-path dir "demo.html"))
    (call-with-output-file source-path
      (lambda (out)
@@ -1360,6 +1446,19 @@
                  out)
    (get-output-string out))
  "# Three\nGamma\n")
+
+(check-equal?
+ (let ([out (open-output-string)])
+   (preview-port (open-input-string markdown-section-sample)
+                 "example.md"
+                 (make-preview-options #:color-mode 'never
+                                       #:toc? #t)
+                 out)
+   (get-output-string out))
+ (string-append
+  "- One\n"
+  "  - Two\n"
+  "- Three\n"))
 
 (check-equal?
  (strip-ansi (preview-file demo-tex-path

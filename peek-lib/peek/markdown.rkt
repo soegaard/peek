@@ -8,6 +8,8 @@
 
 ;; extract-markdown-section : string? string? -> string?
 ;;   Extract one Markdown section by heading title.
+;; extract-markdown-toc : string? -> string?
+;;   Extract a simple heading outline from one Markdown document.
 ;; render-markdown-preview : string? #:pretty? boolean? -> string?
 ;;   Render Markdown for terminal preview.
 ;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? -> void?
@@ -17,6 +19,9 @@
  ;; extract-markdown-section : string? string? -> string?
  ;;   Extract one Markdown section by heading title.
  extract-markdown-section
+ ;; extract-markdown-toc : string? -> string?
+ ;;   Extract a simple heading outline from one Markdown document.
+ extract-markdown-toc
  ;; render-markdown-preview : string? #:pretty? boolean? -> string?
  ;;   Render Markdown for terminal preview.
  render-markdown-preview
@@ -260,6 +265,53 @@
                 in-fence?
                 section-start
                 section-level)])])))
+
+;; extract-markdown-toc : string? -> string?
+;;   Extract a simple heading outline from one Markdown document.
+(define (extract-markdown-toc source)
+  (define lines
+    (string-split source "\n" #:trim? #f))
+  (define headings
+    (let loop ([remaining lines]
+               [in-fence? #f]
+               [acc '()])
+      (cond
+        [(null? remaining)
+         (reverse acc)]
+        [else
+         (define line
+           (car remaining))
+         (define heading
+           (and (not in-fence?)
+                (markdown-atx-heading line)))
+         (cond
+           [(fenced-code-boundary-line? line)
+            (loop (cdr remaining)
+                  (not in-fence?)
+                  acc)]
+           [heading
+            (loop (cdr remaining)
+                  in-fence?
+                  (cons heading acc))]
+           [else
+            (loop (cdr remaining)
+                  in-fence?
+                  acc)])])))
+  (cond
+    [(null? headings)
+     ""]
+    [else
+     (string-join
+      (for/list ([heading (in-list headings)])
+        (define level
+          (car heading))
+        (define title
+          (cadr heading))
+        (string-append (make-string (* 2 (sub1 level)) #\space)
+                       "- "
+                       title))
+      "\n"
+      #:after-last "\n")]))
 
 ;; table-row-cells : string? -> (or/c (listof string?) #f)
 ;;   Parse one Markdown table row into trimmed cell text.
@@ -851,31 +903,36 @@
     [else
      text]))
 
-;; render-markdown-preview : string? #:pretty? boolean? #:section (or/c string? #f) -> string?
+;; render-markdown-preview : string? #:pretty? boolean? #:toc? boolean? #:section (or/c string? #f) -> string?
 ;;   Render Markdown for terminal preview.
 (define (render-markdown-preview source
                                  #:pretty? [pretty? #f]
+                                 #:toc? [toc? #f]
                                  #:section [section #f])
   (define source*
     (let ([selected-source
            (if section
                (extract-markdown-section source section)
                source)])
-      (if pretty?
-          (normalize-markdown-tables selected-source)
-          selected-source)))
+      (if toc?
+          (extract-markdown-toc selected-source)
+          (if pretty?
+              (normalize-markdown-tables selected-source)
+              selected-source))))
   (apply string-append
          (for/list ([token (annotate-markdown-tokens source*)])
            (colorize-text (token-style token pretty?)
                           (markdown-token-display-text token pretty?)))))
 
-;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? #:section (or/c string? #f) -> void?
+;; render-markdown-preview-port : input-port? output-port? #:pretty? boolean? #:toc? boolean? #:section (or/c string? #f) -> void?
 ;;   Render Markdown from a port for terminal preview.
 (define (render-markdown-preview-port in
                                      [out (current-output-port)]
                                      #:pretty? [pretty? #f]
+                                     #:toc? [toc? #f]
                                      #:section [section #f])
   (display (render-markdown-preview (port->string in)
                                     #:pretty? pretty?
+                                    #:toc? toc?
                                     #:section section)
            out))

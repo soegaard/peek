@@ -22,6 +22,7 @@
 ;; preview-options-line-range          -- Selected output line range.
 ;; preview-options-grep-patterns       -- Line-matching regexps.
 ;; preview-options-line-numbers?       -- Whether line numbers are enabled.
+;; preview-options-stats?              -- Whether stats mode is enabled.
 ;; preview-options-directory-sort      -- Directory sort mode.
 ;; supported-file-types                -- Supported explicit file type names.
 ;; make-preview-options                -- Construct preview options.
@@ -69,6 +70,8 @@
  preview-options-grep-patterns
  ;; preview-options-line-numbers? Whether line numbers are enabled.
  preview-options-line-numbers?
+ ;; preview-options-stats?     Whether stats mode is enabled.
+ preview-options-stats?
  ;; preview-options-directory-sort Directory sort mode.
  preview-options-directory-sort
  ;; supported-file-types       Supported explicit file type names.
@@ -118,6 +121,7 @@
          "latex.rkt"
          "plist.rkt"
          "python.rkt"
+         "ruby.rkt"
          "pascal.rkt"
          "rust.rkt"
          "racket.rkt"
@@ -129,11 +133,11 @@
          "wat.rkt")
 
 (struct preview-line-range (start end) #:transparent)
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? directory-sort) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? stats? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+  '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md objc pascal plist powershell python rhombus rkt ruby rust scrbl swift tex tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -151,8 +155,9 @@
                               #:line-range  [line-range #f]
                               #:grep-patterns [grep-patterns '()]
                               #:line-numbers? [line-numbers? #f]
+                              #:stats?      [stats? #f]
                               #:directory-sort [directory-sort 'kind])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? directory-sort))
+  (preview-options type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? stats? directory-sort))
 
 ;; -----------------------------------------------------------------------------
 ;; Line numbering
@@ -662,6 +667,7 @@
                         #:line-range     #f
                         #:grep-patterns  '()
                         #:line-numbers?  #f
+                        #:stats?         #f
                         #:directory-sort (preview-options-directory-sort options)))
 
 ;; render-diff-preview : path-string? preview-options? output-port? -> string?
@@ -686,8 +692,11 @@
                           #:line-range     (preview-options-line-range options)
                           #:grep-patterns  (preview-options-grep-patterns options)
                           #:line-numbers?  #f
+                          #:stats?         #f
                           #:directory-sort (preview-options-directory-sort options)))
   (cond
+    [(preview-options-stats? options)
+     (raise-user-error 'diff "--stats does not combine with --diff yet")]
     [(directory-exists? path)
      (raise-user-error 'diff "directory preview does not support --diff")]
     [(or (eq? file-type 'archive)
@@ -810,6 +819,11 @@
        [(regexp-match? #px"(?i:\\.plist)$" path-string) 'plist]
        [(regexp-match? #px"(?i:\\.ps1)$" path-string) 'powershell]
        [(regexp-match? #px"(?i:\\.(?:py|pyi|pyw))$" path-string) 'python]
+       [(or (regexp-match? #px"(?i:\\.rb)$" path-string)
+            (regexp-match? #px"(?i:\\.rake)$" path-string)
+            (regexp-match? #px"(?i:\\.gemspec)$" path-string)
+            (member file-name '("Gemfile" "Rakefile" "Guardfile" "Appraisals")))
+        'ruby]
        [(regexp-match? #px"(?i:\\.(?:pas|pp|dpr|lpr|inc))$" path-string) 'pascal]
        [(regexp-match? #px"(?i:\\.rs)$" path-string) 'rust]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
@@ -914,16 +928,19 @@
     [(eq? file-type 'archive)
      (or (render-archive-preview (string->bytes/utf-8 source)
                                  #:path maybe-path
-                                 #:color? (color-enabled? out options))
+                                 #:color? (color-enabled? out options)
+                                 #:stats? (preview-options-stats? options))
          source)]
     [(eq? file-type 'directory)
-     source]
+     (raise-user-error 'stats "directory preview from a source string is not supported")]
     [(eq? file-type 'binary)
      (render-binary-preview (string->bytes/utf-8 source)
                             #:color? (color-enabled? out options)
                             #:bits? (eq? (preview-options-binary-mode options)
                                          'bits)
                             #:search-bytes (preview-options-search-bytes options))]
+    [(preview-options-stats? options)
+     (raise-user-error 'stats "--stats currently supports directory and archive previews only")]
     [(eq? file-type 'md)
      (define rendered
        (render-markdown-preview source
@@ -975,6 +992,8 @@
      (render-shell-preview source #:shell 'powershell)]
     [(eq? file-type 'python)
      (render-python-preview source)]
+    [(eq? file-type 'ruby)
+     (render-ruby-preview source)]
     [(eq? file-type 'pascal)
      (render-pascal-preview source)]
     [(eq? file-type 'rust)
@@ -1039,7 +1058,8 @@
      (define rendered
        (render-archive-preview source-bytes
                                #:path maybe-path
-                               #:color? color?))
+                               #:color? color?
+                               #:stats? (preview-options-stats? options)))
      (if rendered
          (display rendered actual-out)
          (display (render-binary-preview source-bytes
@@ -1049,7 +1069,7 @@
                                          #:search-bytes (preview-options-search-bytes options))
                   actual-out))]
     [(eq? file-type 'directory)
-     (copy-port in actual-out)]
+     (raise-user-error 'stats "directory preview requires a filesystem path")]
     [(eq? file-type 'binary)
      (display (render-binary-preview (port->bytes in)
                                      #:color? color?
@@ -1070,12 +1090,13 @@
               (eq? file-type 'mathematica)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
+              (eq? file-type 'ruby)
               (eq? file-type 'pascal)
               (eq? file-type 'rust)
               (eq? file-type 'tex)
               (eq? file-type 'swift)
               (eq? file-type 'zsh))
-          color?)
+         color?)
      (case file-type
        [(css)        (render-css-preview-port in
                                               actual-out
@@ -1094,6 +1115,7 @@
        [(latex)      (render-latex-preview-port in actual-out)]
        [(bash)       (render-shell-preview-port in actual-out #:shell 'bash)]
        [(powershell) (render-shell-preview-port in actual-out #:shell 'powershell)]
+       [(ruby)       (render-ruby-preview-port in actual-out)]
        [(pascal)     (render-pascal-preview-port in actual-out)]
        [(rust)       (render-rust-preview-port in actual-out)]
        [(tex)        (render-tex-preview-port in actual-out)]
@@ -1112,6 +1134,7 @@
          (eq? file-type 'mathematica)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
+         (eq? file-type 'ruby)
          (eq? file-type 'pascal)
          (eq? file-type 'rust)
          (eq? file-type 'tex)
@@ -1139,6 +1162,7 @@
               (eq? file-type 'json)
               (eq? file-type 'plist)
               (eq? file-type 'python)
+              (eq? file-type 'ruby)
               (eq? file-type 'jsx)
               (eq? file-type 'latex)
               (eq? file-type 'swift)
@@ -1152,6 +1176,7 @@
        [(json)  (render-json-preview-port in actual-out)]
        [(plist) (render-plist-preview-port in actual-out)]
        [(python) (render-python-preview-port in actual-out)]
+       [(ruby) (render-ruby-preview-port in actual-out)]
        [(jsx)   (render-javascript-preview-port in actual-out #:jsx? #t)]
        [(latex) (render-latex-preview-port in actual-out)]
        [(swift) (render-swift-preview-port in actual-out)]
@@ -1161,6 +1186,8 @@
                                               #:toc? (preview-options-toc? options)
                                               #:section (preview-options-section options))]
        [(scrbl) (render-scribble-preview-port in actual-out)])]
+    [(preview-options-stats? options)
+     (raise-user-error 'stats "--stats currently supports directory and archive previews only")]
     [(and (eq? file-type 'md)
           (or (preview-options-section options)
               (preview-options-toc? options)))
@@ -1174,6 +1201,7 @@
          (eq? file-type 'json)
          (eq? file-type 'plist)
          (eq? file-type 'python)
+         (eq? file-type 'ruby)
          (eq? file-type 'jsx)
          (eq? file-type 'latex)
          (eq? file-type 'swift)
@@ -1199,7 +1227,8 @@
      (define archive-rendered
        (render-archive-preview source-bytes
                                #:path maybe-path
-                               #:color? color?))
+                               #:color? color?
+                               #:stats? (preview-options-stats? options)))
      (cond
        [archive-rendered
         (display archive-rendered actual-out)]
@@ -1232,11 +1261,15 @@
     [(directory-exists? path)
      (define actual-out
        (maybe-wrap-grep-output-port
-        (maybe-wrap-line-number-output-port out path options)
+        (maybe-wrap-line-number-output-port
+         (maybe-wrap-line-range-output-port out options)
+         path
+         options)
         color?
         options))
      (display (render-directory-preview path
                                         #:color? color?
+                                        #:stats? (preview-options-stats? options)
                                         #:sort-mode (preview-options-directory-sort options))
               actual-out)]
     [(or (eq? file-type 'archive)
@@ -1264,6 +1297,7 @@
      (define rendered
        (render-directory-preview path
                                  #:color? color?
+                                 #:stats? (preview-options-stats? options)
                                  #:sort-mode (preview-options-directory-sort options)))
      (postprocess-rendered-string rendered path color? options)]
     [(eq? file-type 'archive)
@@ -1272,7 +1306,8 @@
      (define rendered
        (or (render-archive-preview source-bytes
                                    #:path path
-                                   #:color? color?)
+                                   #:color? color?
+                                   #:stats? (preview-options-stats? options))
            (render-binary-preview source-bytes
                                   #:color? color?
                                   #:bits? (eq? (preview-options-binary-mode options)
@@ -1280,6 +1315,8 @@
                                   #:search-bytes (preview-options-search-bytes options))))
      (postprocess-rendered-string rendered path color? options)]
     [(eq? file-type 'binary)
+     (when (preview-options-stats? options)
+       (raise-user-error 'stats "--stats currently supports directory and archive previews only"))
      (define rendered
        (open-output-string))
      (call-with-input-file path
@@ -1319,6 +1356,7 @@
          (eq? file-type 'latex)
          (eq? file-type 'tex)
          (eq? file-type 'python)
+         (eq? file-type 'ruby)
          (eq? file-type 'jsx)
          (eq? file-type 'rust)
          (eq? file-type 'tex)
@@ -1327,6 +1365,8 @@
          (eq? file-type 'yaml)
          (eq? file-type 'tsv)
          (eq? file-type 'scrbl))
+     (when (preview-options-stats? options)
+       (raise-user-error 'stats "--stats currently supports directory and archive previews only"))
      (define rendered
        (open-output-string))
      (call-with-input-file path
@@ -1341,7 +1381,8 @@
      (define archive-rendered
        (render-archive-preview source-bytes
                                #:path path
-                               #:color? color?))
+                               #:color? color?
+                               #:stats? (preview-options-stats? options)))
      (cond
        [archive-rendered
         (postprocess-rendered-string archive-rendered path color? options)]

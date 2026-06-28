@@ -29,6 +29,7 @@
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
+;; ruby-like-style       -- Style Ruby-like embedded tokens.
 ;; mathematica-like-style -- Style Mathematica-like embedded tokens.
 ;; pascal-like-style     -- Style Pascal-like embedded tokens.
 ;; swift-like-style      -- Style Swift-like embedded tokens.
@@ -87,6 +88,8 @@
  yaml-like-style
  ;; python-like-style Style Python-like embedded tokens.
  python-like-style
+ ;; ruby-like-style Style Ruby-like embedded tokens.
+ ruby-like-style
  ;; mathematica-like-style Style Mathematica-like embedded tokens.
  mathematica-like-style
  ;; pascal-like-style Style Pascal-like embedded tokens.
@@ -626,6 +629,58 @@
      ansi-identifier]
     [(or (memq 'python-operator tags)
          (memq 'python-delimiter tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; ruby-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Ruby-like roles.
+(define (ruby-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'ruby-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'ruby-comment tags)
+         (memq 'ruby-shebang-comment tags))
+     ansi-comment]
+    [(or (memq 'ruby-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'ruby-string-literal tags)
+         (memq 'ruby-symbol-literal tags)
+         (memq 'ruby-character-literal tags)
+         (memq 'ruby-number-literal tags)
+         (memq 'ruby-regexp-literal tags)
+         (memq 'ruby-command-literal tags)
+         (memq 'ruby-percent-literal tags)
+         (memq 'ruby-word-list-literal tags)
+         (memq 'ruby-symbol-list-literal tags)
+         (memq 'ruby-heredoc-introducer tags)
+         (memq 'ruby-heredoc-body tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'ruby-instance-variable tags)
+         (memq 'ruby-class-variable tags)
+         (memq 'ruby-global-variable tags)
+         (memq 'ruby-method-name tags)
+         (memq 'ruby-operator-method-name tags)
+         (memq 'ruby-method-reference tags)
+         (memq 'ruby-method-symbol-literal tags)
+         (memq 'ruby-keyword-argument-label tags)
+         (memq 'ruby-identifier tags)
+         (memq 'ruby-constant tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'ruby-interpolation tags)
+         (memq 'ruby-operator tags)
+         (memq 'ruby-delimiter tags)
+         (memq 'ruby-line-continuation tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]

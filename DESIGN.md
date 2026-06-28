@@ -66,8 +66,10 @@ a directory, the generic layer routes to a flat directory preview instead of
 treating the path as a file. This preview stays intentionally close to `ls`:
 directories appear first, links next, regular files after that, regular-file
 sizes are aligned, and optional sorting can group by file kind or by size.
-That keeps folder preview separate from both archive trees and text-language
-previewers.
+`--stats` builds on the same path-oriented layer and appends a compact summary
+block instead of creating a separate stats-only preview mode. That keeps
+folder preview separate from both archive trees and text-language previewers
+while still sharing one summary format with archive preview.
 
 Git-focused diff preview is another generic path-oriented layer. `--diff`
 does not try to replace `git diff`; instead, it asks Git for the changed

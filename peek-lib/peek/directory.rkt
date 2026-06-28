@@ -16,7 +16,8 @@
          racket/list
          racket/path
          racket/string
-         "common-style.rkt")
+         "common-style.rkt"
+         "stats.rkt")
 
 (struct directory-entry (name display-name kind size target executable?) #:transparent)
 
@@ -221,11 +222,12 @@
                 (not (string-ci=? (file-kind-key previous)
                                   (file-kind-key entry)))))))
 
-;; render-directory-preview : path-string? #:color? boolean? #:sort-mode symbol? -> string?
+;; render-directory-preview : path-string? #:color? boolean? #:sort-mode symbol? #:stats? boolean? -> string?
 ;;   Render a directory listing.
 (define (render-directory-preview path
                                   #:color? [color? #t]
-                                  #:sort-mode [sort-mode 'kind])
+                                  #:sort-mode [sort-mode 'kind]
+                                  #:stats? [stats? #f])
   (define entries
     (sort-directory-entries (collect-directory-entries path)
                             sort-mode))
@@ -255,6 +257,13 @@
             (loop (cdr rest)
                   entry
                   next-acc)])))
-     (string-append
-      (string-join rendered-lines "\n")
-      "\n")]))
+     (define listing
+       (string-append
+        (string-join rendered-lines "\n")
+        "\n"))
+     (if stats?
+         (string-append listing
+                        "\n"
+                        (render-preview-stats (directory-path->preview-stats path)
+                                              color?))
+         listing)]))

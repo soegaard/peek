@@ -10,6 +10,7 @@ Current behavior:
 - directories come first, then links, then regular files
 - regular-file sizes are right-aligned
 - blank lines separate the directory, link, and file groups
+- `--stats` appends a compact recursive summary block
 - `--kind` groups regular files by file kind such as `.md` or `.rkt`
 - `--size` sorts regular files by descending size
 

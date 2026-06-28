@@ -192,6 +192,7 @@
   (define section #f)
   (define line-range #f)
   (define line-numbers? #f)
+  (define stats? #f)
   (define directory-sort 'kind)
   (define search-byte-specs '())
   (define search-text-specs '())
@@ -255,6 +256,9 @@
    [("-n" "--line-numbers")
     "Prefix output lines with nl-style line numbers."
     (set! line-numbers? #t)]
+   [("--stats")
+    "Append a compact summary block for directory and archive previews."
+    (set! stats? #t)]
    [("--kind")
     "Sort directory previews by kind and then by name."
     (set! directory-sort 'kind)]
@@ -312,6 +316,7 @@
                              #:grep-patterns (map grep-spec->regexp
                                                   (reverse grep-specs))
                              #:line-numbers? line-numbers?
+                             #:stats? stats?
                              #:pretty? pretty?))
      (define (write-preview out)
        (cond

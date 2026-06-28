@@ -17,6 +17,7 @@ Current design choices:
 
 - archive detection is extension-first, with a small amount of byte-level
   recognition for fallback cases
+- `--stats` appends the same compact summary block used by directory preview
 - explicit `--type archive` forces archive preview
 - explicit `--type binary` remains the escape hatch for raw byte inspection
 - ZIP uses Racket’s `file/unzip` directory-reading API

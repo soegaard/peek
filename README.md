@@ -130,6 +130,13 @@ Preview a Markdown heading outline:
 peek --toc -P README.md
 ```
 
+Append a compact stats block for a folder or archive:
+
+```sh
+peek --stats path/to/folder/
+peek --stats path/to/archive.zip
+```
+
 Preview only the changed Git hunks for one file:
 
 ```sh
@@ -194,6 +201,7 @@ Current supported file types are:
 - `pascal`
 - `powershell`
 - `python`
+- `ruby`
 - `rhombus`
 - `rkt`
 - `rust`
@@ -227,9 +235,12 @@ rewriting. Plist uses the `plist` previewer and preserves source text and
 line breaks without layout rewriting. Pascal uses
 the `pascal` previewer and preserves source text and line breaks without
 layout rewriting. Python uses the `python` previewer and preserves source text
-and line breaks without layout rewriting. Mathematica uses the `mathematica`
-previewer for `.wl` and `.wls` sources while leaving the ambiguous `.m`
-extension with Objective-C. Rhombus uses the `rhombus`
+and line breaks without layout rewriting. Ruby uses the `ruby` previewer and
+preserves source text and line breaks without layout rewriting for `.rb`,
+`.rake`, `.gemspec`, and common extensionless Ruby file names such as
+`Gemfile` and `Rakefile`. Mathematica uses the `mathematica`
+previewer for `.wl` and `.wls` sources while choosing the ambiguous `.m`
+extension heuristically between Mathematica and Objective-C. Rhombus uses the `rhombus`
 previewer and preserves source text and line breaks without layout rewriting.
 Shell files use the `bash`, `zsh`, and `powershell` previewers and preserve
 source text and line breaks without layout rewriting. Swift uses the `swift`
@@ -238,8 +249,10 @@ YAML uses the `yaml` previewer and preserves source text and line breaks
 without layout rewriting.
 Directory paths use the directory previewer and show a flat listing with
 directories first, simple kind-aware coloring, right-aligned file sizes, and
-optional `--kind` / `--size` sorting. Directory preview is selected from the
-path itself, not with `--type`.
+optional `--kind` / `--size` sorting. Add `--stats` to append a compact
+summary block with recursive counts, total file bytes, largest files, and
+top file kinds. Directory preview is selected from the path itself, not with
+`--type`.
 TeX uses the `tex` previewer and preserves source text and line breaks
 without layout rewriting, while giving math shifts, accent commands, spacing
 commands, parameters, and delimiters their own terminal structure. LaTeX
@@ -253,6 +266,8 @@ heuristic keeps form-like and binding-form-like names readable.
 Archive files use the `archive` previewer and show a directory tree for
 supported formats such as ZIP, TAR, and TGZ/TAR.GZ. Use `--type archive` to
 force archive preview, or `--type binary` to inspect the raw bytes instead.
+Add `--stats` to append the same compact summary block that directory
+preview uses.
 
 Binary files use the `binary` previewer and show offsets, color-coded bytes,
 and an ASCII gutter. Add `--bits` to show each byte as eight bits instead of

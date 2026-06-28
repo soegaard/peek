@@ -175,6 +175,7 @@ surface includes:
        @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
        @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
        @seclink["shell"]{PowerShell}, @seclink["python"]{Python},
+       @seclink["ruby"]{Ruby},
        @seclink["rhombus"]{Rhombus},
        @seclink["racket"]{Racket}, @seclink["rust"]{Rust},
        @seclink["swift"]{Swift}, and @seclink["shell"]{Zsh}}
@@ -260,6 +261,7 @@ Useful command-line combinations:
 peek -P path/to/file.css
 peek --lines 20:40 -P path/to/file.rkt
 peek --toc -P README.md
+peek --stats path/to/folder/
 peek --diff path/to/file.rkt
 peek --diff --staged path/to/file.rkt
 }
@@ -274,7 +276,7 @@ General options:
        input. Supported values include @tt{archive}, @tt{binary}, @tt{bash}, @tt{c},
        @tt{cpp}, @tt{css}, @tt{html}, @tt{js}, @tt{json}, @tt{jsx},
        @tt{latex}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
-       @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{rust}, @tt{scrbl},
+       @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{ruby}, @tt{rust}, @tt{scrbl},
        @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, and @tt{zsh}. Use
        @tt{archive} to force archive preview for a supported archive, or use
        @tt{binary} to force the binary preview mode even when automatic
@@ -317,6 +319,10 @@ General options:
  @item{@DFlag{--grep} @italic{regexp}
        emphasizes rendered lines whose text matches a regular expression.
        Repeat the flag to add more patterns.}
+ @item{@DFlag{--stats}
+       appends a compact stats block for directory and archive previews.
+       The block includes recursive counts, total file bytes, largest files,
+       and the most common file kinds.}
  @item{@DFlag{--diff}
        renders only the changed Git hunks for one file path, with a small
        amount of context around each hunk and normal syntax coloring inside
@@ -411,7 +417,8 @@ The current reference sections are:
        @seclink["objective-c"]{Objective-C}, @seclink["go"]{Go},
        @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
        @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
-       @seclink["python"]{Python}, @seclink["racket"]{Racket},
+       @seclink["python"]{Python}, @seclink["ruby"]{Ruby},
+       @seclink["racket"]{Racket},
        @seclink["rhombus"]{Rhombus},
        @seclink["rust"]{Rust}, and @seclink["swift"]{Swift}}
  @item{@bold{Document languages:} @seclink["markdown"]{Markdown},
@@ -691,6 +698,22 @@ Example Python preview input:
 Rendered Python preview:
 
 @(preview-shot snippet-python-shot)
+
+@subsubsection[#:tag "ruby"]{Ruby}
+
+For Ruby, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.rb}, @tt{.rake}, and @tt{.gemspec} files}
+ @item{syntax coloring for common extensionless Ruby files such as
+       @tt{Gemfile}, @tt{Rakefile}, @tt{Guardfile}, and @tt{Appraisals}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}
+]
+
+The Ruby previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
 
 @subsubsection[#:tag "mathematica"]{Mathematica}
 
@@ -1095,6 +1118,7 @@ For a directory path, @exec{peek} supports:
  @item{simple kind-aware coloring}
  @item{right-aligned size fields for regular files}
  @item{blank-line dividers between major groups}
+ @item{@tt{--stats} to append a compact recursive summary}
  @item{@tt{--kind} sorting by file kind and name}
  @item{@tt{--size} sorting by size inside the regular-file group}
 ]
@@ -1121,6 +1145,12 @@ Sorting by size:
 peek --size path/to/folder/
 }
 
+Adding a stats block:
+
+@shellblock[#:shell 'bash]{
+peek --stats path/to/folder/
+}
+
 @subsection[#:tag "archive-files"]{Archive Files}
 
 For Archive Files, @exec{peek} currently supports:
@@ -1129,6 +1159,7 @@ For Archive Files, @exec{peek} currently supports:
  @item{tree previews for @tt{.zip}, @tt{.tar}, @tt{.tgz}, and @tt{.tar.gz}}
  @item{automatic archive routing from those known extensions}
  @item{explicit @tt{archive} mode for stdin and files}
+ @item{@tt{--stats} to append a compact summary block}
  @item{an explicit escape hatch to raw bytes with @tt{binary} mode}
 ]
 
@@ -1142,6 +1173,12 @@ Example archive preview command:
 
 @shellblock[#:shell 'bash]{
 peek archive.zip
+}
+
+Archive preview with stats:
+
+@shellblock[#:shell 'bash]{
+peek --stats archive.zip
 }
 
 @subsection[#:tag "binary-files"]{Binary Files}
@@ -1219,8 +1256,9 @@ The command-line entry point lives in
 Unsupported file types currently fall back to plain text.
 
 The current implementation focuses on CSS, HTML, Java, JavaScript, Markdown,
-Racket, Scribble, TeX, LaTeX, WAT, Shell, Makefile, and the data-format
-previewers. Most supported lexers use the port-oriented streaming path.
+Racket, Ruby, Scribble, TeX, LaTeX, WAT, Shell, Makefile, and the
+data-format previewers. Most supported lexers use the port-oriented
+streaming path.
 CSS remains the special buffered renderer because it can add swatches and
 alignment. Future file types may add their own previewers without forcing all
 file types into the same rendering model.

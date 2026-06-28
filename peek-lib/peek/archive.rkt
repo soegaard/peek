@@ -33,7 +33,8 @@
          racket/path
          racket/port
          racket/string
-         "common-style.rkt")
+         "common-style.rkt"
+         "stats.rkt")
 
 (struct archive-entry (segments kind size target) #:transparent)
 (struct tree-node (name kind children size target) #:mutable #:transparent)
@@ -499,11 +500,29 @@
                        links
                        (if (= links 1) "" "s"))))))
 
-;; render-archive-preview : bytes? #:path (or/c path-string? #f) #:color? boolean? -> (or/c string? #f)
+;; archive-entry->stats-entry : archive-entry? -> (or/c stats-entry? #f)
+;;   Convert one archive entry to the normalized stats shape when relevant.
+(define (archive-entry->stats-entry entry)
+  (define path-text
+    (string-join (archive-entry-segments entry) "/"))
+  (case (archive-entry-kind entry)
+    [(directory)
+     (stats-entry path-text 'directory #f)]
+    [(link)
+     (stats-entry path-text 'link #f)]
+    [(file)
+     (stats-entry path-text 'file
+                  (or (archive-entry-size entry)
+                      0))]
+    [else
+     #f]))
+
+;; render-archive-preview : bytes? #:path (or/c path-string? #f) #:color? boolean? #:stats? boolean? -> (or/c string? #f)
 ;;   Render archive bytes as a tree preview when the format is recognized.
 (define (render-archive-preview bs
                                 #:path [maybe-path #f]
-                                #:color? [color? #t])
+                                #:color? [color? #t]
+                                #:stats? [stats? #f])
   (let loop ([formats (archive-candidate-formats bs maybe-path)])
     (cond
       [(null? formats) #f]
@@ -522,7 +541,13 @@
                                       color?)
                          "\n")
             "\n\n"
-            (render-summary root color?)
+            (if stats?
+                (render-preview-stats
+                 (stats-entries->preview-stats
+                  (filter values
+                          (map archive-entry->stats-entry entries)))
+                 color?)
+                (render-summary root color?))
             "\n")))
        (or maybe-rendered
            (loop (cdr formats)))])))

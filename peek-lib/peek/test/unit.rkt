@@ -28,6 +28,7 @@
          "../plist.rkt"
          "../pascal.rkt"
          "../python.rkt"
+         "../ruby.rkt"
          "../rust.rkt"
          "../cpp.rkt"
          "../objc.rkt"
@@ -83,6 +84,8 @@
   "fixtures/demo.yml")
 (define-runtime-path demo-python-path
   "fixtures/demo.py")
+(define-runtime-path demo-ruby-path
+  "fixtures/demo.rb")
 (define-runtime-path demo-rust-path
   "fixtures/demo.rs")
 (define-runtime-path demo-swift-path
@@ -209,7 +212,7 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md objc pascal plist powershell python rhombus rkt rust scrbl swift tex tsv wat yaml zsh))
+              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md objc pascal plist powershell python rhombus rkt ruby rust scrbl swift tex tsv wat yaml zsh))
 
 (let ([out (open-output-string)])
   (preview-path-port demo-racket-path
@@ -220,6 +223,13 @@
 
 (let ([out (open-output-string)])
   (preview-path-port demo-mathematica-path
+                     (make-preview-options #:color-mode 'always)
+                     out)
+  (check-true (regexp-match? ansi-pattern
+                             (get-output-string out))))
+
+(let ([out (open-output-string)])
+  (preview-path-port demo-ruby-path
                      (make-preview-options #:color-mode 'always)
                      out)
   (check-true (regexp-match? ansi-pattern
@@ -252,6 +262,19 @@
    (check-equal? (preview-file path
                                (make-preview-options #:color-mode 'always))
                  (render-mathematica-preview (file->string path)))))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define path
+     (build-path dir "Gemfile"))
+   (call-with-output-file path
+     (lambda (out)
+       (display "source \"https://rubygems.org\"\n" out)
+       (display "gem \"rack\"\n" out))
+     #:exists 'truncate/replace)
+   (check-equal? (preview-file path
+                               (make-preview-options #:color-mode 'always))
+                 (render-ruby-preview (file->string path)))))
 
 (call-with-temp-directory
  (lambda (dir)
@@ -386,7 +409,20 @@
    (check-true (exact-nonnegative-integer? rkt-index))
    (check-true (exact-nonnegative-integer? txt-index))
    (check-true (< md-index rkt-index))
-   (check-true (< rkt-index txt-index))))
+   (check-true (< rkt-index txt-index))
+   (define stats-preview
+     (strip-ansi (preview-file source-dir
+                               (make-preview-options #:color-mode 'always
+                                                     #:stats? #t))))
+   (check-true (regexp-match? #px"\nStats\n" stats-preview))
+   (check-true (regexp-match? #px"2 directories, 4 files, 1 link" stats-preview))
+   (check-true (regexp-match? #px"Largest files\n" stats-preview))
+   (check-true (regexp-match? #px"module\\.rkt +17 B" stats-preview))
+   (check-true (regexp-match? #px"longer-name\\.txt +5 B" stats-preview))
+   (check-true (regexp-match? #px"File kinds\n" stats-preview))
+   (check-true (regexp-match? #px"txt +2" stats-preview))
+   (check-true (regexp-match? #px"md +1" stats-preview))
+   (check-true (regexp-match? #px"rkt +1" stats-preview))))
 
 (call-with-temp-archive-files
  (lambda (zip-path tar-path tgz-path)
@@ -429,6 +465,18 @@
    (check-true (andmap exact-nonnegative-integer? bytes-start-columns))
    (check-equal? (car bytes-start-columns)
                  (cadr bytes-start-columns))
+   (define zip-stats-preview
+     (strip-ansi (preview-file zip-path
+                               (make-preview-options #:color-mode 'always
+                                                     #:stats? #t))))
+   (check-true (regexp-match? #px"\nStats\n" zip-stats-preview))
+   (check-true (regexp-match? #px"1 directory, 3 files, 0 links" zip-stats-preview))
+   (check-true (regexp-match? #px"Largest files\n" zip-stats-preview))
+   (check-true (regexp-match? #px"src/main\\.rkt" zip-stats-preview))
+   (check-true (regexp-match? #px"File kinds\n" zip-stats-preview))
+   (check-true (regexp-match? #px"md +1" zip-stats-preview))
+   (check-true (regexp-match? #px"rkt +1" zip-stats-preview))
+   (check-true (regexp-match? #px"txt +1" zip-stats-preview))
    (check-true (regexp-match? #px"demo\\.zip"
                               (or (render-archive-preview (file->bytes zip-path)
                                                           #:path zip-path
@@ -716,6 +764,9 @@
 (check-true
  (regexp-match? #px"answer"
                 (render-python-preview "def answer(name):\n    return name\n")))
+(check-true
+ (regexp-match? #px"Greeter"
+                (render-ruby-preview "class Greeter\n  def greet(name:)\n    \"hello #{name}\"\n  end\nend\n")))
 (check-true
  (regexp-match? #px"greet"
                 (render-rust-preview "/// Demo\nfn greet(name: &str) -> String {\n    format!(\"hello, {name}\")\n}\n")))
@@ -1460,6 +1511,13 @@
   "  - Two\n"
   "- Three\n"))
 
+(check-exn
+ exn:fail:user?
+ (lambda ()
+   (preview-file demo-racket-path
+                 (make-preview-options #:color-mode 'never
+                                       #:stats? #t))))
+
 (check-equal?
  (strip-ansi (preview-file demo-tex-path
                            (make-preview-options #:color-mode 'always)))
@@ -1565,6 +1623,10 @@
  (strip-ansi (preview-file demo-python-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-python-path))
+(check-equal?
+ (strip-ansi (preview-file demo-ruby-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-ruby-path))
 (check-equal?
  (strip-ansi (preview-file demo-rust-path
                            (make-preview-options #:color-mode 'always)))
@@ -1678,6 +1740,12 @@
                              (make-preview-options #:type 'python
                                                    #:color-mode 'always)))
  "def answer(name):\n    return name\n")
+(check-equal?
+ (strip-ansi (preview-string "class Greeter\n  def greet(name:)\n    \"hello #{name}\"\n  end\nend\n"
+                             #f
+                             (make-preview-options #:type 'ruby
+                                                   #:color-mode 'always)))
+ "class Greeter\n  def greet(name:)\n    \"hello #{name}\"\n  end\nend\n")
 (check-equal?
  (strip-ansi (preview-string "/// Demo\nfn greet(name: &str) -> String {\n    format!(\"hello, {name}\")\n}\n"
                              #f

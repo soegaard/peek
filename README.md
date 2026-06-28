@@ -201,6 +201,10 @@ Current supported file types are:
 - `pascal`
 - `powershell`
 - `python`
+- `sql`
+- `sqlite`
+- `postgres`
+- `mysql`
 - `ruby`
 - `rhombus`
 - `rkt`
@@ -235,7 +239,10 @@ rewriting. Plist uses the `plist` previewer and preserves source text and
 line breaks without layout rewriting. Pascal uses
 the `pascal` previewer and preserves source text and line breaks without
 layout rewriting. Python uses the `python` previewer and preserves source text
-and line breaks without layout rewriting. Ruby uses the `ruby` previewer and
+and line breaks without layout rewriting. SQL uses the `sql`, `sqlite`,
+`postgres`, and `mysql` previewers and preserves source text and line breaks
+without layout rewriting for `.sql` files, with dialect-specific overrides
+available through `--type`. Ruby uses the `ruby` previewer and
 preserves source text and line breaks without layout rewriting for `.rb`,
 `.rake`, `.gemspec`, and common extensionless Ruby file names such as
 `Gemfile` and `Rakefile`. Mathematica uses the `mathematica`

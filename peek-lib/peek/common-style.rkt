@@ -29,6 +29,7 @@
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
 ;; yaml-like-style       -- Style YAML-like embedded tokens.
 ;; python-like-style     -- Style Python-like embedded tokens.
+;; sql-like-style        -- Style SQL-like embedded tokens.
 ;; ruby-like-style       -- Style Ruby-like embedded tokens.
 ;; mathematica-like-style -- Style Mathematica-like embedded tokens.
 ;; pascal-like-style     -- Style Pascal-like embedded tokens.
@@ -88,6 +89,8 @@
  yaml-like-style
  ;; python-like-style Style Python-like embedded tokens.
  python-like-style
+ ;; sql-like-style Style SQL-like embedded tokens.
+ sql-like-style
  ;; ruby-like-style Style Ruby-like embedded tokens.
  ruby-like-style
  ;; mathematica-like-style Style Mathematica-like embedded tokens.
@@ -631,6 +634,42 @@
          (memq 'python-delimiter tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; sql-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for SQL-like roles.
+(define (sql-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'sql-unknown tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'sql-comment tags)
+         (memq 'sql-line-comment tags)
+         (memq 'sql-block-comment tags))
+     ansi-comment]
+    [(or (eq? category 'keyword)
+         (memq 'sql-keyword tags))
+     ansi-keyword]
+    [(or (eq? category 'literal)
+         (memq 'sql-string-literal tags)
+         (memq 'sql-dollar-string tags)
+         (memq 'sql-numeric-literal tags))
+     ansi-literal]
+    [(or (eq? category 'identifier)
+         (memq 'sql-identifier tags)
+         (memq 'sql-quoted-identifier tags)
+         (memq 'sql-parameter tags))
+     ansi-identifier]
+    [(or (eq? category 'operator)
+         (eq? category 'delimiter)
+         (memq 'sql-operator tags)
+         (memq 'sql-delimiter tags))
      ansi-delimiter]
     [else
      ""]))

@@ -23,6 +23,7 @@
                      lexers/tex
                      lexers/latex
                      lexers/python
+                     lexers/sql
                      lexers/racket
                      lexers/rhombus
                      lexers/rust
@@ -185,7 +186,7 @@ surface includes:
  @item{@bold{Data and tooling formats:} @seclink["csv"]{CSV},
        @seclink["json"]{JSON}, @seclink["makefile"]{Makefile},
        @seclink["plist"]{Plist}, @seclink["tsv"]{TSV}, @seclink["wat"]{WAT},
-       and @seclink["yaml"]{YAML}}
+       @seclink["sql"]{SQL}, and @seclink["yaml"]{YAML}}
  @item{@bold{Directory paths:} @seclink["directory-paths"]{Directory Paths}}
  @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
  @item{@bold{Binary files:} automatic binary detection plus explicit
@@ -276,8 +277,9 @@ General options:
        input. Supported values include @tt{archive}, @tt{binary}, @tt{bash}, @tt{c},
        @tt{cpp}, @tt{css}, @tt{html}, @tt{js}, @tt{json}, @tt{jsx},
        @tt{latex}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
-       @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt}, @tt{ruby}, @tt{rust}, @tt{scrbl},
-       @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, and @tt{zsh}. Use
+       @tt{postgres}, @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt},
+       @tt{ruby}, @tt{rust}, @tt{scrbl}, @tt{sql}, @tt{sqlite},
+       @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, @tt{mysql}, and @tt{zsh}. Use
        @tt{archive} to force archive preview for a supported archive, or use
        @tt{binary} to force the binary preview mode even when automatic
        detection would not select it.}
@@ -426,7 +428,7 @@ The current reference sections are:
        @seclink["latex"]{LaTeX}}
  @item{@bold{Tooling and config:} @seclink["makefile"]{Makefile}}
  @item{@bold{Data formats:} @seclink["csv"]{CSV}, @seclink["json"]{JSON},
-       @seclink["plist"]{Plist}, @seclink["tsv"]{TSV},
+       @seclink["plist"]{Plist}, @seclink["sql"]{SQL}, @seclink["tsv"]{TSV},
        @seclink["wat"]{WAT}, and @seclink["yaml"]{YAML}}
  @item{@bold{Directory paths:} @seclink["directory-paths"]{Directory Paths}}
  @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
@@ -698,6 +700,21 @@ Example Python preview input:
 Rendered Python preview:
 
 @(preview-shot snippet-python-shot)
+
+@subsubsection[#:tag "sql"]{SQL}
+
+For SQL, @exec{peek} currently supports:
+
+@itemlist[
+ @item{syntax coloring for @tt{.sql} files}
+ @item{explicit dialect overrides via @tt{sql}, @tt{sqlite}, @tt{postgres},
+       and @tt{mysql}}
+ @item{best-effort previewing on malformed input}
+ @item{source-preserving, color-only terminal output}]
+
+The SQL previewer is intentionally color-only. It does not add layout
+rewriting or alignment, and it preserves source text and line breaks after
+ANSI stripping.
 
 @subsubsection[#:tag "ruby"]{Ruby}
 

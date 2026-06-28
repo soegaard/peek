@@ -28,6 +28,7 @@
          "../plist.rkt"
          "../pascal.rkt"
          "../python.rkt"
+         "../sql.rkt"
          "../ruby.rkt"
          "../rust.rkt"
          "../cpp.rkt"
@@ -84,6 +85,8 @@
   "fixtures/demo.yml")
 (define-runtime-path demo-python-path
   "fixtures/demo.py")
+(define-runtime-path demo-sql-path
+  "fixtures/demo.sql")
 (define-runtime-path demo-ruby-path
   "fixtures/demo.rb")
 (define-runtime-path demo-rust-path
@@ -212,7 +215,7 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md objc pascal plist powershell python rhombus rkt ruby rust scrbl swift tex tsv wat yaml zsh))
+              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scrbl sql sqlite swift tex tsv wat yaml zsh))
 
 (let ([out (open-output-string)])
   (preview-path-port demo-racket-path
@@ -230,6 +233,13 @@
 
 (let ([out (open-output-string)])
   (preview-path-port demo-ruby-path
+                     (make-preview-options #:color-mode 'always)
+                     out)
+  (check-true (regexp-match? ansi-pattern
+                             (get-output-string out))))
+
+(let ([out (open-output-string)])
+  (preview-path-port demo-sql-path
                      (make-preview-options #:color-mode 'always)
                      out)
   (check-true (regexp-match? ansi-pattern
@@ -262,6 +272,19 @@
    (check-equal? (preview-file path
                                (make-preview-options #:color-mode 'always))
                  (render-mathematica-preview (file->string path)))))
+
+(call-with-temp-directory
+ (lambda (dir)
+   (define path
+     (build-path dir "demo.sql"))
+   (call-with-output-file path
+     (lambda (out)
+       (display "-- query\n" out)
+       (display "SELECT id, name FROM people WHERE id = 42;\n" out))
+     #:exists 'truncate/replace)
+   (check-equal? (preview-file path
+                               (make-preview-options #:color-mode 'always))
+                 (render-sql-preview (file->string path)))))
 
 (call-with-temp-directory
  (lambda (dir)
@@ -764,6 +787,13 @@
 (check-true
  (regexp-match? #px"answer"
                 (render-python-preview "def answer(name):\n    return name\n")))
+(check-true
+ (regexp-match? #px"SELECT"
+                (render-sql-preview "-- query\nSELECT id FROM people;\n")))
+(check-true
+ (regexp-match? #px"\\$\\$hello\\$\\$"
+                (render-sql-preview "SELECT $$hello$$;\n"
+                                    'postgres)))
 (check-true
  (regexp-match? #px"Greeter"
                 (render-ruby-preview "class Greeter\n  def greet(name:)\n    \"hello #{name}\"\n  end\nend\n")))
@@ -1624,6 +1654,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-python-path))
 (check-equal?
+ (strip-ansi (preview-file demo-sql-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-sql-path))
+(check-equal?
  (strip-ansi (preview-file demo-ruby-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-ruby-path))
@@ -1740,6 +1774,30 @@
                              (make-preview-options #:type 'python
                                                    #:color-mode 'always)))
  "def answer(name):\n    return name\n")
+(check-equal?
+ (strip-ansi (preview-string "SELECT id, name FROM people WHERE id = 42;\n"
+                             #f
+                             (make-preview-options #:type 'sql
+                                                   #:color-mode 'always)))
+ "SELECT id, name FROM people WHERE id = 42;\n")
+(check-equal?
+ (strip-ansi (preview-string "SELECT [group], `name` FROM \"items\" WHERE id = ?1;\n"
+                             #f
+                             (make-preview-options #:type 'sqlite
+                                                   #:color-mode 'always)))
+ "SELECT [group], `name` FROM \"items\" WHERE id = ?1;\n")
+(check-equal?
+ (strip-ansi (preview-string "SELECT $1, $$hello$$ FROM accounts;\n"
+                             #f
+                             (make-preview-options #:type 'postgres
+                                                   #:color-mode 'always)))
+ "SELECT $1, $$hello$$ FROM accounts;\n")
+(check-equal?
+ (strip-ansi (preview-string "# note\nSELECT _utf8'hej', `name` FROM users;\n"
+                             #f
+                             (make-preview-options #:type 'mysql
+                                                   #:color-mode 'always)))
+ "# note\nSELECT _utf8'hej', `name` FROM users;\n")
 (check-equal?
  (strip-ansi (preview-string "class Greeter\n  def greet(name:)\n    \"hello #{name}\"\n  end\nend\n"
                              #f

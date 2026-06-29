@@ -9,9 +9,6 @@
                      "lexers-lib"
                      "rackunit-lib"))
 
-(define racket-launcher-names '("peek"))
-(define racket-launcher-libraries '("peek/main.rkt"))
-
 (define compile-omit-paths '("peek/test/fixtures"))
 (define test-omit-paths    '("peek/test/fixtures"))
 

@@ -1,8 +1,14 @@
 #lang info
 
+(define collection 'multi)
+
 (define pkg-desc "Meta-package for the peek library and documentation.")
 (define pkg-authors '(soegaard))
 (define license 'MIT)
+
+(define setup-collects '())
+(define compile-omit-paths 'all)
+(define test-omit-paths 'all)
 
 (define deps '("base"
                "peek-lib"

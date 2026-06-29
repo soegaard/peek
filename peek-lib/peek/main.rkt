@@ -27,6 +27,12 @@
   (eprintf "peek: ~a\n" message)
   (exit 1))
 
+;; interactive-stdin-without-file? : input-port? (or/c path-string? #f) -> boolean?
+;;   Determine whether `peek` started without a file while stdin is a terminal.
+(define (interactive-stdin-without-file? in file-path)
+  (and (not file-path)
+       (terminal-port? in)))
+
 ;; hex-digit->value : char? -> (or/c exact-nonnegative-integer? #f)
 ;;   Convert a hexadecimal digit to its numeric value.
 (define (hex-digit->value ch)
@@ -287,6 +293,9 @@
     [list-file-types?
      (print-supported-file-types)]
     [else
+     (when (interactive-stdin-without-file? (current-input-port)
+                                            file-path)
+       (usage-error "Missing filename (\"peek --help\" for help)"))
      (when file-path
        (unless (or (file-exists? file-path)
                    (directory-exists? file-path))
@@ -338,6 +347,11 @@
 
 (module+ test
   (require rackunit)
+
+  (check-false (interactive-stdin-without-file? (open-input-string "peek")
+                                                #f))
+  (check-false (interactive-stdin-without-file? (current-input-port)
+                                                "demo.txt"))
 
   (check-equal? (search-text-spec->bytes "peek")
                 (string->bytes/utf-8 "peek"))

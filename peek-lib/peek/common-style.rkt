@@ -24,6 +24,7 @@
 ;; javascript-like-style -- Style JavaScript-like embedded tokens.
 ;; java-like-style       -- Style Java-like embedded tokens.
 ;; json-like-style       -- Style JSON-like embedded tokens.
+;; toml-like-style       -- Style TOML-like embedded tokens.
 ;; plist-like-style      -- Style plist-like embedded tokens.
 ;; tex-like-style        -- Style TeX/LaTeX embedded tokens.
 ;; delimited-like-style  -- Style CSV/TSV-like embedded tokens.
@@ -79,6 +80,8 @@
  java-like-style
  ;; json-like-style       Style JSON-like embedded tokens.
  json-like-style
+ ;; toml-like-style       Style TOML-like embedded tokens.
+ toml-like-style
  ;; plist-like-style      Style plist-like embedded tokens.
  plist-like-style
  ;; tex-like-style        Style TeX/LaTeX embedded tokens.
@@ -442,6 +445,40 @@
          (memq 'json-array-end tags)
          (memq 'json-comma tags)
          (memq 'json-colon tags)
+         (eq? category 'delimiter)
+         (eq? category 'operator))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; toml-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for TOML roles.
+(define (toml-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'toml-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (memq 'comment tags)
+         (memq 'toml-comment tags)
+         (eq? category 'comment))
+     ansi-comment]
+    [(or (memq 'toml-key tags)
+         (memq 'toml-table-key tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'toml-string tags)
+         (memq 'toml-boolean tags)
+         (memq 'toml-number tags)
+         (memq 'toml-date-time tags)
+         (memq 'toml-bare-value tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'toml-key-value-separator tags)
+         (memq 'toml-comma tags)
+         (memq 'toml-dot tags)
+         (memq 'toml-structural-delimiter tags)
          (eq? category 'delimiter)
          (eq? category 'operator))
      ansi-delimiter]

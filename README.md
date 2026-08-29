@@ -38,6 +38,7 @@ peek path/to/file.java
 peek path/to/file.hs
 peek path/to/file.js
 peek path/to/file.json
+peek path/to/file.toml
 peek path/to/file.tex
 peek path/to/file.cls
 peek path/to/file.sty
@@ -74,6 +75,7 @@ cat path/to/file.java | peek --type java
 cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.hs | peek --type haskell
 cat path/to/file.json | peek --type json
+cat path/to/file.toml | peek --type toml
 cat path/to/file.tex | peek --type tex
 cat path/to/file.cls | peek --type latex
 cat path/to/file.sty | peek --type latex
@@ -193,6 +195,7 @@ Current supported file types are:
 - `haskell`
 - `js`
 - `json`
+- `toml`
 - `jsx`
 - `latex`
 - `mathematica`
@@ -229,9 +232,10 @@ references, source text, and line breaks without layout rewriting. Rust uses
 the `rust` previewer and preserves source text and line breaks without layout
 rewriting. CSV and TSV use the `csv` and
 `tsv` previewers and preserve source text and line breaks without layout
-rewriting. JSON uses the `json` previewer and preserves source text and line
-breaks without layout rewriting. Go uses the `go` previewer and preserves
-source text and line breaks without layout rewriting. Java uses the `java`
+rewriting. JSON and TOML use the `json` and `toml` previewers and preserve
+source text and line breaks without layout rewriting. Go uses the `go`
+previewer and preserves source text and line breaks without layout rewriting.
+Java uses the `java`
 previewer and preserves source text and line breaks without layout rewriting.
 Haskell uses the
 `haskell` previewer and preserves source text and line breaks without layout

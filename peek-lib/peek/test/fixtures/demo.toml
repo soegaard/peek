@@ -1,0 +1,9 @@
+# Peek development settings.
+title = "peek"
+enabled = true
+retries = 3
+started = 2026-08-29T12:00:00Z
+
+[server]
+host = "127.0.0.1"
+ports = [8080, 8081]

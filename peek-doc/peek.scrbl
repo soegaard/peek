@@ -185,7 +185,8 @@ surface includes:
        @seclink["latex"]{LaTeX}}
  @item{@bold{Data and tooling formats:} @seclink["csv"]{CSV},
        @seclink["json"]{JSON}, @seclink["makefile"]{Makefile},
-       @seclink["plist"]{Plist}, @seclink["tsv"]{TSV}, @seclink["wat"]{WAT},
+       @seclink["plist"]{Plist}, @seclink["toml"]{TOML},
+       @seclink["tsv"]{TSV}, @seclink["wat"]{WAT},
        @seclink["sql"]{SQL}, and @seclink["yaml"]{YAML}}
  @item{@bold{Directory paths:} @seclink["directory-paths"]{Directory Paths}}
  @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
@@ -279,7 +280,7 @@ General options:
        @tt{latex}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
        @tt{postgres}, @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt},
        @tt{ruby}, @tt{rust}, @tt{scrbl}, @tt{sql}, @tt{sqlite},
-       @tt{swift}, @tt{tex}, @tt{wat}, @tt{yaml}, @tt{mysql}, and @tt{zsh}. Use
+       @tt{swift}, @tt{tex}, @tt{toml}, @tt{wat}, @tt{yaml}, @tt{mysql}, and @tt{zsh}. Use
        @tt{archive} to force archive preview for a supported archive, or use
        @tt{binary} to force the binary preview mode even when automatic
        detection would not select it.}
@@ -429,7 +430,7 @@ The current reference sections are:
  @item{@bold{Tooling and config:} @seclink["makefile"]{Makefile}}
  @item{@bold{Data formats:} @seclink["csv"]{CSV}, @seclink["json"]{JSON},
        @seclink["plist"]{Plist}, @seclink["sql"]{SQL}, @seclink["tsv"]{TSV},
-       @seclink["wat"]{WAT}, and @seclink["yaml"]{YAML}}
+       @seclink["toml"]{TOML}, @seclink["wat"]{WAT}, and @seclink["yaml"]{YAML}}
  @item{@bold{Directory paths:} @seclink["directory-paths"]{Directory Paths}}
  @item{@bold{Archive files:} @seclink["archive-files"]{Archive Files}}
  @item{@bold{Binary files:} @seclink["binary-files"]{Binary Files}}
@@ -1033,6 +1034,13 @@ Example JSON preview input:
 Rendered JSON preview:
 
 @(preview-shot snippet-json-shot)
+
+@subsubsection[#:tag "toml"]{TOML}
+
+For TOML, @exec{peek} supports syntax coloring for @tt{.toml} files,
+best-effort previewing on malformed input, and source-preserving,
+color-only terminal output. The previewer does not add layout rewriting or
+alignment, and it preserves source text and line breaks after ANSI stripping.
 
 @subsubsection[#:tag "plist"]{Plist}
 

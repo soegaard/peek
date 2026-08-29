@@ -113,6 +113,7 @@
          "js.rkt"
          "json.rkt"
          "toml.rkt"
+         "lua.rkt"
          "haskell.rkt"
          "objc.rkt"
          "makefile.rkt"
@@ -139,7 +140,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scrbl sql sqlite swift tex toml tsv wat yaml zsh))
+  '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scrbl sql sqlite swift tex toml tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -816,6 +817,7 @@
        [(regexp-match? #px"(?i:\\.(?:json|webmanifest))$" path-string)
         'json]
        [(regexp-match? #px"(?i:\\.toml)$" path-string) 'toml]
+       [(regexp-match? #px"(?i:\\.lua)$" path-string) 'lua]
        [(regexp-match? #px"(?i:\\.md)$" path-string) 'md]
        [(regexp-match? #px"(?i:\\.(?:wl|wls))$" path-string) 'mathematica]
        [(regexp-match? #px"(?i:\\.(?:cls|sty|latex|ltx))$" path-string) 'latex]
@@ -985,6 +987,8 @@
      (render-json-preview source)]
     [(eq? file-type 'toml)
      (render-toml-preview source)]
+    [(eq? file-type 'lua)
+     (render-lua-preview source)]
     [(eq? file-type 'plist)
      (render-plist-preview source)]
     [(eq? file-type 'mathematica)
@@ -1103,6 +1107,7 @@
               (eq? file-type 'java)
               (eq? file-type 'mathematica)
               (eq? file-type 'toml)
+              (eq? file-type 'lua)
               (eq? file-type 'plist)
               (eq? file-type 'powershell)
               (eq? file-type 'sql)
@@ -1131,6 +1136,7 @@
        [(java)       (render-java-preview-port in actual-out)]
        [(mathematica) (render-mathematica-preview-port in actual-out)]
        [(toml)       (render-toml-preview-port in actual-out)]
+       [(lua)        (render-lua-preview-port in actual-out)]
        [(plist)      (render-plist-preview-port in actual-out)]
        [(latex)      (render-latex-preview-port in actual-out)]
        [(bash)       (render-shell-preview-port in actual-out #:shell 'bash)]
@@ -1157,6 +1163,7 @@
          (eq? file-type 'java)
          (eq? file-type 'mathematica)
          (eq? file-type 'toml)
+         (eq? file-type 'lua)
          (eq? file-type 'plist)
          (eq? file-type 'powershell)
          (eq? file-type 'sql)
@@ -1190,6 +1197,7 @@
               (eq? file-type 'js)
               (eq? file-type 'json)
               (eq? file-type 'toml)
+              (eq? file-type 'lua)
               (eq? file-type 'plist)
               (eq? file-type 'python)
               (eq? file-type 'sql)
@@ -1209,6 +1217,7 @@
        [(js)    (render-javascript-preview-port in actual-out)]
        [(json)  (render-json-preview-port in actual-out)]
        [(toml)  (render-toml-preview-port in actual-out)]
+       [(lua)   (render-lua-preview-port in actual-out)]
        [(plist) (render-plist-preview-port in actual-out)]
        [(python) (render-python-preview-port in actual-out)]
        [(sql) (render-sql-preview-port in actual-out 'generic)]
@@ -1239,6 +1248,7 @@
          (eq? file-type 'js)
          (eq? file-type 'json)
          (eq? file-type 'toml)
+         (eq? file-type 'lua)
          (eq? file-type 'plist)
          (eq? file-type 'python)
          (eq? file-type 'ruby)
@@ -1392,6 +1402,7 @@
          (eq? file-type 'js)
          (eq? file-type 'json)
          (eq? file-type 'toml)
+         (eq? file-type 'lua)
          (eq? file-type 'mathematica)
          (eq? file-type 'plist)
          (eq? file-type 'latex)

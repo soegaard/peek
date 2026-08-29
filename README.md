@@ -39,6 +39,7 @@ peek path/to/file.hs
 peek path/to/file.js
 peek path/to/file.json
 peek path/to/file.toml
+peek path/to/file.lua
 peek path/to/file.tex
 peek path/to/file.cls
 peek path/to/file.sty
@@ -76,6 +77,7 @@ cat path/to/file.rhm | peek --type rhombus
 cat path/to/file.hs | peek --type haskell
 cat path/to/file.json | peek --type json
 cat path/to/file.toml | peek --type toml
+cat path/to/file.lua | peek --type lua
 cat path/to/file.tex | peek --type tex
 cat path/to/file.cls | peek --type latex
 cat path/to/file.sty | peek --type latex
@@ -197,6 +199,7 @@ Current supported file types are:
 - `json`
 - `toml`
 - `jsx`
+- `lua`
 - `latex`
 - `mathematica`
 - `md`
@@ -239,7 +242,8 @@ Java uses the `java`
 previewer and preserves source text and line breaks without layout rewriting.
 Haskell uses the
 `haskell` previewer and preserves source text and line breaks without layout
-rewriting. Plist uses the `plist` previewer and preserves source text and
+rewriting. Lua uses the `lua` previewer and preserves source text and line
+breaks without layout rewriting. Plist uses the `plist` previewer and preserves source text and
 line breaks without layout rewriting. Pascal uses
 the `pascal` previewer and preserves source text and line breaks without
 layout rewriting. Python uses the `python` previewer and preserves source text

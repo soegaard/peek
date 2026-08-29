@@ -22,6 +22,7 @@
          "../js.rkt"
          "../json.rkt"
          "../toml.rkt"
+         "../lua.rkt"
          "../haskell.rkt"
          "../main.rkt"
          "../markdown.rkt"
@@ -74,6 +75,8 @@
   "fixtures/demo.json")
 (define-runtime-path demo-toml-path
   "fixtures/demo.toml")
+(define-runtime-path demo-lua-path
+  "fixtures/demo.lua")
 (define-runtime-path demo-mathematica-path
   "fixtures/demo.wl")
 (define-runtime-path demo-haskell-path
@@ -218,7 +221,7 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(archive bash binary c cpp css csv go haskell html java js json jsx latex makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scrbl sql sqlite swift tex toml tsv wat yaml zsh))
+              '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scrbl sql sqlite swift tex toml tsv wat yaml zsh))
 
 (let ([out (open-output-string)])
   (preview-path-port demo-racket-path
@@ -733,6 +736,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-toml-preview "[package]\nname = \"peek\"\nactive = true\n")))
+(check-true
+ (regexp-match? #px"peek"
+                (render-lua-preview "-- Preview example\nlocal name = \"peek\"\nreturn name\n")))
 (check-equal?
  (strip-ansi (render-go-preview "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n"))
  "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n")
@@ -1604,6 +1610,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-toml-path))
 (check-equal?
+ (strip-ansi (preview-file demo-lua-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-lua-path))
+(check-equal?
  (strip-ansi (preview-file demo-plist-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-plist-path))
@@ -1772,6 +1782,12 @@
                              (make-preview-options #:type 'toml
                                                    #:color-mode 'always)))
  "[package]\nname = \"peek\"\nenabled = true\n")
+(check-equal?
+ (strip-ansi (preview-string "-- Preview example\nlocal enabled = true\nreturn enabled\n"
+                             #f
+                             (make-preview-options #:type 'lua
+                                                   #:color-mode 'always)))
+ "-- Preview example\nlocal enabled = true\nreturn enabled\n")
 (check-equal?
  (strip-ansi (preview-string "name,age,city\nAda,37,London\n"
                              #f

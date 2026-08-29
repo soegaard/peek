@@ -32,6 +32,7 @@
 ;; python-like-style     -- Style Python-like embedded tokens.
 ;; sql-like-style        -- Style SQL-like embedded tokens.
 ;; ruby-like-style       -- Style Ruby-like embedded tokens.
+;; lua-like-style        -- Style Lua-like embedded tokens.
 ;; mathematica-like-style -- Style Mathematica-like embedded tokens.
 ;; pascal-like-style     -- Style Pascal-like embedded tokens.
 ;; swift-like-style      -- Style Swift-like embedded tokens.
@@ -96,6 +97,8 @@
  sql-like-style
  ;; ruby-like-style Style Ruby-like embedded tokens.
  ruby-like-style
+ ;; lua-like-style Style Lua-like embedded tokens.
+ lua-like-style
  ;; mathematica-like-style Style Mathematica-like embedded tokens.
  mathematica-like-style
  ;; pascal-like-style Style Pascal-like embedded tokens.
@@ -757,6 +760,39 @@
          (memq 'ruby-operator tags)
          (memq 'ruby-delimiter tags)
          (memq 'ruby-line-continuation tags)
+         (eq? category 'operator)
+         (eq? category 'delimiter))
+     ansi-delimiter]
+    [else
+     ""]))
+
+;; lua-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Lua roles.
+(define (lua-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'lua-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'comment tags)
+         (memq 'lua-comment tags))
+     ansi-comment]
+    [(or (memq 'lua-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'lua-string-literal tags)
+         (memq 'lua-long-string tags)
+         (memq 'lua-number tags)
+         (memq 'lua-constant tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'lua-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'lua-operator tags)
+         (memq 'lua-delimiter tags)
          (eq? category 'operator)
          (eq? category 'delimiter))
      ansi-delimiter]

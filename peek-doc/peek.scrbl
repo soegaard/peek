@@ -174,7 +174,7 @@ surface includes:
        @seclink["c"]{C}, @seclink["objective-c"]{Objective-C},
        @seclink["cpp"]{C++}, @seclink["go"]{Go},
        @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
-       @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
+       @seclink["lua"]{Lua}, @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
        @seclink["shell"]{PowerShell}, @seclink["python"]{Python},
        @seclink["ruby"]{Ruby},
        @seclink["rhombus"]{Rhombus},
@@ -277,7 +277,7 @@ General options:
     selects the input type explicitly. This is mainly useful for standard
        input. Supported values include @tt{archive}, @tt{binary}, @tt{bash}, @tt{c},
        @tt{cpp}, @tt{css}, @tt{html}, @tt{js}, @tt{json}, @tt{jsx},
-       @tt{latex}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
+       @tt{latex}, @tt{lua}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
        @tt{postgres}, @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt},
        @tt{ruby}, @tt{rust}, @tt{scrbl}, @tt{sql}, @tt{sqlite},
        @tt{swift}, @tt{tex}, @tt{toml}, @tt{wat}, @tt{yaml}, @tt{mysql}, and @tt{zsh}. Use
@@ -419,7 +419,7 @@ The current reference sections are:
        @seclink["c"]{C}, @seclink["cpp"]{C++},
        @seclink["objective-c"]{Objective-C}, @seclink["go"]{Go},
        @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
-       @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
+       @seclink["lua"]{Lua}, @seclink["mathematica"]{Mathematica}, @seclink["pascal"]{Pascal},
        @seclink["python"]{Python}, @seclink["ruby"]{Ruby},
        @seclink["racket"]{Racket},
        @seclink["rhombus"]{Rhombus},
@@ -732,6 +732,13 @@ For Ruby, @exec{peek} currently supports:
 The Ruby previewer is intentionally color-only. It does not add layout
 rewriting or alignment, and it preserves source text and line breaks after
 ANSI stripping.
+
+@subsubsection[#:tag "lua"]{Lua}
+
+For Lua, @exec{peek} supports syntax coloring for @tt{.lua} files,
+best-effort previewing on malformed input, and source-preserving,
+color-only terminal output. The previewer does not add layout rewriting or
+alignment, and it preserves source text and line breaks after ANSI stripping.
 
 @subsubsection[#:tag "mathematica"]{Mathematica}
 

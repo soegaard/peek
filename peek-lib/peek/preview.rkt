@@ -128,6 +128,7 @@
          "pascal.rkt"
          "rust.rkt"
          "racket.rkt"
+         "scheme.rkt"
          "rhombus.rkt"
          "swift.rkt"
          "shell.rkt"
@@ -140,7 +141,7 @@
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scrbl sql sqlite swift tex toml tsv wat yaml zsh))
+  '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scheme scrbl sql sqlite swift tex toml tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -833,6 +834,7 @@
        [(regexp-match? #px"(?i:\\.(?:pas|pp|dpr|lpr|inc))$" path-string) 'pascal]
        [(regexp-match? #px"(?i:\\.rs)$" path-string) 'rust]
        [(regexp-match? #px"(?i:\\.rhm)$" path-string) 'rhombus]
+       [(regexp-match? #px"(?i:\\.sld)$" path-string) 'scheme]
        [(regexp-match? #px"(?i:\\.tex)$" path-string) 'tex]
        [(regexp-match? #px"(?i:\\.swift)$" path-string) 'swift]
        [(regexp-match? #px"(?i:\\.(?:ya?ml))$" path-string) 'yaml]
@@ -1026,6 +1028,8 @@
      (render-tsv-preview source)]
     [(eq? file-type 'rkt)
      (render-racket-preview source)]
+    [(eq? file-type 'scheme)
+     (render-scheme-preview source)]
     [(eq? file-type 'tex)
      (render-tex-preview source)]
     [(eq? file-type 'scrbl)
@@ -1151,6 +1155,11 @@
        [(tex)        (render-tex-preview-port in actual-out)]
        [(swift)      (render-swift-preview-port in actual-out)]
        [(zsh)        (render-shell-preview-port in actual-out #:shell 'zsh)])]
+    [(and (eq? file-type 'scheme)
+          color?)
+     (render-scheme-preview-port in actual-out)]
+    [(eq? file-type 'scheme)
+     (copy-port in actual-out)]
     [(or (eq? file-type 'bash)
          (eq? file-type 'css)
          (eq? file-type 'c)
@@ -1397,6 +1406,7 @@
          (eq? file-type 'rhombus)
          (eq? file-type 'zsh)
          (eq? file-type 'rkt)
+         (eq? file-type 'scheme)
          (eq? file-type 'html)
          (eq? file-type 'java)
          (eq? file-type 'js)

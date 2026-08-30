@@ -179,6 +179,7 @@ surface includes:
        @seclink["ruby"]{Ruby},
        @seclink["rhombus"]{Rhombus},
        @seclink["racket"]{Racket}, @seclink["rust"]{Rust},
+       @seclink["scheme"]{Scheme},
        @seclink["swift"]{Swift}, and @seclink["shell"]{Zsh}}
  @item{@bold{Document languages:} @seclink["markdown"]{Markdown},
        @seclink["scribble"]{Scribble}, @seclink["tex"]{TeX}, and
@@ -280,7 +281,7 @@ General options:
        @tt{latex}, @tt{lua}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
        @tt{postgres}, @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt},
        @tt{ruby}, @tt{rust}, @tt{scrbl}, @tt{sql}, @tt{sqlite},
-       @tt{swift}, @tt{tex}, @tt{toml}, @tt{wat}, @tt{yaml}, @tt{mysql}, and @tt{zsh}. Use
+       @tt{scheme}, @tt{swift}, @tt{tex}, @tt{toml}, @tt{wat}, @tt{yaml}, @tt{mysql}, and @tt{zsh}. Use
        @tt{archive} to force archive preview for a supported archive, or use
        @tt{binary} to force the binary preview mode even when automatic
        detection would not select it.}
@@ -423,7 +424,7 @@ The current reference sections are:
        @seclink["python"]{Python}, @seclink["ruby"]{Ruby},
        @seclink["racket"]{Racket},
        @seclink["rhombus"]{Rhombus},
-       @seclink["rust"]{Rust}, and @seclink["swift"]{Swift}}
+       @seclink["rust"]{Rust}, @seclink["scheme"]{Scheme}, and @seclink["swift"]{Swift}}
  @item{@bold{Document languages:} @seclink["markdown"]{Markdown},
        @seclink["scribble"]{Scribble}, @seclink["tex"]{TeX}, and
        @seclink["latex"]{LaTeX}}
@@ -777,6 +778,20 @@ Example Racket preview input:
 Rendered Racket preview:
 
 @(preview-shot snippet-racket-shot)
+
+@subsubsection[#:tag "scheme"]{Scheme}
+
+For Scheme, @exec{peek} supports syntax coloring for @tt{.sld} library
+files and explicit @tt{scheme} preview mode for Scheme source. It uses the
+portable R5RS reader by default and recognizes R5RS, R6RS, R7RS, Chez, Guile,
+Chicken, and Gambit syntax in the underlying lexer. Existing @tt{.scm} and
+@tt{.ss} paths continue to use the Racket previewer; use
+@tt{peek --type scheme file.scm} when Scheme coloring is wanted for those
+extensions.
+
+The Scheme previewer is source-preserving and color-only. It uses best-effort
+rendering for malformed reader input and preserves line breaks after ANSI
+stripping.
 
 @subsubsection[#:tag "rhombus"]{Rhombus}
 

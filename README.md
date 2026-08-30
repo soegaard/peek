@@ -53,6 +53,7 @@ peek path/to/file.md
 peek path/to/file.rhm
 peek path/to/file.rkt
 peek path/to/file.ss
+peek path/to/library.sld
 peek path/to/file.scrbl
 peek path/to/file.wat
 ```
@@ -87,6 +88,7 @@ cat path/to/file.py | peek --type python
 cat path/to/file.swift | peek --type swift
 cat path/to/file.rkt | peek --type rkt
 cat path/to/file.ss | peek --type rkt
+cat path/to/file.scm | peek --type scheme
 cat path/to/file.wat | peek --type wat
 cat path/to/script.sh | peek --type bash
 ```
@@ -215,6 +217,7 @@ Current supported file types are:
 - `rhombus`
 - `rkt`
 - `rust`
+- `scheme`
 - `scrbl`
 - `swift`
 - `tex`
@@ -243,7 +246,8 @@ previewer and preserves source text and line breaks without layout rewriting.
 Haskell uses the
 `haskell` previewer and preserves source text and line breaks without layout
 rewriting. Lua uses the `lua` previewer and preserves source text and line
-breaks without layout rewriting. Plist uses the `plist` previewer and preserves source text and
+breaks without layout rewriting. Scheme uses the `scheme` previewer and
+preserves source text and line breaks without layout rewriting. Plist uses the `plist` previewer and preserves source text and
 line breaks without layout rewriting. Pascal uses
 the `pascal` previewer and preserves source text and line breaks without
 layout rewriting. Python uses the `python` previewer and preserves source text

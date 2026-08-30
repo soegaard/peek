@@ -43,6 +43,7 @@
 ;; haskell-like-style    -- Style Haskell-like embedded tokens.
 ;; wat-like-style        -- Style WAT-like embedded tokens.
 ;; racket-like-style     -- Style Racket-like embedded tokens.
+;; scheme-like-style     -- Style Scheme-like embedded tokens.
 ;; scribble-like-style   -- Style Scribble-like embedded tokens.
 ;; html-like-style       -- Style HTML-like embedded tokens.
 
@@ -119,6 +120,8 @@
  wat-like-style
  ;; racket-like-style Style Racket-like embedded tokens.
  racket-like-style
+ ;; scheme-like-style Style Scheme-like embedded tokens.
+ scheme-like-style
  ;; scribble-like-style Style Scribble-like embedded tokens.
  scribble-like-style
  ;; html-like-style Style HTML-like embedded tokens.
@@ -1167,6 +1170,41 @@
          (memq 'racket-datum tags)
          (eq? category 'identifier))
      ansi-identifier]
+    [else
+     ""]))
+
+;; scheme-like-style : symbol? (listof symbol?) -> string?
+;;   Choose an ANSI style for Scheme roles.
+(define (scheme-like-style category tags)
+  (cond
+    [(or (memq 'malformed-token tags)
+         (memq 'scheme-error tags)
+         (eq? category 'unknown)
+         (eq? category 'malformed))
+     ansi-malformed]
+    [(or (eq? category 'comment)
+         (memq 'scheme-comment tags))
+     ansi-comment]
+    [(or (memq 'scheme-keyword tags)
+         (eq? category 'keyword))
+     ansi-keyword]
+    [(or (memq 'scheme-boolean tags)
+         (memq 'scheme-number tags)
+         (memq 'scheme-string tags)
+         (memq 'scheme-character tags)
+         (eq? category 'literal))
+     ansi-literal]
+    [(or (memq 'scheme-identifier tags)
+         (memq 'scheme-escaped-identifier tags)
+         (eq? category 'identifier))
+     ansi-identifier]
+    [(or (memq 'scheme-delimiter tags)
+         (memq 'scheme-abbreviation tags)
+         (memq 'scheme-reader-abbreviation tags)
+         (memq 'scheme-vector-open tags)
+         (memq 'scheme-bytevector-open tags)
+         (eq? category 'delimiter))
+     ansi-delimiter]
     [else
      ""]))
 

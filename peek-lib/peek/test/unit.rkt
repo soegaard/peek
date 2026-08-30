@@ -42,6 +42,7 @@
          "../preview.rkt"
          "../yaml.rkt"
          "../racket.rkt"
+         "../scheme.rkt"
          "../rhombus.rkt"
          "../shell.rkt"
          "../scribble.rkt"
@@ -105,6 +106,8 @@
   "fixtures/demo.tsv")
 (define-runtime-path demo-racket-path
   "fixtures/demo.rkt")
+(define-runtime-path demo-scheme-path
+  "fixtures/demo.sld")
 (define-runtime-path demo-ss-path
   "fixtures/demo.ss")
 (define-runtime-path demo-rktd-path
@@ -221,7 +224,7 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scrbl sql sqlite swift tex toml tsv wat yaml zsh))
+              '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scheme scrbl sql sqlite swift tex toml tsv wat yaml zsh))
 
 (let ([out (open-output-string)])
   (preview-path-port demo-racket-path
@@ -739,6 +742,9 @@
 (check-true
  (regexp-match? #px"peek"
                 (render-lua-preview "-- Preview example\nlocal name = \"peek\"\nreturn name\n")))
+(check-true
+ (regexp-match? #px"peek"
+                (render-scheme-preview ";; Preview example\n(define name \"peek\")\nname\n")))
 (check-equal?
  (strip-ansi (render-go-preview "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n"))
  "package main\n// Demo\nfunc main() {\n    println(\"hello\")\n}\n")
@@ -1614,6 +1620,10 @@
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-lua-path))
 (check-equal?
+ (strip-ansi (preview-file demo-scheme-path
+                           (make-preview-options #:color-mode 'always)))
+ (file->string demo-scheme-path))
+(check-equal?
  (strip-ansi (preview-file demo-plist-path
                            (make-preview-options #:color-mode 'always)))
  (file->string demo-plist-path))
@@ -1788,6 +1798,12 @@
                              (make-preview-options #:type 'lua
                                                    #:color-mode 'always)))
  "-- Preview example\nlocal enabled = true\nreturn enabled\n")
+(check-equal?
+ (strip-ansi (preview-string ";; Preview example\n(define enabled #t)\nenabled\n"
+                             #f
+                             (make-preview-options #:type 'scheme
+                                                   #:color-mode 'always)))
+ ";; Preview example\n(define enabled #t)\nenabled\n")
 (check-equal?
  (strip-ansi (preview-string "name,age,city\nAda,37,London\n"
                              #f

@@ -80,6 +80,21 @@ into a full patch viewer. The current design is intentionally file-path-only
 and buffered, so ordinary file preview keeps its fast port-to-port streaming
 path while diff preview remains simple and predictable.
 
+## Following Files
+
+`--follow` renders the initial file content and each appended byte batch through
+the normal port-based preview pipeline. It keeps the generic line-number,
+range, and grep wrappers open across batches, while each language renderer gets
+a finite batch and can flush its final line immediately. A permanently open
+input stream would preserve lexer state, but some lexers defer their final
+newline until more input arrives, which makes a terminal preview appear one
+line behind.
+
+Follow mode is intentionally limited to regular text previews. Directory,
+archive, binary, diff, statistics, and Markdown-outline modes either need a
+finite input or have path-oriented semantics that do not describe a growing
+text stream.
+
 ## Lessons From `scribble-tools`
 
 The JavaScript colorer in `scribble-tools` is a useful reference point for

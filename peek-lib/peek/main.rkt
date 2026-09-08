@@ -196,6 +196,7 @@
   (define pretty? #f)
   (define toc? #f)
   (define section #f)
+  (define follow? #f)
   (define line-range #f)
   (define line-numbers? #f)
   (define stats? #f)
@@ -256,6 +257,9 @@
    [("--section") value
     "Render one named section when the selected file type supports it."
     (set! section value)]
+   [("--follow")
+    "Keep previewing a file as new content is appended."
+    (set! follow? #t)]
    [("--lines") value
     "Render only one output line range: N, N:M, N:, or :M."
     (set! line-range (line-range-spec->range value))]
@@ -289,6 +293,8 @@
       (set! file-path (car args))]
      [else
       (usage-error "expected at most one input file")]))
+  (when follow?
+    (set! pager? #f))
   (cond
     [list-file-types?
      (print-supported-file-types)]
@@ -306,6 +312,24 @@
      (when (and diff-staged?
                 (not diff?))
        (usage-error "--cached and --staged require --diff"))
+     (when (and follow?
+                (not file-path))
+       (usage-error "--follow requires a file path"))
+     (when (and follow?
+                (directory-exists? file-path))
+       (usage-error "--follow requires a regular file"))
+     (when (and follow?
+                diff?)
+       (usage-error "--follow does not combine with --diff"))
+     (when (and follow?
+                stats?)
+       (usage-error "--follow does not combine with --stats"))
+     (when (and follow?
+                toc?)
+       (usage-error "--follow does not combine with --toc"))
+     (when (and follow?
+                section)
+       (usage-error "--follow does not combine with --section"))
      (define options
        (make-preview-options #:type      type
                              #:align?    align?
@@ -321,6 +345,7 @@
                                                          (reverse search-text-specs)))
                              #:toc? toc?
                              #:section section
+                             #:follow? follow?
                              #:line-range line-range
                              #:grep-patterns (map grep-spec->regexp
                                                   (reverse grep-specs))
@@ -333,7 +358,10 @@
           (preview-path-port file-path options out)]
          [else
           (preview-port (current-input-port) #f options out)]))
-     (with-handlers ([exn:fail:user?
+     (with-handlers ([exn:break?
+                      (lambda (_)
+                        (void))]
+                     [exn:fail:user?
                       (lambda (e)
                         (usage-error (exn-message e)))])
        (cond

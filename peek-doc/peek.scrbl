@@ -313,6 +313,12 @@ General options:
        @tt{N:M} for an inclusive range, @tt{N:} from one line to the end,
        or @tt{:M} from the beginning through line @tt{M}. This works well
        together with @Flag{-n}.}
+ @item{@DFlag{--follow}
+       continuously previews a growing text file, including its current
+       contents. Each appended batch receives syntax coloring, and line
+       numbering continues across appended text. The pager is disabled automatically; press
+       @exec{Ctrl-C} to stop following. This mode does not support directory,
+       archive, binary, Git-diff, statistics, or Markdown-outline previews.}
  @item{@DFlag{--toc}
        renders a compact heading outline when the selected file type supports
        it. Markdown currently supports @DFlag{--toc}.}

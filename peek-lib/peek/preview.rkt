@@ -19,6 +19,7 @@
 ;; preview-options-pretty?             -- Whether pretty mode is enabled.
 ;; preview-options-toc?                -- Whether table-of-contents mode is enabled.
 ;; preview-options-section             -- Selected named section.
+;; preview-options-follow?             -- Whether file-following mode is enabled.
 ;; preview-options-line-range          -- Selected output line range.
 ;; preview-options-grep-patterns       -- Line-matching regexps.
 ;; preview-options-line-numbers?       -- Whether line numbers are enabled.
@@ -64,6 +65,8 @@
  preview-options-toc?
  ;; preview-options-section     Selected named section.
  preview-options-section
+ ;; preview-options-follow?     Whether file-following mode is enabled.
+ preview-options-follow?
  ;; preview-options-line-range  Selected output line range.
  preview-options-line-range
  ;; preview-options-grep-patterns Line-matching regexps.
@@ -137,7 +140,7 @@
          "wat.rkt")
 
 (struct preview-line-range (start end) #:transparent)
-(struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? stats? directory-sort) #:transparent)
+(struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section follow? line-range grep-patterns line-numbers? stats? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
@@ -156,12 +159,13 @@
                               #:pretty?     [pretty? #f]
                               #:toc?        [toc? #f]
                               #:section     [section #f]
+                              #:follow?     [follow? #f]
                               #:line-range  [line-range #f]
                               #:grep-patterns [grep-patterns '()]
                               #:line-numbers? [line-numbers? #f]
                               #:stats?      [stats? #f]
                               #:directory-sort [directory-sort 'kind])
-  (preview-options type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section line-range grep-patterns line-numbers? stats? directory-sort))
+  (preview-options type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section follow? line-range grep-patterns line-numbers? stats? directory-sort))
 
 ;; -----------------------------------------------------------------------------
 ;; Line numbering
@@ -218,31 +222,46 @@
     1)
   (define at-line-start?
     #t)
+  (define ansi-in-progress?
+    #f)
+  (define pending-ansi
+    (open-output-bytes))
+  (define (flush-pending-ansi)
+    (define pending
+      (get-output-bytes pending-ansi #t))
+    (unless (zero? (bytes-length pending))
+      (write-bytes pending out)))
   (define (emit-prefix)
     (when at-line-start?
       (display (line-number-prefix width current-line) out)
+      (flush-pending-ansi)
       (set! at-line-start? #f)))
   (define (write-out bs start end non-block? breakable?)
-    (let loop ([pos start]
-               [segment-start start])
+    (for ([pos (in-range start end)])
+      (define byte
+        (bytes-ref bs pos))
       (cond
-        [(= pos end)
-         (when (< segment-start end)
-           (emit-prefix)
-           (write-bytes bs out segment-start end))
-         (- end start)]
-        [(= (bytes-ref bs pos) 10)
-         (emit-prefix)
-         (write-bytes bs out segment-start (add1 pos))
-         (set! at-line-start? #t)
-         (set! current-line (add1 current-line))
-         (loop (add1 pos) (add1 pos))]
+        [(and at-line-start?
+              ansi-in-progress?)
+         (write-byte byte pending-ansi)
+         (when (= byte (char->integer #\m))
+           (set! ansi-in-progress? #f))]
+        [(and at-line-start?
+              (= byte 27))
+         (write-byte byte pending-ansi)
+         (set! ansi-in-progress? #t)]
         [else
-         (loop (add1 pos) segment-start)])))
+         (emit-prefix)
+         (write-byte byte out)
+         (when (= byte 10)
+           (set! at-line-start? #t)
+           (set! current-line (add1 current-line)))]))
+    (- end start))
   (make-output-port 'peek/line-numbers
                     always-evt
                     write-out
                     (lambda ()
+                      (flush-pending-ansi)
                       (flush-output out))))
 
 ;; maybe-wrap-line-number-output-port : output-port? (or/c path-string? #f) preview-options? -> output-port?
@@ -388,19 +407,24 @@
     [else
      out]))
 
+;; make-preview-output-port : output-port? (or/c path-string? #f) boolean? preview-options? -> output-port?
+;;   Apply generic line-oriented preview postprocessing to an output port.
+(define (make-preview-output-port out maybe-path color? options)
+  (maybe-wrap-grep-output-port
+   (maybe-wrap-line-number-output-port
+    (maybe-wrap-line-range-output-port out options)
+    maybe-path
+    options)
+   color?
+   options))
+
 ;; postprocess-rendered-string : string? (or/c path-string? #f) boolean? preview-options? -> string?
 ;;   Apply generic line-oriented postprocessing to a rendered preview string.
 (define (postprocess-rendered-string rendered maybe-path color? options)
   (define out
     (open-output-string))
   (define actual-out
-    (maybe-wrap-grep-output-port
-     (maybe-wrap-line-number-output-port
-      (maybe-wrap-line-range-output-port out options)
-      maybe-path
-      options)
-     color?
-     options))
+    (make-preview-output-port out maybe-path color? options))
   (display rendered actual-out)
   (close-output-port actual-out)
   (get-output-string out))
@@ -668,6 +692,7 @@
                         #:pretty?        (preview-options-pretty? options)
                         #:toc?           #f
                         #:section        #f
+                        #:follow?        #f
                         #:line-range     #f
                         #:grep-patterns  '()
                         #:line-numbers?  #f
@@ -693,6 +718,7 @@
                           #:pretty?        (preview-options-pretty? options)
                           #:toc?           (preview-options-toc? options)
                           #:section        (preview-options-section options)
+                          #:follow?        (preview-options-follow? options)
                           #:line-range     (preview-options-line-range options)
                           #:grep-patterns  (preview-options-grep-patterns options)
                           #:line-numbers?  #f
@@ -1063,13 +1089,7 @@
   (define color?
     (color-enabled? out options))
   (define actual-out
-    (maybe-wrap-grep-output-port
-     (maybe-wrap-line-number-output-port
-      (maybe-wrap-line-range-output-port out options)
-      maybe-path
-      options)
-     color?
-     options))
+    (make-preview-output-port out maybe-path color? options))
   (define file-type
     (effective-file-type maybe-path options))
   (begin0
@@ -1278,6 +1298,9 @@
      (render-yaml-preview-port in actual-out)]
     [(eq? file-type 'yaml)
      (copy-port in actual-out)]
+    [(preview-options-follow? options)
+     ;; Unknown text files cannot be classified without waiting for EOF.
+     (copy-port in actual-out)]
     [else
      (define source-bytes
        (port->bytes in))
@@ -1304,6 +1327,102 @@
    (unless (eq? actual-out out)
      (close-output-port actual-out))))
 
+;; follow-poll-seconds : positive-real?
+;;   Delay between checks for appended data in a followed file.
+(define follow-poll-seconds
+  1/4)
+
+;; read-file-suffix : path-string? exact-nonnegative-integer? -> (values bytes? exact-nonnegative-integer?)
+;;   Read bytes appended after an offset and return the position reached.
+(define (read-file-suffix path offset)
+  (call-with-input-file path
+    (lambda (in)
+      (file-position in offset)
+      (define suffix
+        (port->bytes in))
+      (values suffix
+              (file-position in)))
+    #:mode 'binary))
+
+;; follow-file : path-string? (bytes? -> void?) -> nothing
+;;   Continuously pass a file's initial content and later appended bytes onward.
+(define (follow-file path consume)
+  (let loop ([offset 0])
+    (with-handlers ([exn:fail:filesystem?
+                     (lambda (_)
+                       ;; Rotation can leave the path absent briefly.
+                       (sleep follow-poll-seconds)
+                       (loop offset))])
+      (define current-size
+        (file-size path))
+      (define start-offset
+        (cond
+          [(< current-size offset) 0]
+          [else offset]))
+      (define next-offset
+        (cond
+          [(< start-offset current-size)
+           (define-values (suffix reached-offset)
+             (read-file-suffix path start-offset))
+           (consume suffix)
+           reached-offset]
+          [else
+           start-offset]))
+      (sleep follow-poll-seconds)
+      (loop next-offset))))
+
+;; follow-render-options : preview-options? boolean? -> preview-options?
+;;   Disable per-batch postprocessing while preserving its long-lived wrapper.
+(define (follow-render-options options color?)
+  (make-preview-options #:type           (preview-options-type options)
+                        #:align?         (preview-options-align? options)
+                        #:swatches?      (preview-options-swatches? options)
+                        #:color-mode     (if color? 'always 'never)
+                        #:binary-mode    (preview-options-binary-mode options)
+                        #:search-bytes   (preview-options-search-bytes options)
+                        #:diff?          #f
+                        #:diff-staged?   #f
+                        #:pretty?        (preview-options-pretty? options)
+                        #:toc?           #f
+                        #:section        #f
+                        #:follow?        #t
+                        #:line-range     #f
+                        #:grep-patterns  '()
+                        #:line-numbers?  #f
+                        #:stats?         #f
+                        #:directory-sort (preview-options-directory-sort options)))
+
+;; preview-follow-path : path-string? preview-options? output-port? -> void?
+;;   Preview a growing text file with persistent line-oriented postprocessing.
+(define (preview-follow-path path options out)
+  (define file-type
+    (effective-file-type path options))
+  (cond
+    [(directory-exists? path)
+     (raise-user-error 'follow "directory previews cannot be followed")]
+    [(or (eq? file-type 'archive)
+         (eq? file-type 'binary))
+     (raise-user-error 'follow "archive and binary previews cannot be followed")]
+    [else
+     (define color?
+       (color-enabled? out options))
+     (define actual-out
+       (make-preview-output-port out path color? options))
+     (define render-options
+       (follow-render-options options color?))
+     (dynamic-wind
+       void
+       (lambda ()
+         (follow-file path
+                      (lambda (suffix)
+                        (preview-port (open-input-bytes suffix)
+                                      path
+                                      render-options
+                                      actual-out))))
+       (lambda ()
+         (unless (eq? actual-out out)
+           (close-output-port actual-out))))]))
+
 ;; preview-file : path-string? preview-options? -> string?
 ;;   Preview a file from disk.
 (define (preview-path-port path
@@ -1317,15 +1436,11 @@
    (cond
     [(preview-options-diff? options)
      (display (render-diff-preview path options out) out)]
+    [(preview-options-follow? options)
+     (preview-follow-path path options out)]
     [(directory-exists? path)
      (define actual-out
-       (maybe-wrap-grep-output-port
-        (maybe-wrap-line-number-output-port
-         (maybe-wrap-line-range-output-port out options)
-         path
-         options)
-        color?
-        options))
+       (make-preview-output-port out path color? options))
      (display (render-directory-preview path
                                         #:color? color?
                                         #:stats? (preview-options-stats? options)
@@ -1463,3 +1578,55 @@
         (postprocess-rendered-string rendered path color? options)]
        [else
         (postprocess-rendered-string source path color? options)])]))
+
+(module+ test
+  (require rackunit)
+
+  ;; wait-for-output : output-port? string? -> boolean?
+  ;;   Wait briefly for a followed preview to emit expected text.
+  (define (wait-for-output out expected)
+    (for/or ([attempt (in-range 40)])
+      (define current
+        (get-output-string out))
+      (cond
+        [(string-contains? current expected) #t]
+        [else
+         (sleep 1/20)
+         #f])))
+
+  (define follow-test-path
+    (make-temporary-file "peek-follow~a.rkt"))
+  (define follow-output
+    (open-output-string))
+  (define follower #f)
+  (dynamic-wind
+    void
+    (lambda ()
+      (call-with-output-file follow-test-path
+        (lambda (out)
+          (display "#lang racket/base\n" out)
+          (display "(define first 1)\n" out))
+        #:exists 'truncate/replace)
+      (set! follower
+            (thread
+             (lambda ()
+               (preview-follow-path follow-test-path
+                                    (make-preview-options #:color-mode 'always
+                                                          #:follow? #t
+                                                          #:line-numbers? #t)
+                                    follow-output))))
+      (check-true (wait-for-output follow-output "first"))
+      (call-with-output-file follow-test-path
+        (lambda (out)
+          (display "(define second 2)\n" out))
+        #:exists 'append)
+      (check-true (wait-for-output follow-output "second"))
+      (check-true (regexp-match? #px"\u001b\\[" (get-output-string follow-output)))
+      (check-equal? (strip-ansi (get-output-string follow-output))
+                    (string-append " 1\t#lang racket/base\n"
+                                   " 2\t(define first 1)\n"
+                                   " 3\t(define second 2)\n")))
+    (lambda ()
+      (when follower
+        (kill-thread follower))
+      (delete-file follow-test-path))))

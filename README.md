@@ -124,6 +124,13 @@ peek --lines 20:40 -P path/to/file.rkt
 peek --lines :25 -P path/to/file.rkt
 ```
 
+Keep previewing a growing text file. `peek` disables the pager in this mode;
+press `Ctrl-C` when you are finished:
+
+```sh
+peek --follow path/to/application.log
+```
+
 Emphasize rendered lines whose text matches a regexp:
 
 ```sh

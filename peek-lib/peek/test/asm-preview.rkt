@@ -74,6 +74,20 @@
 (check-true (string-contains? styled-output
                               (string-append ansi-comment ";" ansi-reset)))
 
+;; The generic profile establishes labels and numeric literals, but it does
+;; not claim that an ordinary word is an instruction, symbol, or comment.
+(define generic-styled-output
+  (render-asm-preview "entry:\nMOVE.W #1,D0 ; note\n"))
+
+(check-true (string-contains? generic-styled-output
+                              (string-append ansi-identifier "entry" ansi-reset)))
+(check-true (string-contains? generic-styled-output
+                              (string-append ansi-delimiter "MOVE.W" ansi-reset)))
+(check-false (string-contains? generic-styled-output
+                               (string-append ansi-identifier "MOVE.W" ansi-reset)))
+(check-true (string-contains? generic-styled-output
+                              (string-append ansi-literal "1" ansi-reset)))
+
 ;; Invalid bytes, ESC, and lone CR are visibly escaped; CRLF is one output newline.
 (define unsafe-output
   (let ([out (open-output-string)])

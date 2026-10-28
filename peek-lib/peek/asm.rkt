@@ -55,6 +55,8 @@
     (asm-derived-token-category token))
   (define tags
     (asm-derived-token-tags token))
+  (define effective-state
+    (asm-derived-token-effective-state token))
   (cond
     [(memq 'asm-invalid-encoding tags)
      ansi-malformed]
@@ -67,6 +69,13 @@
      ansi-builtin]
     [(eq? category 'literal)
      ansi-literal]
+    [(memq 'asm-label-definition tags)
+     ansi-identifier]
+    [(and (eq? category 'identifier)
+          (eq? (asm-effective-state-dialect effective-state) 'generic))
+     ;; Generic assembly syntax cannot distinguish ordinary symbols from
+     ;; mnemonics or prose reliably, so keep them visually neutral.
+     ansi-delimiter]
     [(eq? category 'identifier)
      ansi-identifier]
     [(or (eq? category 'operator)

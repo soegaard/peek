@@ -345,8 +345,9 @@ Work:
   punctuation is neutral; comments use the subdued comment color; and malformed
   encoding remains distinct. Do not infer a mnemonic, register, or listing
   annotation from its spelling in `peek`. Consequently, generic rendering only
-  colors roles the generic lexer can establish; an explicit or qualified
-  profile enables the richer instruction/register distinction.
+  colors labels and literals brightly and renders ordinary generic symbols
+  neutrally; an explicit or qualified profile enables the richer
+  instruction/register distinction.
 - Add the assembly configuration record and optional keywords described above.
 - Wire string, port, file, and CLI paths. Open byte-authoritative file paths in
   binary mode. String/file convenience functions may collect their result;

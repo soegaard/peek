@@ -339,6 +339,14 @@ Work:
   and named accessors. Use the common palette, with assembly role decisions
   remaining in the assembly module. Unknown/uncertain text stays neutral;
   diagnostic severity is distinct from an unknown category.
+- The assembly palette uses only lexer-supplied roles: instructions and
+  directives use the keyword color; registers use the builtin color; labels
+  and symbols use the identifier color; literals use the literal color;
+  punctuation is neutral; comments use the subdued comment color; and malformed
+  encoding remains distinct. Do not infer a mnemonic, register, or listing
+  annotation from its spelling in `peek`. Consequently, generic rendering only
+  colors roles the generic lexer can establish; an explicit or qualified
+  profile enables the richer instruction/register distinction.
 - Add the assembly configuration record and optional keywords described above.
 - Wire string, port, file, and CLI paths. Open byte-authoritative file paths in
   binary mode. String/file convenience functions may collect their result;

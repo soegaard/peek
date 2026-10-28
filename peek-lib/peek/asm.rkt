@@ -49,7 +49,7 @@
          "private/input-probe.rkt")
 
 ;; asm-token-style : asm-derived-token? -> string?
-;;   Choose a conservative terminal style without treating unknown syntax as malformed.
+;;   Choose a semantic terminal style without treating unknown syntax as malformed.
 (define (asm-token-style token)
   (define category
     (asm-derived-token-category token))
@@ -58,6 +58,15 @@
   (cond
     [(memq 'asm-invalid-encoding tags)
      ansi-malformed]
+    [(eq? category 'comment)
+     ansi-comment]
+    [(or (memq 'asm-instruction tags)
+         (memq 'asm-directive tags))
+     ansi-keyword]
+    [(memq 'asm-register tags)
+     ansi-builtin]
+    [(eq? category 'literal)
+     ansi-literal]
     [(eq? category 'identifier)
      ansi-identifier]
     [(or (eq? category 'operator)

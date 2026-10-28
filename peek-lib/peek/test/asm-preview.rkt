@@ -10,6 +10,8 @@
 (require rackunit
          racket/string
          "../asm.rkt"
+         "../common-style.rkt"
+         "../private/assembly-options.rkt"
          "../preview.rkt")
 
 ;; ansi-pattern : regexp?
@@ -42,6 +44,35 @@
               source)
 (check-true (regexp-match? ansi-pattern
                            (render-asm-preview source)))
+
+;; Explicit profiles provide semantic roles that the assembly renderer maps to
+;; the shared palette; generic source keeps unclassified words conservative.
+(define styled-source
+  "entry:\nMOVE.W #1,D0\nDC.W $100\n; comment\n")
+
+(define styled-output
+  (render-asm-preview styled-source
+                      #:assembly (make-assembly-options
+                                  #:dialect 'native-motorola)))
+
+(check-true (string-contains? styled-output
+                              (string-append ansi-identifier "entry" ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-delimiter ":" ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-keyword "MOVE.W" ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-literal "1" ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-delimiter "," ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-builtin "D0" ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-keyword "DC.W" ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-literal "$100" ansi-reset)))
+(check-true (string-contains? styled-output
+                              (string-append ansi-comment ";" ansi-reset)))
 
 ;; Invalid bytes, ESC, and lone CR are visibly escaped; CRLF is one output newline.
 (define unsafe-output

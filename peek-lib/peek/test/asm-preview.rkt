@@ -114,6 +114,19 @@
 (check-true (string-contains? generic-layout-output
                               (string-append ansi-literal "1" ansi-reset)))
 
+;; Assembly tabs expand to the next fixed eight-column stop, independent of
+;; terminal configuration; ANSI styling does not affect the tracked column.
+(define tabbed-source
+  "L:\tMOVE.W\tD0\r\nLONG:\tMOVE.W\tA7\n")
+
+(define tabbed-output
+  "L:      MOVE.W  D0\nLONG:   MOVE.W  A7\n")
+
+(check-equal? (render-asm-preview tabbed-source #:color? #f)
+              tabbed-output)
+(check-equal? (strip-ansi (render-asm-preview tabbed-source))
+              tabbed-output)
+
 ;; Invalid bytes, ESC, and lone CR are visibly escaped; CRLF is one output newline.
 (define unsafe-output
   (let ([out (open-output-string)])

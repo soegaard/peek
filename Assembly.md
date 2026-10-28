@@ -219,11 +219,13 @@ selection must validate its supported names. Leave guessed legacy encodings
 unknown until a specific decoder and fixtures are added. Emitted PETSCII,
 screen-code, or character-map directives do not change source decoding.
 
-Recommended display policy: retain printable text, LF, and tabs; render
+Recommended display policy: retain printable text and LF; expand each source
+tab to spaces through the next fixed eight-column terminal stop; render
 terminal-active controls, lone CR, and undecodable bytes visibly. Render CRLF
-as one terminal line break while preserving both bytes in provenance. Document
-the exact escape spelling and width before snapshot tests. Sanitizing happens
-before adding renderer-generated ANSI, including when color is disabled.
+as one terminal line break while preserving both bytes in provenance. JSONL
+tokens retain the original tab bytes. Document the exact escape spelling and
+width before snapshot tests. Sanitizing happens before adding renderer-generated
+ANSI, including when color is disabled.
 
 Token JSONL includes an unambiguous raw-byte encoding, such as base64, so its
 fragments can reconstruct the exact input. Do not add a terminal-unsafe raw

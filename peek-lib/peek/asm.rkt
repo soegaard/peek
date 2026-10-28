@@ -113,12 +113,69 @@
       (<= #x202A code #x202E)
       (<= #x2066 code #x2069)))
 
-;; safe-asm-display-state : boolean?
-;;   Whether a carriage return is pending until the next decoded character.
-(struct safe-asm-display-state (pending-carriage-return?) #:mutable)
+;; Assembly terminal layout constants.
+(define assembly-tab-stop
+  8)
+
+;; safe-asm-display-state : boolean? exact-nonnegative-integer? -> safe-asm-display-state?
+;;   Track a deferred carriage return and the next terminal column.
+(struct safe-asm-display-state (pending-carriage-return? column) #:mutable)
+
+;; tab-padding : exact-nonnegative-integer? -> exact-positive-integer?
+;;   Determine how many spaces advance one tab to the next assembly tab stop.
+(define (tab-padding column)
+  (- assembly-tab-stop
+     (remainder column assembly-tab-stop)))
+
+;; emit-visible-text : string? safe-asm-display-state? output-port? -> void?
+;;   Write known single-column terminal text and advance the display column.
+(define (emit-visible-text text state out)
+  (display text out)
+  (set-safe-asm-display-state-column!
+   state
+   (+ (safe-asm-display-state-column state)
+      (string-length text))))
+
+;; emit-assembly-tab : safe-asm-display-state? output-port? -> void?
+;;   Render a source tab as spaces through the next fixed assembly tab stop.
+(define (emit-assembly-tab state out)
+  (define padding
+    (tab-padding (safe-asm-display-state-column state)))
+  (emit-visible-text (make-string padding #\space) state out))
+
+;; emit-assembly-newline : safe-asm-display-state? output-port? -> void?
+;;   Write one terminal line break and restart column tracking.
+(define (emit-assembly-newline state out)
+  (write-char #\newline out)
+  (set-safe-asm-display-state-column! state 0))
+
+;; emit-safe-non-carriage-return : char? safe-asm-display-state? output-port? -> void?
+;;   Render one decoded character that is known not to be a carriage return.
+(define (emit-safe-non-carriage-return ch state out)
+  (cond
+    [(char=? ch #\tab)
+     (emit-assembly-tab state out)]
+    [(char=? ch #\newline)
+     (emit-assembly-newline state out)]
+    [(terminal-control-character? ch)
+     (emit-visible-text (character->escape ch) state out)]
+    [else
+     (write-char ch out)
+     (set-safe-asm-display-state-column!
+      state
+      (add1 (safe-asm-display-state-column state)))]))
+
+;; emit-safe-character : char? safe-asm-display-state? output-port? -> void?
+;;   Defer carriage returns so CRLF stays one output newline.
+(define (emit-safe-character ch state out)
+  (cond
+    [(char=? ch #\return)
+     (set-safe-asm-display-state-pending-carriage-return?! state #t)]
+    [else
+     (emit-safe-non-carriage-return ch state out)]))
 
 ;; emit-safe-text : string? safe-asm-display-state? output-port? -> void?
-;;   Write text safely, treating CRLF as one line break and lone CR visibly.
+;;   Write text safely, expanding tabs and treating CRLF as one line break.
 (define (emit-safe-text text state out)
   (for ([ch (in-string text)])
     (cond
@@ -126,33 +183,18 @@
        (set-safe-asm-display-state-pending-carriage-return?! state #f)
        (cond
          [(char=? ch #\newline)
-          (write-char #\newline out)]
+          (emit-assembly-newline state out)]
          [else
-          (display "\\x0D" out)
-          (cond
-            [(char=? ch #\tab)
-             (write-char ch out)]
-            [(char=? ch #\newline)
-             (write-char ch out)]
-            [(terminal-control-character? ch)
-             (display (character->escape ch) out)]
-            [else
-             (write-char ch out)])])]
-      [(char=? ch #\return)
-       (set-safe-asm-display-state-pending-carriage-return?! state #t)]
-      [(or (char=? ch #\newline)
-           (char=? ch #\tab))
-       (write-char ch out)]
-      [(terminal-control-character? ch)
-       (display (character->escape ch) out)]
+          (emit-visible-text "\\x0D" state out)
+          (emit-safe-character ch state out)])]
       [else
-       (write-char ch out)])))
+       (emit-safe-character ch state out)])))
 
 ;; flush-safe-asm-display : safe-asm-display-state? output-port? -> void?
 ;;   Emit a deferred lone carriage return at end of input.
 (define (flush-safe-asm-display state out)
   (when (safe-asm-display-state-pending-carriage-return? state)
-    (display "\\x0D" out)
+    (emit-visible-text "\\x0D" state out)
     (set-safe-asm-display-state-pending-carriage-return?! state #f)))
 
 ;; emit-safe-token : asm-derived-token? safe-asm-display-state? output-port? boolean? -> void?
@@ -167,9 +209,14 @@
        (apply string-append
               (for/list ([byte (in-bytes (asm-derived-token-raw-bytes token))])
                 (byte->escape byte))))
+     (define rendered
+       (open-output-string))
+     (emit-visible-text escaped state rendered)
+     (define text
+       (get-output-string rendered))
      (display (if color?
-                  (colorize-text (asm-token-style token) escaped)
-                  escaped)
+                  (colorize-text (asm-token-style token) text)
+                  text)
               out)]
     [else
      (define rendered
@@ -273,7 +320,7 @@
                             #:architecture architecture
                             #:encoding     (assembly-options-encoding options)))
   (define safe-state
-    (safe-asm-display-state #f))
+    (safe-asm-display-state #f 0))
   (let loop ()
     (define token
       (lexer in))

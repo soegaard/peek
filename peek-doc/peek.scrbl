@@ -1196,6 +1196,9 @@ Assembly preview uses a conservative bounded source probe:
  @item{Terminal-active control characters, malformed byte sequences, and lone
        carriage returns are visibly escaped even with @DFlag{--color never}.
        CRLF displays as one newline.}
+ @item{Source tabs expand to spaces through fixed eight-column tab stops, so
+       assembly columns align independently of the terminal's tab setting.
+       Token JSONL retains the original tab bytes.}
 ]
 
 Use @DFlag{--detect-only} with @DFlag{--json} for an inspection record,

@@ -77,6 +77,19 @@
 (check-equal? gas-rendered ".intel_syntax noprefix\n.code64\nmov rax, 1\n")
 (check-equal? gas-stderr "")
 
+;; An explicit dialect is a forced assembly request even when --type asm is
+;; omitted, so it cannot be replaced by automatic generic fallback.
+(define-values (vasm-rendered vasm-explained)
+  (run-main '("--dialect" "vasm"
+              "--explain-type"
+              "--no-pager"
+              "--color" "never")
+            #"MOVE.W #1,D0 ; tail\n"))
+
+(check-equal? vasm-rendered "MOVE.W #1,D0 ; tail\n")
+(check-true (regexp-match? #px"assembly request: requested vasm" vasm-explained))
+(check-false (regexp-match? #px"generic-fallback" vasm-explained))
+
 (define-values (token-jsonl token-stderr)
   (run-main '("--type" "asm"
               "--dump-tokens" "jsonl"

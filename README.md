@@ -64,8 +64,8 @@ assembly evidence uses the neutral generic profile. An explicit generic preview
 remains available when you do not want filename/content arbitration:
 
 ```sh
-peek --type asm --dialect generic path/to/file.s
-peek --type asm --dialect gas --arch x86 path/to/file.S
+peek --dialect generic path/to/file.s
+peek --dialect gas --arch x86 path/to/file.S
 ```
 
 Preview from standard input by choosing a file type explicitly:

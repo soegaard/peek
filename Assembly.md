@@ -344,17 +344,21 @@ Work:
   and symbols use the identifier color; literals use the literal color;
   punctuation is neutral; comments use the subdued comment color; and malformed
   encoding remains distinct. Do not infer a mnemonic, register, or listing
-  annotation from its spelling in `peek`. Consequently, generic rendering only
-  colors labels and literals brightly and renders ordinary generic symbols
-  neutrally; an explicit or qualified profile enables the richer
-  instruction/register distinction.
+  annotation from its spelling in `peek`. The generic lexer may identify an
+  indented `asm-layout-statement-head`, which uses the keyword color solely to
+  preserve the conventional opcode column; it does not claim instruction or
+  directive semantics. Other generic symbols use the bright identifier color.
+  An explicit or qualified profile enables the richer instruction/register
+  distinction.
 - Add the assembly configuration record and optional keywords described above.
 - Wire string, port, file, and CLI paths. Open byte-authoritative file paths in
   binary mode. String/file convenience functions may collect their result;
   the normal CLI port path must stream.
 - Add forced generic selection, validated option combinations, and the
   inspection modes in section 6. `--type asm` means the assembly family; before
-  calibrated profiles exist its resolution is conservative and explained.
+  calibrated profiles exist its resolution is conservative and explained. An
+  explicit `--dialect` implies `--type asm`, so it remains a forced selection
+  rather than entering automatic fallback.
 - Route assembly no-color rendering through the same sanitizer and state
   machine. Test stdout/stderr separation, pager forwarding, and prompt flushes.
 - Add state-preserving assembly follow support using feed/checkpoint state.

@@ -291,7 +291,7 @@ General options:
        calibration-qualified; otherwise a plausible source uses the neutral
        generic profile.}
  @item{@DFlag{--dialect} @italic{dialect}
-       selects an assembly lexer dialect with @tt{--type asm}. Implemented
+       selects an assembly lexer dialect and implies @tt{--type asm}. Implemented
        profiles include @tt{generic}, @tt{ca65}, @tt{acme},
        @tt{native-motorola}, @tt{asmone}, @tt{devpac}, @tt{kick},
        @tt{64tass}, @tt{gas}, and @tt{nasm}. Unsupported selections are

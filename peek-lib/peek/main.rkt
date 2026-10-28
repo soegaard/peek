@@ -269,7 +269,7 @@
                "Explicit file type for stdin input."
                (set! type (string->symbol value))]
    [("--dialect") value
-    "Assembly dialect, such as generic, ca65, gas, or nasm."
+    "Assembly dialect; implies --type asm."
     (set! dialect (option-symbol value))]
    [("--arch") value
     "Assembly target architecture, such as x86, arm, aarch64, or m68k."
@@ -371,6 +371,11 @@
       (set! file-path (car args))]
      [else
       (usage-error "expected at most one input file")]))
+  ;; An explicit dialect is a forced assembly request, not an automatic hint.
+  (define selected-type
+    (cond
+      [(and dialect (not type)) 'asm]
+      [else type]))
   (when follow?
     (set! pager? #f))
   (when (or detect-only?
@@ -413,29 +418,29 @@
        (usage-error "--follow does not combine with --section"))
      (when (and (or dialect architecture encoding
                     (not (eq? detection-mode 'interactive)))
-                (not (or (eq? type 'asm)
+                (not (or (eq? selected-type 'asm)
                          detect-only?
-                         (not type))))
+                         (not selected-type))))
        (usage-error "assembly selection options require --type asm, --detect-only, or automatic type selection"))
      (when (and detect-only?
                 (not json?))
        (usage-error "--detect-only requires --json"))
      (when (and detect-only?
-                type
-                (not (eq? type 'asm)))
+                selected-type
+                (not (eq? selected-type 'asm)))
        (usage-error "--detect-only accepts only --type asm"))
      (when (and json?
                 (not detect-only?))
        (usage-error "--json currently requires --detect-only"))
      (when (and explain-type?
-                type
-                (not (eq? type 'asm)))
+                selected-type
+                (not (eq? selected-type 'asm)))
        (usage-error "--explain-type accepts --type asm or automatic type selection"))
      (when (and dump-tokens-format
                 (not (eq? dump-tokens-format 'jsonl)))
        (usage-error "--dump-tokens supports only jsonl"))
      (when (and dump-tokens-format
-                (not (eq? type 'asm)))
+                (not (eq? selected-type 'asm)))
        (usage-error "--dump-tokens requires --type asm"))
      (when (and detect-only?
                 dump-tokens-format)
@@ -444,7 +449,7 @@
                 explain-type?)
        (usage-error "--detect-only does not combine with --explain-type"))
      (when (and follow?
-                (eq? type 'asm))
+                (eq? selected-type 'asm))
        (usage-error "--follow is not available for assembly previews yet"))
      (unless (memq detection-mode '(interactive fixed-prefix))
        (usage-error (format "unknown assembly detection mode: ~a"
@@ -471,7 +476,7 @@
      (define assembly
        (make-assembly-options
         #:dialect (cond
-                    [(eq? type 'asm)
+                    [(eq? selected-type 'asm)
                      (or dialect 'generic)]
                     [else
                      dialect])
@@ -479,7 +484,7 @@
         #:encoding (or encoding 'auto)
         #:detection-mode detection-mode))
      (define options
-       (make-preview-options #:type      type
+       (make-preview-options #:type      selected-type
                              #:align?    align?
                              #:swatches? swatches?
                              #:color-mode color-mode
@@ -524,7 +529,7 @@
                                          (current-error-port)
                                          #:path file-path
                                          #:assembly assembly
-                                         #:automatic? (not type))
+                                         #:automatic? (not selected-type))
              (preview-port (input-probe-replay-port probe)
                            file-path
                            options
@@ -539,7 +544,7 @@
           (write-assembly-explanation probe
                                       (current-error-port)
                                       #:assembly assembly
-                                      #:automatic? (not type))
+                                      #:automatic? (not selected-type))
           (preview-port (input-probe-replay-port probe)
                         #f
                         options

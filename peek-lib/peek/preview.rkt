@@ -25,6 +25,13 @@
 ;; preview-options-line-numbers?       -- Whether line numbers are enabled.
 ;; preview-options-stats?              -- Whether stats mode is enabled.
 ;; preview-options-directory-sort      -- Directory sort mode.
+;; assembly-options                    -- Assembly rendering configuration.
+;; assembly-options?                   -- Recognize assembly rendering configuration.
+;; assembly-options-dialect            -- Requested assembly lexer dialect.
+;; assembly-options-architecture        -- Requested assembly target architecture.
+;; assembly-options-encoding           -- Requested assembly source encoding.
+;; assembly-options-detection-mode     -- Automatic-selection sampling schedule.
+;; make-assembly-options               -- Construct assembly rendering configuration.
 ;; supported-file-types                -- Supported explicit file type names.
 ;; make-preview-options                -- Construct preview options.
 ;; preview-string : string? ... -> string?
@@ -77,6 +84,20 @@
  preview-options-stats?
  ;; preview-options-directory-sort Directory sort mode.
  preview-options-directory-sort
+ ;; assembly-options             Assembly rendering configuration.
+ assembly-options
+ ;; assembly-options?            Recognize assembly rendering configuration.
+ assembly-options?
+ ;; assembly-options-dialect     Requested assembly lexer dialect.
+ assembly-options-dialect
+ ;; assembly-options-architecture Requested assembly target architecture.
+ assembly-options-architecture
+ ;; assembly-options-encoding    Requested assembly source encoding.
+ assembly-options-encoding
+ ;; assembly-options-detection-mode Automatic-selection sampling schedule.
+ assembly-options-detection-mode
+ ;; make-assembly-options        Construct assembly rendering configuration.
+ make-assembly-options
  ;; supported-file-types       Supported explicit file type names.
  supported-file-types
  ;; make-preview-options       Construct preview options.
@@ -103,6 +124,7 @@
          racket/string
          "common-style.rkt"
          "archive.rkt"
+         "asm.rkt"
          "binary.rkt"
          "git-diff.rkt"
          "directory.rkt"
@@ -137,14 +159,16 @@
          "shell.rkt"
          "yaml.rkt"
          "scribble.rkt"
-         "wat.rkt")
+         "wat.rkt"
+         "private/assembly-options.rkt"
+         "private/input-probe.rkt")
 
 (struct preview-line-range (start end) #:transparent)
 (struct preview-options (type align? swatches? color-mode binary-mode search-bytes diff? diff-staged? pretty? toc? section follow? line-range grep-patterns line-numbers? stats? directory-sort) #:transparent)
 
 ;; Supported explicit file-type names.
 (define supported-file-types
-  '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scheme scrbl sql sqlite swift tex toml tsv wat yaml zsh))
+  '(archive asm bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scheme scrbl sql sqlite swift tex toml tsv wat yaml zsh))
 
 ;; make-preview-options : -> preview-options?
 ;;   Construct default preview options.
@@ -619,12 +643,13 @@
 
 ;; render-diff-line/fallback : git-diff-line? path-string? preview-options? output-port? boolean? exact-positive-integer? boolean? -> string?
 ;;   Render one diff line independently when hunk-level rendering cannot be used.
-(define (render-diff-line/fallback line path options out color? line-number-width line-numbers?)
+(define (render-diff-line/fallback line path options out color? line-number-width line-numbers? assembly)
   (define rendered
     (preview-string/rendered (string-append (git-diff-line-text line) "\n")
                              path
                              options
-                             out))
+                             out
+                             #:assembly assembly))
   (define rendered-line
     (cond
       [(pair? (rendered-lines rendered))
@@ -639,25 +664,32 @@
 
 ;; current-file-rendered-lines : path-string? preview-options? output-port? -> (or/c (listof string?) #f)
 ;;   Render the whole current file and return one rendered line per source line when possible.
-(define (current-file-rendered-lines path options out)
-  (define source
-    (file->string path))
-  (define source-lines
-    (drop-right (string-split source "\n" #:trim? #f) 1))
-  (define rendered
-    (preview-string/rendered source
-                             path
-                             options
-                             out))
-  (define lines
-    (rendered-lines rendered))
-  (and (= (length lines)
-          (length source-lines))
-       lines))
+(define (current-file-rendered-lines path options out assembly)
+  (cond
+    [(assembly-preview? (effective-file-type path options))
+     ;; A generic assembly diff renders each independent hunk line neutrally.
+     ;; That avoids borrowing source state from the current revision for deleted text.
+     #f]
+    [else
+     (define source
+       (file->string path))
+     (define source-lines
+       (drop-right (string-split source "\n" #:trim? #f) 1))
+     (define rendered
+       (preview-string/rendered source
+                                path
+                                options
+                                out
+                                #:assembly assembly))
+     (define lines
+       (rendered-lines rendered))
+     (and (= (length lines)
+             (length source-lines))
+          lines)]))
 
 ;; render-diff-hunk-snippet : git-diff-render-hunk? path-string? preview-options? output-port? boolean? exact-positive-integer? boolean? (or/c (listof string?) #f) -> string?
 ;;   Render one diff hunk, reusing whole-file rendered lines when possible.
-(define (render-diff-hunk-snippet hunk path options out color? line-number-width line-numbers? file-rendered-lines)
+(define (render-diff-hunk-snippet hunk path options out color? line-number-width line-numbers? file-rendered-lines assembly)
   (apply string-append
          (for/list ([line (in-list (git-diff-render-hunk-lines hunk))])
            (cond
@@ -676,7 +708,8 @@
                                          out
                                          color?
                                          line-number-width
-                                         line-numbers?)]))))
+                                         line-numbers?
+                                         assembly)]))))
 
 ;; diff-preview-options : preview-options? -> preview-options?
 ;;   Remove incompatible postprocessing from per-hunk rendering.
@@ -701,7 +734,7 @@
 
 ;; render-diff-preview : path-string? preview-options? output-port? -> string?
 ;;   Render Git-changed file hunks using the normal file-type previewer.
-(define (render-diff-preview path options out)
+(define (render-diff-preview path options out #:assembly [assembly (make-assembly-options)])
   (define file-type
     (effective-file-type path options))
   (define color?
@@ -757,7 +790,7 @@
          (let* ([hunk-options
                  (diff-preview-options options)]
                 [file-rendered-lines
-                 (current-file-rendered-lines path hunk-options out)]
+                 (current-file-rendered-lines path hunk-options out assembly)]
                 [number-note
                  (cond
                    [(preview-options-line-numbers? options)
@@ -786,7 +819,8 @@
                                                color?
                                                line-number-width
                                                (preview-options-line-numbers? options)
-                                               file-rendered-lines))
+                                               file-rendered-lines
+                                               assembly))
                    (string-append (diff-header-line hunk
                                                     color?)
                                   rendered-snippet))])
@@ -797,6 +831,54 @@
                                         path
                                         color?
                                         final-options)))]))
+
+;; assembly-source-path? : string? -> boolean?
+;;   Recognize a filename suffix that is an assembly-family hint.
+(define (assembly-source-path? path-text)
+  (or (regexp-match? #px"\\.asm$" path-text)
+      (regexp-match? #px"\\.s$" path-text)
+      (regexp-match? #px"\\.S$" path-text)
+      (regexp-match? #px"\\.sx$" path-text)
+      (regexp-match? #px"\\.nasm$" path-text)))
+
+;; ambiguous-assembly-path? : string? -> boolean?
+;;   Recognize suffixes whose ordinary source language needs content arbitration.
+(define (ambiguous-assembly-path? path-text)
+  (or (regexp-match? #px"\\.inc$" path-text)
+      (regexp-match? #px"\\.i$" path-text)
+      (regexp-match? #px"\\.a$" path-text)))
+
+;; extensionless-path? : (or/c path-string? #f) -> boolean?
+;;   Determine whether a filesystem input has no ordinary filename extension.
+(define (extensionless-path? maybe-path)
+  (cond
+    [(not maybe-path)
+     #f]
+    [else
+     (define file-name
+       (file-name-from-path (simple-form-path maybe-path)))
+     (cond
+       [(not file-name)
+        #f]
+       [else
+        (not (regexp-match? #px"\\.[^.]+$" (path->string file-name)))])]))
+
+;; automatic-assembly-request? : (or/c path-string? #f) preview-options? (or/c symbol? #f) -> boolean?
+;;   Limit content probing to assembly hints, ambiguous source, extensionless input, or stdin.
+(define (automatic-assembly-request? maybe-path options file-type)
+  (and (not (preview-options-type options))
+       (or (assembly-preview? file-type)
+           (eq? file-type 'assembly-candidate)
+           (and (not maybe-path)
+                (not file-type))
+           (and (not file-type)
+                (extensionless-path? maybe-path)))))
+
+;; automatic-assembly-route? : (or/c symbol? #f) assembly-resolution? -> boolean?
+;;   Decide whether a bounded automatic request should use the assembly renderer.
+(define (automatic-assembly-route? file-type resolution)
+  (or (assembly-preview? file-type)
+      (assembly-probe-plausibly-source? resolution)))
 
 ;; detect-file-type : (or/c path-string? #f) -> (or/c symbol? #f)
 ;;   Infer a supported file type from a file path.
@@ -818,6 +900,8 @@
        [(regexp-match? #px"(?i:\\.zip)$" path-string) 'archive]
        [(regexp-match? #px"(?i:\\.tar)$" path-string) 'archive]
        [(regexp-match? #px"(?i:\\.(?:tar\\.gz|tgz))$" path-string) 'archive]
+       [(assembly-source-path? path-string) 'asm]
+       [(ambiguous-assembly-path? path-string) 'assembly-candidate]
        [(or (regexp-match? #px"(?i:\\.go)$" path-string)
             (member file-name '("go.mod" "go.work")))
         'go]
@@ -881,6 +965,18 @@
   (cond
     [(preview-options-type options) => values]
     [else                             (detect-file-type maybe-path)]))
+
+;; assembly-preview? : (or/c symbol? #f) -> boolean?
+;;   Determine whether an explicit assembly preview was requested.
+(define (assembly-preview? file-type)
+  (eq? file-type 'asm))
+
+;; report-assembly-artifact-conflict : symbol? -> void?
+;;   Explain why a forced source selection was routed to a safe binary path.
+(define (report-assembly-artifact-conflict artifact-kind)
+  (eprintf "peek: assembly source selection conflicts with ~a input; using safe ~a preview.\n"
+           artifact-kind
+           (if (eq? artifact-kind 'archive) "archive" "binary")))
 
 ;; bytes->text-or-false : bytes? -> (or/c string? #f)
 ;;   Decode bytes as UTF-8 when possible.
@@ -955,9 +1051,32 @@
 (define (preview-string/rendered source
                                  [maybe-path #f]
                                  [options (make-preview-options)]
-                                 [out (current-output-port)])
-  (define file-type
+                                 [out (current-output-port)]
+                                 #:assembly [assembly (make-assembly-options)])
+  (define detected-file-type
     (effective-file-type maybe-path options))
+  (define automatic?
+    (automatic-assembly-request? maybe-path options detected-file-type))
+  (define resolution
+    (and automatic?
+         (resolve-assembly-options (string->bytes/utf-8 source)
+                                   assembly
+                                   #:automatic? #t)))
+  (define file-type
+    (cond
+      [(and resolution
+            (automatic-assembly-route? detected-file-type resolution))
+       'asm]
+      [(eq? detected-file-type 'assembly-candidate)
+       'pascal]
+      [else
+       detected-file-type]))
+  (define effective-assembly
+    (cond
+      [resolution
+       (assembly-resolution-options resolution)]
+      [else
+       assembly]))
   (cond
     [(eq? file-type 'archive)
      (or (render-archive-preview (string->bytes/utf-8 source)
@@ -975,6 +1094,10 @@
                             #:search-bytes (preview-options-search-bytes options))]
     [(preview-options-stats? options)
      (raise-user-error 'stats "--stats currently supports directory and archive previews only")]
+    [(assembly-preview? file-type)
+     (render-asm-preview source
+                         #:assembly effective-assembly
+                         #:color? (color-enabled? out options))]
     [(eq? file-type 'md)
      (define rendered
        (render-markdown-preview source
@@ -1072,20 +1195,44 @@
 (define (preview-string source
                         [maybe-path #f]
                         [options (make-preview-options)]
-                        [out (current-output-port)])
+                        [out (current-output-port)]
+                        #:assembly [assembly (make-assembly-options)])
   (define rendered
-    (preview-string/rendered source maybe-path options out))
+    (preview-string/rendered source
+                             maybe-path
+                             options
+                             out
+                             #:assembly assembly))
   (postprocess-rendered-string rendered
                                maybe-path
                                (color-enabled? out options)
                                options))
+
+;; explicit-assembly-preview? : preview-options? (or/c symbol? #f) -> boolean?
+;;   Determine whether the caller, rather than filename/content evidence, forced assembly.
+(define (explicit-assembly-preview? options file-type)
+  (and (eq? (preview-options-type options) 'asm)
+       (assembly-preview? file-type)))
+
+;; render-automatic-assembly-fallback : input-port? symbol? boolean? output-port? -> void?
+;;   Preserve the established non-assembly fallback after a bounded probe abstains.
+(define (render-automatic-assembly-fallback in file-type color? out)
+  (define text-in
+    (reencode-input-port in "UTF-8"))
+  (cond
+    [(and (eq? file-type 'assembly-candidate)
+          color?)
+     (render-pascal-preview-port text-in out)]
+    [else
+     (copy-port text-in out)]))
 
 ;; preview-port : input-port? (or/c path-string? #f) preview-options? output-port? -> void?
 ;;   Preview from an input port to an output port.
 (define (preview-port in
                       [maybe-path #f]
                       [options (make-preview-options)]
-                      [out (current-output-port)])
+                      [out (current-output-port)]
+                      #:assembly [assembly (make-assembly-options)])
   (define color?
     (color-enabled? out options))
   (define actual-out
@@ -1119,6 +1266,74 @@
                                                   'bits)
                                      #:search-bytes (preview-options-search-bytes options))
               actual-out)]
+    [(and (or (assembly-preview? file-type)
+              (automatic-assembly-request? maybe-path options file-type))
+          (preview-options-stats? options))
+     (raise-user-error 'stats "--stats currently supports directory and archive previews only")]
+    [(or (assembly-preview? file-type)
+         (automatic-assembly-request? maybe-path options file-type))
+     (define probe
+       (probe-input-port in
+                         #:mode (assembly-options-detection-mode assembly)))
+     (define input-kind
+       (assembly-input-kind (input-probe-sample probe)
+                            assembly))
+     (define automatic?
+       (automatic-assembly-request? maybe-path options file-type))
+     (define resolution
+       (and automatic?
+            (resolve-assembly-options (input-probe-sample probe)
+                                      assembly
+                                      #:automatic? #t)))
+     (define assembly?
+       (or (assembly-preview? file-type)
+           (and resolution
+                (automatic-assembly-route? file-type resolution))))
+     (define effective-assembly
+       (cond
+         [resolution
+          (assembly-resolution-options resolution)]
+         [else
+          assembly]))
+     (case input-kind
+       [(archive)
+        (when (explicit-assembly-preview? options file-type)
+          (report-assembly-artifact-conflict 'archive))
+        (define source-bytes
+          (port->bytes (input-probe-replay-port probe)))
+        (define rendered
+          (render-archive-preview source-bytes
+                                  #:path maybe-path
+                                  #:color? color?
+                                  #:stats? (preview-options-stats? options)))
+        (display (or rendered
+                     (render-binary-preview source-bytes
+                                            #:color? color?
+                                            #:bits? (eq? (preview-options-binary-mode options)
+                                                         'bits)
+                                            #:search-bytes (preview-options-search-bytes options)))
+                 actual-out)]
+       [(binary)
+        (when (explicit-assembly-preview? options file-type)
+          (report-assembly-artifact-conflict 'binary))
+        (render-binary-preview-port (input-probe-replay-port probe)
+                                    actual-out
+                                    #:color? color?
+                                    #:bits? (eq? (preview-options-binary-mode options)
+                                                 'bits)
+                                    #:search-bytes (preview-options-search-bytes options))]
+       [else
+        (cond
+          [assembly?
+           (render-asm-preview-port (input-probe-replay-port probe)
+                                    actual-out
+                                    #:assembly effective-assembly
+                                    #:color? color?)]
+          [else
+           (render-automatic-assembly-fallback (input-probe-replay-port probe)
+                                               file-type
+                                               color?
+                                               actual-out)])])]
     [(and (or (eq? file-type 'bash)
               (eq? file-type 'css)
               (eq? file-type 'c)
@@ -1401,8 +1616,10 @@
     [(directory-exists? path)
      (raise-user-error 'follow "directory previews cannot be followed")]
     [(or (eq? file-type 'archive)
+         (assembly-preview? file-type)
          (eq? file-type 'binary))
-     (raise-user-error 'follow "archive and binary previews cannot be followed")]
+     (raise-user-error 'follow
+                       "assembly, archive, and binary previews cannot be followed yet")]
     [else
      (define color?
        (color-enabled? out options))
@@ -1427,7 +1644,8 @@
 ;;   Preview a file from disk.
 (define (preview-path-port path
                            [options (make-preview-options)]
-                           [out (current-output-port)])
+                           [out (current-output-port)]
+                           #:assembly [assembly (make-assembly-options)])
   (define color?
     (color-enabled? out options))
   (define file-type
@@ -1435,7 +1653,7 @@
   (begin0
    (cond
     [(preview-options-diff? options)
-     (display (render-diff-preview path options out) out)]
+     (display (render-diff-preview path options out #:assembly assembly) out)]
     [(preview-options-follow? options)
      (preview-follow-path path options out)]
     [(directory-exists? path)
@@ -1448,25 +1666,32 @@
               actual-out)]
     [(or (eq? file-type 'archive)
          (eq? file-type 'binary))
-     (display (preview-file path options out) out)]
+     (display (preview-file path options out #:assembly assembly) out)]
+    [(or (assembly-preview? file-type)
+         (automatic-assembly-request? path options file-type))
+     (call-with-input-file path
+       (lambda (in)
+         (preview-port in path options out #:assembly assembly))
+       #:mode 'binary)]
     [else
      (call-with-input-file path
        (lambda (in)
-         (preview-port in path options out)))] )
+         (preview-port in path options out #:assembly assembly)))] )
    (void)))
 
 ;; preview-file : path-string? preview-options? -> string?
 ;;   Preview a file from disk.
 (define (preview-file path
                       [options (make-preview-options)]
-                      [out (current-output-port)])
+                      [out (current-output-port)]
+                      #:assembly [assembly (make-assembly-options)])
   (define file-type
     (effective-file-type path options))
   (define color?
     (color-enabled? out options))
   (cond
     [(preview-options-diff? options)
-     (render-diff-preview path options out)]
+     (render-diff-preview path options out #:assembly assembly)]
     [(directory-exists? path)
      (define rendered
        (render-directory-preview path
@@ -1505,6 +1730,17 @@
      (define text
        (get-output-string rendered))
      (postprocess-rendered-string text path color? options)]
+    [(or (assembly-preview? file-type)
+         (automatic-assembly-request? path options file-type))
+     (when (preview-options-stats? options)
+       (raise-user-error 'stats "--stats currently supports directory and archive previews only"))
+     (define rendered
+       (open-output-string))
+     (call-with-input-file path
+       (lambda (in)
+         (preview-port in path options rendered #:assembly assembly))
+       #:mode 'binary)
+     (get-output-string rendered)]
     [(or (eq? file-type 'wat)
          (eq? file-type 'css)
          (eq? file-type 'c)
@@ -1552,7 +1788,7 @@
        (open-output-string))
      (call-with-input-file path
        (lambda (in)
-         (preview-port in path options rendered)))
+         (preview-port in path options rendered #:assembly assembly)))
      (get-output-string rendered)]
     [else
      (define source-bytes

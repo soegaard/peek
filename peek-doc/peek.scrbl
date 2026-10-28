@@ -152,6 +152,7 @@ peek path/to/file.css
 peek path/to/folder/
 peek -P path/to/file.css
 cat path/to/file.json | peek --type json
+peek --type asm --dialect generic path/to/file.s
 }
 
 By default, @exec{peek} opens rendered output in a pager. Use @Flag{-P} or
@@ -170,7 +171,7 @@ surface includes:
  @item{@bold{Web languages:} @seclink["css"]{CSS}, @seclink["html"]{HTML},
        @seclink["javascript-jsx"]{JavaScript}, and
        @seclink["javascript-jsx"]{JSX}}
- @item{@bold{Programming languages:} @seclink["shell"]{Bash},
+ @item{@bold{Programming languages:} @seclink["assembly"]{Assembly source}, @seclink["shell"]{Bash},
        @seclink["c"]{C}, @seclink["objective-c"]{Objective-C},
        @seclink["cpp"]{C++}, @seclink["go"]{Go},
        @seclink["haskell"]{Haskell}, @seclink["java"]{Java},
@@ -276,7 +277,7 @@ General options:
 @itemlist[
 @item{@DFlag{--type} @italic{type}
     selects the input type explicitly. This is mainly useful for standard
-       input. Supported values include @tt{archive}, @tt{binary}, @tt{bash}, @tt{c},
+       input. Supported values include @tt{archive}, @tt{asm}, @tt{binary}, @tt{bash}, @tt{c},
        @tt{cpp}, @tt{css}, @tt{html}, @tt{js}, @tt{json}, @tt{jsx},
        @tt{latex}, @tt{lua}, @tt{mathematica}, @tt{md}, @tt{pascal}, @tt{plist},
        @tt{postgres}, @tt{powershell}, @tt{python}, @tt{rhombus}, @tt{rkt},
@@ -284,7 +285,43 @@ General options:
        @tt{scheme}, @tt{swift}, @tt{tex}, @tt{toml}, @tt{wat}, @tt{yaml}, @tt{mysql}, and @tt{zsh}. Use
        @tt{archive} to force archive preview for a supported archive, or use
        @tt{binary} to force the binary preview mode even when automatic
-       detection would not select it.}
+       detection would not select it. Assembly suffixes @tt{.asm}, @tt{.s},
+       @tt{.S}, @tt{.sx}, and @tt{.nasm} start bounded assembly probing. The
+       detected profile is used only when the shared lexer marks it
+       calibration-qualified; otherwise a plausible source uses the neutral
+       generic profile.}
+ @item{@DFlag{--dialect} @italic{dialect}
+       selects an assembly lexer dialect with @tt{--type asm}. Implemented
+       profiles include @tt{generic}, @tt{ca65}, @tt{acme},
+       @tt{native-motorola}, @tt{asmone}, @tt{devpac}, @tt{kick},
+       @tt{64tass}, @tt{gas}, and @tt{nasm}. Unsupported selections are
+       rejected instead of being silently rendered with a neighbouring grammar.}
+ @item{@DFlag{--arch} @italic{architecture}
+       supplies a target architecture for an assembly profile when needed.
+       GNU assembler syntax requires one of its supported targets, such as
+       @tt{x86}, @tt{arm}, @tt{aarch64}, or @tt{m68k}.}
+ @item{@DFlag{--detection-mode} @italic{mode}
+       chooses the bounded automatic-selection schedule: @tt{interactive}
+       stops after the short post-input availability budget, while
+       @tt{fixed-prefix} waits for EOF or the 32 KiB/256-line cap. The latter
+       gives scripts a reproducible source prefix.}
+ @item{@DFlag{--encoding} @italic{encoding}
+       selects an assembly source encoding with @tt{--type asm}: @tt{auto},
+       @tt{utf-8}, @tt{utf-16le}, or @tt{utf-16be}.}
+ @item{@DFlag{--detect-only} together with @DFlag{--json}
+       emits one ANSI-free JSON record for a bounded assembly representation
+       probe. The record reports encoding evidence, source/archive/binary
+       routing, candidate profiles, evidence, conflicts, scores, calibration
+       state, the effective renderer selection, and the sampling stop reason.}
+ @item{@DFlag{--explain-type}
+       writes assembly selection, representation, and automatic-probe facts to
+       standard error while leaving the rendered preview on standard output. It
+       accepts explicit @tt{--type asm} selection or automatic type selection.}
+ @item{@DFlag{--dump-tokens} @tt{jsonl}
+       streams one ANSI-free JSON record per derived assembly token. Records
+       include category, tags, byte spans, effective state, diagnostics, and
+       exact raw bytes encoded as hexadecimal text. It requires
+       @tt{--type asm}.}
  @item{@DFlag{--list-file-types}
        prints the currently supported explicit file type names, one per line,
        and exits.}
@@ -318,7 +355,7 @@ General options:
        contents. Each appended batch receives syntax coloring, and line
        numbering continues across appended text. The pager is disabled automatically; press
        @exec{Ctrl-C} to stop following. This mode does not support directory,
-       archive, binary, Git-diff, statistics, or Markdown-outline previews.}
+       assembly, archive, binary, Git-diff, statistics, or Markdown-outline previews.}
  @item{@DFlag{--toc}
        renders a compact heading outline when the selected file type supports
        it. Markdown currently supports @DFlag{--toc}.}
@@ -670,7 +707,7 @@ For Pascal, @exec{peek} currently supports:
 
 @itemlist[
  @item{syntax coloring for common Pascal source files such as @tt{.pas},
-       @tt{.pp}, @tt{.dpr}, @tt{.lpr}, and @tt{.inc}}
+       @tt{.pp}, @tt{.dpr}, @tt{.lpr}, and unresolved @tt{.inc} files}
  @item{best-effort previewing on malformed input}
  @item{source-preserving, color-only terminal output}
 ]
@@ -1138,6 +1175,37 @@ Rendered WAT preview:
 
 @(preview-shot snippet-wat-shot)
 
+@subsubsection[#:tag "assembly"]{Assembly source}
+
+Assembly preview uses a conservative bounded source probe:
+
+@itemlist[
+ @item{Assembly suffixes @tt{.asm}, @tt{.s}, @tt{.S}, @tt{.sx}, and
+       @tt{.nasm} are probed before rendering. Ambiguous @tt{.inc}, @tt{.i},
+       and @tt{.a} files, extensionless input, and stdin require strong source
+       evidence; unresolved @tt{.inc} files retain Pascal previewing.}
+ @item{A detected dialect is used only after the @tt{lexers/asm} probe marks
+       it calibration-qualified. A plausible but unqualified sample uses the
+       generic profile, which preserves ambiguous syntax neutrally rather than
+       claiming a CPU, assembler dialect, or executable identity. Use
+       @tt{peek --type asm --dialect generic file.s} to force generic syntax,
+       or add @DFlag{--arch} for target-dependent explicit profiles.}
+ @item{A bounded prefix probe recognizes UTF-8/UTF-16 byte-order marks before
+       NUL-based binary routing. Strong binary or archive evidence produces the
+       corresponding safe representation preview instead of source coloring.}
+ @item{Terminal-active control characters, malformed byte sequences, and lone
+       carriage returns are visibly escaped even with @DFlag{--color never}.
+       CRLF displays as one newline.}
+]
+
+Use @DFlag{--detect-only} with @DFlag{--json} for an inspection record,
+@DFlag{--explain-type} for a stderr explanation beside normal preview output,
+or @DFlag{--dump-tokens jsonl} for lossless token-fragment inspection. The
+inspection record includes evidence, conflicts, scores, the calibration gate,
+and the effective preview fallback. Assembly
+@DFlag{--follow} is unavailable until the lexer exposes stateful feeding and
+checkpoints.
+
 @subsubsection[#:tag "yaml"]{YAML}
 
 For YAML, @exec{peek} currently supports:
@@ -1297,6 +1365,11 @@ The initial library surface is intentionally small:
  @item{@tt{preview-port} previews from an input port to an output port. This
        is the lower-level entry point used by streaming previewers such as
        standalone WAT.}
+ @item{@tt{make-assembly-options} constructs assembly settings, including an
+       optional dialect, target architecture, and source encoding.
+       @tt{preview-string}, @tt{preview-port}, @tt{preview-path-port},
+       and @tt{preview-file} accept them through an optional @racket[#:assembly]
+       keyword while preserving the existing positional options API.}
  @item{@tt{preview-file} reads a file and previews it using the selected
        options.}
 ]

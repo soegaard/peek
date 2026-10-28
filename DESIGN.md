@@ -95,6 +95,40 @@ archive, binary, diff, statistics, and Markdown-outline modes either need a
 finite input or have path-oriented semantics that do not describe a growing
 text stream.
 
+## Assembly Source
+
+Assembly previewing uses the shared, byte-preserving `lexers/asm` derived-token
+interface; `peek` applies only terminal presentation and never tokenizes an
+assembly dialect itself. Assembly suffixes (`.asm`, `.s`, `.S`, `.sx`, and
+`.nasm`) start bounded content probing. Ambiguous `.inc`, `.i`, and `.a` input,
+extensionless files, and stdin need sufficiently strong profile evidence before
+they take the assembly path; unresolved includes retain Pascal previewing.
+
+The lexer’s calibration gate is authoritative. `peek` adopts an automatically
+detected dialect only when the probe marks that profile qualified. A plausible
+but unqualified assembly sample uses the neutral generic profile, rather than
+claiming a CPU, assembler dialect, or executable identity. `--type asm` remains
+an explicit generic choice unless `--dialect` (and, for GNU syntax, `--arch`) is
+also supplied.
+
+Before the renderer starts, `peek` samples at most 32 KiB or 256 physical
+lines and prepends that exact sample to the unconsumed input. The normal
+`interactive` schedule waits at most 20 ms for more input after data arrives;
+`--detection-mode fixed-prefix` instead waits for EOF or a cap, giving scripts
+a reproducible bounded prefix. UTF-16 BOMs are recognized before NUL-byte
+binary routing. Strong binary or archive evidence routes to a safe
+representation preview even when assembly was explicitly requested. Ordinary
+source preview stays port-oriented and flushes fragments promptly; `--grep`
+retains its existing whole-rendered-line buffer.
+
+The generic renderer safely escapes terminal-active controls, malformed source
+bytes, and lone carriage returns regardless of color mode. CRLF renders as a
+single newline. `--follow` is deliberately unavailable for assembly until the
+shared lexer exposes a stateful feed/checkpoint API. `--detect-only --json`,
+`--explain-type`, and `--dump-tokens jsonl` expose bounded selection facts and
+raw-byte token fragments. Detection JSON includes candidates, evidence,
+conflicts, scores, the calibration decision, and the actual renderer fallback.
+
 ## Lessons From `scribble-tools`
 
 The JavaScript colorer in `scribble-tools` is a useful reference point for
@@ -153,6 +187,7 @@ File-type-specific notes belong in separate files, such as:
 - [`Pascal.md`](/Users/soegaard/Dropbox/GitHub/peek/Pascal.md)
 - [`Binary.md`](/Users/soegaard/Dropbox/GitHub/peek/Binary.md)
 - [`Archive.md`](/Users/soegaard/Dropbox/GitHub/peek/Archive.md)
+- [`Assembly.md`](/Users/soegaard/Dropbox/GitHub/peek/Assembly.md)
 - [`Directory.md`](/Users/soegaard/Dropbox/GitHub/peek/Directory.md)
 - [`Python.md`](/Users/soegaard/Dropbox/GitHub/peek/Python.md)
 - [`TeX.md`](/Users/soegaard/Dropbox/GitHub/peek/TeX.md)

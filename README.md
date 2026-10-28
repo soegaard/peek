@@ -58,6 +58,16 @@ peek path/to/file.scrbl
 peek path/to/file.wat
 ```
 
+Assembly suffixes are probed with the shared lexer. `peek` adopts a detected
+dialect only after the lexer marks it calibration-qualified; otherwise strong
+assembly evidence uses the neutral generic profile. An explicit generic preview
+remains available when you do not want filename/content arbitration:
+
+```sh
+peek --type asm --dialect generic path/to/file.s
+peek --type asm --dialect gas --arch x86 path/to/file.S
+```
+
 Preview from standard input by choosing a file type explicitly:
 
 ```sh
@@ -90,7 +100,19 @@ cat path/to/file.rkt | peek --type rkt
 cat path/to/file.ss | peek --type rkt
 cat path/to/file.scm | peek --type scheme
 cat path/to/file.wat | peek --type wat
+cat path/to/file.s | peek --type asm --dialect generic
 cat path/to/script.sh | peek --type bash
+```
+
+Inspect a bounded assembly prefix, including candidates and calibration status,
+or emit the shared lexer’s lossless token fragments without pager or ANSI
+output:
+
+```sh
+peek --detect-only --json path/to/file.s
+peek --detection-mode fixed-prefix --detect-only --json path/to/file.s
+peek --explain-type path/to/file.inc
+peek --type asm --dump-tokens jsonl path/to/file.s
 ```
 
 List the currently supported explicit file types:

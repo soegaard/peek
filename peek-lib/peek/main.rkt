@@ -14,12 +14,15 @@
  ;;   Run the peek command-line interface.
  main)
 
-(require racket/cmdline
+(require json
+         racket/cmdline
          racket/list
          racket/string
          racket/system
          racket/port
-         "preview.rkt")
+         "asm.rkt"
+         "preview.rkt"
+         "private/input-probe.rkt")
 
 ;; usage-error : string? -> nothing
 ;;   Print a command-line error and exit.
@@ -184,6 +187,49 @@
   (for ([file-type (in-list supported-file-types)])
     (displayln file-type)))
 
+;; option-symbol : string? -> symbol?
+;;   Normalize one symbolic command-line option without changing punctuation.
+(define (option-symbol value)
+  (string->symbol (string-downcase value)))
+
+;; call-with-assembly-input : (or/c path-string? #f) (input-port? -> any/c) -> any/c
+;;   Open a byte-authoritative input path, or pass standard input through unchanged.
+(define (call-with-assembly-input file-path proc)
+  (cond
+    [file-path
+     (call-with-input-file file-path proc #:mode 'binary)]
+    [else
+     (proc (current-input-port))]))
+
+;; write-assembly-detection : input-port? (or/c path-string? #f) assembly-options? output-port? -> void?
+;;   Emit one bounded JSON detection record without consuming unsampled source.
+(define (write-assembly-detection in file-path assembly out)
+  (define probe
+    (probe-input-port in
+                      #:mode (assembly-options-detection-mode assembly)))
+  (write-json (assembly-detection-jsexpr probe
+                                         #:path file-path
+                                         #:assembly assembly)
+              out)
+  (newline out)
+  (flush-output out))
+
+;; write-assembly-token-dump : input-port? assembly-options? output-port? -> void?
+;;   Emit source tokens only after representation routing accepts source input.
+(define (write-assembly-token-dump in assembly out)
+  (define probe
+    (probe-input-port in
+                      #:mode (assembly-options-detection-mode assembly)))
+  (define input-kind
+    (assembly-input-kind (input-probe-sample probe) assembly))
+  (unless (eq? input-kind 'source)
+    (raise-user-error 'assembly
+                      (format "cannot dump assembly tokens for ~a input"
+                              input-kind)))
+  (write-asm-token-jsonl (input-probe-replay-port probe)
+                         out
+                         #:assembly assembly))
+
 ;; main : -> void?
 ;;   Run the peek command-line interface.
 (define (main)
@@ -206,6 +252,14 @@
   (define grep-specs '())
   (define pager? #t)
   (define list-file-types? #f)
+  (define dialect #f)
+  (define architecture #f)
+  (define encoding #f)
+  (define detection-mode 'interactive)
+  (define detect-only? #f)
+  (define json? #f)
+  (define explain-type? #f)
+  (define dump-tokens-format #f)
   (define type #f)
   (define file-path #f)
   (command-line
@@ -214,6 +268,30 @@
    [("--type") value
                "Explicit file type for stdin input."
                (set! type (string->symbol value))]
+   [("--dialect") value
+    "Assembly dialect, such as generic, ca65, gas, or nasm."
+    (set! dialect (option-symbol value))]
+   [("--arch") value
+    "Assembly target architecture, such as x86, arm, aarch64, or m68k."
+    (set! architecture (option-symbol value))]
+   [("--encoding") value
+    "Assembly source encoding: auto, utf-8, utf-16le, or utf-16be."
+    (set! encoding (option-symbol value))]
+   [("--detection-mode") value
+    "Assembly detection schedule: interactive or fixed-prefix."
+    (set! detection-mode (option-symbol value))]
+   [("--detect-only")
+    "Inspect a bounded assembly input sample without rendering it."
+    (set! detect-only? #t)]
+   [("--json")
+    "With --detect-only, emit the inspection record as JSON."
+    (set! json? #t)]
+   [("--explain-type")
+    "Write the assembly selection and representation explanation to stderr."
+    (set! explain-type? #t)]
+   [("--dump-tokens") value
+    "Stream assembly-derived tokens; the only supported format is jsonl."
+    (set! dump-tokens-format (option-symbol value))]
    [("--list-file-types")
     "Print supported file type names and exit."
     (set! list-file-types? #t)]
@@ -295,6 +373,9 @@
       (usage-error "expected at most one input file")]))
   (when follow?
     (set! pager? #f))
+  (when (or detect-only?
+            dump-tokens-format)
+    (set! pager? #f))
   (cond
     [list-file-types?
      (print-supported-file-types)]
@@ -330,6 +411,73 @@
      (when (and follow?
                 section)
        (usage-error "--follow does not combine with --section"))
+     (when (and (or dialect architecture encoding
+                    (not (eq? detection-mode 'interactive)))
+                (not (or (eq? type 'asm)
+                         detect-only?
+                         (not type))))
+       (usage-error "assembly selection options require --type asm, --detect-only, or automatic type selection"))
+     (when (and detect-only?
+                (not json?))
+       (usage-error "--detect-only requires --json"))
+     (when (and detect-only?
+                type
+                (not (eq? type 'asm)))
+       (usage-error "--detect-only accepts only --type asm"))
+     (when (and json?
+                (not detect-only?))
+       (usage-error "--json currently requires --detect-only"))
+     (when (and explain-type?
+                type
+                (not (eq? type 'asm)))
+       (usage-error "--explain-type accepts --type asm or automatic type selection"))
+     (when (and dump-tokens-format
+                (not (eq? dump-tokens-format 'jsonl)))
+       (usage-error "--dump-tokens supports only jsonl"))
+     (when (and dump-tokens-format
+                (not (eq? type 'asm)))
+       (usage-error "--dump-tokens requires --type asm"))
+     (when (and detect-only?
+                dump-tokens-format)
+       (usage-error "--detect-only does not combine with --dump-tokens"))
+     (when (and detect-only?
+                explain-type?)
+       (usage-error "--detect-only does not combine with --explain-type"))
+     (when (and follow?
+                (eq? type 'asm))
+       (usage-error "--follow is not available for assembly previews yet"))
+     (unless (memq detection-mode '(interactive fixed-prefix))
+       (usage-error (format "unknown assembly detection mode: ~a"
+                            detection-mode)))
+     (when (and (or detect-only?
+                    dump-tokens-format)
+                (or align?
+                    (not swatches?)
+                    (not (eq? binary-mode 'hex))
+                    diff?
+                    diff-staged?
+                    pretty?
+                    toc?
+                    section
+                    follow?
+                    line-range
+                    (pair? grep-specs)
+                    line-numbers?
+                    stats?
+                    (not (eq? directory-sort 'kind))
+                    (pair? search-byte-specs)
+                    (pair? search-text-specs)))
+       (usage-error "machine-readable assembly modes do not combine with presentation options"))
+     (define assembly
+       (make-assembly-options
+        #:dialect (cond
+                    [(eq? type 'asm)
+                     (or dialect 'generic)]
+                    [else
+                     dialect])
+        #:architecture architecture
+        #:encoding (or encoding 'auto)
+        #:detection-mode detection-mode))
      (define options
        (make-preview-options #:type      type
                              #:align?    align?
@@ -354,10 +502,55 @@
                              #:pretty? pretty?))
      (define (write-preview out)
        (cond
+         [detect-only?
+          (call-with-assembly-input
+           file-path
+           (lambda (in)
+             (write-assembly-detection in file-path assembly out)))]
+         [dump-tokens-format
+          (call-with-assembly-input
+           file-path
+           (lambda (in)
+             (write-assembly-token-dump in assembly out)))]
+         [(and explain-type?
+               file-path)
+          (call-with-assembly-input
+           file-path
+           (lambda (in)
+             (define probe
+               (probe-input-port in
+                                 #:mode (assembly-options-detection-mode assembly)))
+             (write-assembly-explanation probe
+                                         (current-error-port)
+                                         #:path file-path
+                                         #:assembly assembly
+                                         #:automatic? (not type))
+             (preview-port (input-probe-replay-port probe)
+                           file-path
+                           options
+                           out
+                           #:assembly assembly)))]
          [file-path
-          (preview-path-port file-path options out)]
+          (preview-path-port file-path options out #:assembly assembly)]
+         [explain-type?
+          (define probe
+            (probe-input-port (current-input-port)
+                              #:mode (assembly-options-detection-mode assembly)))
+          (write-assembly-explanation probe
+                                      (current-error-port)
+                                      #:assembly assembly
+                                      #:automatic? (not type))
+          (preview-port (input-probe-replay-port probe)
+                        #f
+                        options
+                        out
+                        #:assembly assembly)]
          [else
-          (preview-port (current-input-port) #f options out)]))
+          (preview-port (current-input-port)
+                        #f
+                        options
+                        out
+                        #:assembly assembly)]))
      (with-handlers ([exn:break?
                       (lambda (_)
                         (void))]

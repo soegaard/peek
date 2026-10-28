@@ -224,7 +224,7 @@
     "</plist>\n"))
 
 (check-equal? supported-file-types
-              '(archive bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scheme scrbl sql sqlite swift tex toml tsv wat yaml zsh))
+              '(archive asm bash binary c cpp css csv go haskell html java js json jsx latex lua makefile mathematica md mysql objc pascal plist postgres powershell python rhombus rkt ruby rust scheme scrbl sql sqlite swift tex toml tsv wat yaml zsh))
 
 (let ([out (open-output-string)])
   (preview-path-port demo-racket-path

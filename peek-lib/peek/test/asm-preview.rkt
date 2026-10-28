@@ -85,6 +85,22 @@
                                (string-append ansi-identifier "MOVE.W" ansi-reset)))
 (check-true (string-contains? generic-styled-output
                               (string-append ansi-literal "1" ansi-reset)))
+(check-true (string-contains? generic-styled-output
+                              (string-append ansi-builtin "D0" ansi-reset)))
+
+;; Generic convention roles preserve column-one comments and the m68k data
+;; and address register spellings without treating an inline semicolon as a comment.
+(define generic-convention-output
+  (render-asm-preview "; heading\n  MOVE.W D0,A7 ; tail\n"))
+
+(check-true (string-contains? generic-convention-output
+                              (string-append ansi-comment ";" ansi-reset)))
+(check-true (string-contains? generic-convention-output
+                              (string-append ansi-builtin "D0" ansi-reset)))
+(check-true (string-contains? generic-convention-output
+                              (string-append ansi-builtin "A7" ansi-reset)))
+(check-true (string-contains? generic-convention-output
+                              (string-append ansi-delimiter ";" ansi-reset)))
 
 ;; Generic source preserves the conventional fixed-column distinction without
 ;; asserting that an indented statement head is an instruction or directive.
